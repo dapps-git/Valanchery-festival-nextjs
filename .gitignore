@@ -28,3 +28,6 @@ server/.env
 *.sw?
 tsconfig.tsbuildinfo
 scratch/
+
+# Root build cache (auto-generated, ignore)
+.next

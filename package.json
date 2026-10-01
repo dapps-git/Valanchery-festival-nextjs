@@ -9,8 +9,8 @@
     "start": "next start",
     "dev:vite": "vite",
     "build:vite": "tsc && vite build",
-    "server:dev": "npm run dev --prefix server",
-    "server:start": "npm start --prefix server"
+    "server:dev": "npm run dev --prefix backend",
+    "server:start": "npm start --prefix backend"
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.3.3",
