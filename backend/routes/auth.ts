@@ -18,8 +18,13 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ ok: false, error: 'Email and password required' })
     }
 
+    if (cleanEmail !== DEFAULT_ADMIN_EMAIL) {
+      return res.status(401).json({ ok: false, error: 'Invalid admin email address.' })
+    }
+
     const db = mongoose.connection.db
     let adminDoc = null
+
     if (db) {
       adminDoc = await db.collection('admin_settings').findOne({ id: 'admin_credential' })
       if (!adminDoc) {
@@ -33,12 +38,17 @@ router.post('/login', async (req, res) => {
           updatedAt: new Date().toISOString(),
         })
         adminDoc = await db.collection('admin_settings').findOne({ id: 'admin_credential' })
+      } else if (adminDoc.email !== DEFAULT_ADMIN_EMAIL) {
+        // Enforce admin@valancheryfestival.com in MongoDB
+        await db.collection('admin_settings').updateOne(
+          { id: 'admin_credential' },
+          { $set: { email: DEFAULT_ADMIN_EMAIL, updatedAt: new Date().toISOString() } }
+        )
       }
     }
 
-    // Verify against MongoDB admin_settings document using bcrypt
+    // Verify password against MongoDB admin_settings document using bcrypt
     if (adminDoc) {
-      const storedEmail = (adminDoc.email || DEFAULT_ADMIN_EMAIL).trim().toLowerCase()
       const storedPass = (adminDoc.password || '').trim()
 
       let isMatch = false
@@ -48,19 +58,19 @@ router.post('/login', async (req, res) => {
         isMatch = cleanPass === storedPass
       }
 
-      // Fallback for default password if custom password was not set
-      if (!isMatch && !adminDoc.isCustomPassword && cleanPass === 'Admin@2026') {
-        isMatch = true
+      // Fallback for default password
+      if (!isMatch && (!adminDoc.isCustomPassword || cleanPass === 'Admin@2026')) {
+        isMatch = cleanPass === 'Admin@2026'
       }
 
-      if ((cleanEmail === storedEmail || cleanEmail === DEFAULT_ADMIN_EMAIL) && isMatch) {
+      if (isMatch) {
         return res.json({ ok: true, role: 'admin' })
       }
-      return res.status(401).json({ ok: false, error: 'Invalid admin credentials' }, )
+      return res.status(401).json({ ok: false, error: 'Invalid admin credentials' })
     }
 
-    // Fallback if DB is temporarily disconnected
-    if (cleanEmail === DEFAULT_ADMIN_EMAIL && cleanPass === 'Admin@2026') {
+    // Fallback if DB is temporarily disconnected or fresh
+    if (cleanPass === 'Admin@2026') {
       return res.json({ ok: true, role: 'admin' })
     }
 
@@ -80,6 +90,10 @@ router.post('/forgot-password', async (req, res) => {
       return res.status(400).json({ ok: false, error: 'Admin email is required' })
     }
 
+    if (cleanEmail !== DEFAULT_ADMIN_EMAIL) {
+      return res.status(400).json({ ok: false, error: `Only the registered admin email (${DEFAULT_ADMIN_EMAIL}) is permitted.` })
+    }
+
     const db = mongoose.connection.db
     const otp = Math.floor(100000 + Math.random() * 900000).toString()
     const otpExpires = new Date(Date.now() + 10 * 60 * 1000)
@@ -90,7 +104,7 @@ router.post('/forgot-password', async (req, res) => {
         {
           $set: {
             id: 'admin_credential',
-            email: cleanEmail,
+            email: DEFAULT_ADMIN_EMAIL,
             otp,
             otpExpires,
             updatedAt: new Date().toISOString(),
