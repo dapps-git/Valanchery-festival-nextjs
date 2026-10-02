@@ -49,15 +49,12 @@ export function CouponsDirectoryPage() {
           search: searchQuery.trim(),
           status: statusFilter,
         })
-        const res = await fetch(`/api/coupons?${queryParams.toString()}`)
-        if (res.ok) {
-          const d = await res.json()
-          if (isMounted && d.ok && Array.isArray(d.coupons)) {
-            setServerCoupons(d.coupons)
-            setServerTotal(d.filteredCount ?? d.totalCoupons ?? 0)
-            setIsLoadingServer(false)
-            return
-          }
+        const d = await api.getDirectoryCoupons(queryParams)
+        if (isMounted && d.ok && Array.isArray(d.coupons)) {
+          setServerCoupons(d.coupons)
+          setServerTotal(d.filteredCount ?? d.totalCoupons ?? 0)
+          setIsLoadingServer(false)
+          return
         }
       } catch {
         // fallback

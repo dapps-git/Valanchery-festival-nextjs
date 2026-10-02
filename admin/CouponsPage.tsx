@@ -67,12 +67,9 @@ export function CouponsPage() {
 
     if (batchCoupons.length < (batchCount || 1)) {
       try {
-        const res = await fetch(`/api/coupons?batchId=${batchId}&limit=${Math.min(batchCount || 10000, 50000)}`)
-        if (res.ok) {
-          const d = await res.json()
-          if (d.ok && Array.isArray(d.coupons) && d.coupons.length > 0) {
-            batchCoupons = d.coupons
-          }
+        const d = await api.getBatchCoupons(batchId, Math.min(batchCount || 10000, 50000))
+        if (d.ok && Array.isArray(d.coupons) && d.coupons.length > 0) {
+          batchCoupons = d.coupons
         }
       } catch {
         // ignore

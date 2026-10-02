@@ -248,6 +248,30 @@ export const api = {
     }
   },
 
+  async getBatchCoupons(batchId: string, limit = 50000): Promise<{ ok: boolean; coupons: Coupon[] }> {
+    try {
+      const res = await fetchWithTimeout(`${API_BASE}/coupons?batchId=${encodeURIComponent(batchId)}&limit=${limit}`, {}, 20000)
+      if (res.ok) {
+        return await res.json()
+      }
+    } catch {
+      // fallback
+    }
+    return { ok: false, coupons: [] }
+  },
+
+  async getDirectoryCoupons(queryParams: URLSearchParams): Promise<{ ok: boolean; coupons: Coupon[]; filteredCount?: number; totalCoupons?: number }> {
+    try {
+      const res = await fetchWithTimeout(`${API_BASE}/coupons?${queryParams.toString()}`, {}, 15000)
+      if (res.ok) {
+        return await res.json()
+      }
+    } catch {
+      // fallback
+    }
+    return { ok: false, coupons: [] }
+  },
+
   async deleteBatch(batchId: string): Promise<{ ok: boolean }> {
     const res = await fetchWithTimeout(`${API_BASE}/coupons?batchId=${encodeURIComponent(batchId)}`, {
       method: 'DELETE',

@@ -173,9 +173,51 @@ router.post('/generate', async (req, res) => {
   }
 })
 
-// 3. Get coupons & batches
-router.get('/', async (_req, res) => {
+// 2.5 Bulk Insert Coupons (from frontend generator)
+router.post('/bulk-insert', async (req, res) => {
   try {
+    const { batch, coupons } = req.body || {}
+    
+    if (batch && batch.id) {
+      await CouponBatch.updateOne(
+        { id: batch.id },
+        { $set: batch },
+        { upsert: true }
+      )
+    }
+
+    if (Array.isArray(coupons) && coupons.length > 0) {
+      const CHUNK_SIZE = 5000
+      for (let i = 0; i < coupons.length; i += CHUNK_SIZE) {
+        const slice = coupons.slice(i, i + CHUNK_SIZE)
+        try {
+          await Coupon.insertMany(slice, { ordered: false })
+        } catch (insertErr: any) {
+          // If duplicates exist, ignore duplicate key errors (code 11000)
+          if (insertErr.code !== 11000 && !insertErr.writeErrors) {
+            console.error('Batch insert warning:', insertErr)
+          }
+        }
+      }
+    }
+
+    res.json({ ok: true, insertedCount: coupons?.length || 0 })
+  } catch (error: any) {
+    res.status(500).json({ ok: false, error: error.message })
+  }
+})
+
+// 3. Get coupons & batches
+router.get('/', async (req, res) => {
+  try {
+    const batchId = req.query.batchId as string
+    const limit = Math.min(Math.max(1, Number(req.query.limit) || 50000), 100000)
+
+    if (batchId) {
+      const batchCoupons = await Coupon.find({ batchId }).limit(limit).lean()
+      return res.json({ ok: true, coupons: batchCoupons })
+    }
+
     const [coupons, batches] = await Promise.all([
       Coupon.find({}, { id: 1, batchId: 1, status: 1, createdAt: 1, usedAt: 1, usedByParticipantName: 1, usedByParticipantPhone: 1, usedByParticipantId: 1 }).sort({ createdAt: -1 }).lean(),
       CouponBatch.find().sort({ createdAt: -1 }).lean(),
@@ -196,7 +238,52 @@ router.get('/batches', async (_req, res) => {
   }
 })
 
-// 5. Delete a coupon batch with cascade participant cleanup
+// 5. Delete coupon batches (via query params: ?batchId=... or ?all=true)
+router.delete('/', async (req, res) => {
+  try {
+    const batchId = req.query.batchId as string
+    const isAll = req.query.all === 'true'
+
+    if (isAll) {
+      await Promise.all([
+        CouponBatch.deleteMany({}),
+        Coupon.deleteMany({}),
+        Participant.deleteMany({}),
+      ])
+      return res.json({ ok: true, message: 'All batches, coupons, and participants deleted' })
+    }
+
+    if (batchId) {
+      const batchCoupons = await Coupon.find({ batchId }, { id: 1, serialNo: 1 }).lean()
+      const couponIdentifiers = new Set<string>()
+      batchCoupons.forEach((c: any) => {
+        if (c.id) couponIdentifiers.add(String(c.id).toUpperCase())
+        if (c.serialNo) couponIdentifiers.add(String(c.serialNo).toUpperCase())
+      })
+      const couponIdsArray = Array.from(couponIdentifiers)
+
+      if (couponIdsArray.length > 0) {
+        const participantsToDelete = await Participant.find({ couponId: { $in: couponIdsArray } }, { id: 1 }).lean()
+        const participantIds = participantsToDelete.map((p: any) => p.id).filter(Boolean)
+        if (participantIds.length > 0) {
+          await Participant.deleteMany({ id: { $in: participantIds } })
+        }
+      }
+
+      await Promise.all([
+        CouponBatch.deleteOne({ id: batchId }),
+        Coupon.deleteMany({ batchId }),
+      ])
+      return res.json({ ok: true, message: 'Batch and associated participants deleted' })
+    }
+
+    res.status(400).json({ ok: false, error: 'batchId or all=true required' })
+  } catch (error: any) {
+    res.status(500).json({ ok: false, error: error.message })
+  }
+})
+
+// 6. Delete a coupon batch by ID in URL path (/batches/:id)
 router.delete('/batches/:id', async (req, res) => {
   try {
     const batchId = req.params.id
