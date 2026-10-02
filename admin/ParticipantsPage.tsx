@@ -241,8 +241,8 @@ export function ParticipantsPage() {
       {/* Table */}
       <div className="border border-[#E8E3D8] bg-white rounded-[6px] shadow-2xs overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[680px] text-left text-xs">
-            <thead className="border-b border-[#E8E3D8] bg-[#FAF8F5] text-[11px] font-semibold text-stone-600">
+          <table className="w-full min-w-[680px] text-left text-xs" style={{ fontWeight: 500 }}>
+            <thead className="border-b-2 border-[#E8E3D8] bg-[#F5F2EB] text-[11px] text-stone-700 uppercase tracking-wider" style={{ fontWeight: 700 }}>
               <tr>
                 <th className="w-12 px-4 py-3 text-center">#</th>
                 <th className="px-4 py-3">Name</th>
@@ -258,16 +258,16 @@ export function ParticipantsPage() {
                 const slNo = (page - 1) * PAGE + idx + 1
                 const winInfo = winnerMap.get(p.id)
                 return (
-                  <tr key={p.id} className="hover:bg-[#FAF8F5] transition-colors">
-                    <td className="w-12 px-4 py-3 text-center font-mono text-[11px] text-stone-400">
+                  <tr key={p.id} className="hover:bg-[#FAF8F5] transition-colors" style={{ color: '#1c1917' }}>
+                    <td className="w-12 px-4 py-3 text-center font-mono text-[11px]" style={{ color: '#78716c', fontWeight: 600 }}>
                       {slNo}
                     </td>
 
-                    <td className="px-4 py-3 font-medium text-stone-900">
+                    <td className="px-4 py-3" style={{ fontWeight: 600, color: '#1c1917' }}>
                       {p.name || 'Participant'}
                     </td>
 
-                    <td className="px-4 py-3 font-mono text-xs text-stone-800 font-medium">
+                    <td className="px-4 py-3 font-mono text-xs" style={{ fontWeight: 600, color: '#292524' }}>
                       {p.phone}
                     </td>
 
@@ -281,7 +281,7 @@ export function ParticipantsPage() {
                       )}
                     </td>
 
-                    <td className="px-4 py-3 text-stone-600 font-normal whitespace-nowrap">
+                    <td className="px-4 py-3 text-[11px] whitespace-nowrap" style={{ color: '#57534e', fontWeight: 600 }}>
                       {formatShortDate(p.registeredAt || p.createdAt || '')}
                     </td>
 

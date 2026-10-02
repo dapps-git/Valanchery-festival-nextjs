@@ -305,16 +305,16 @@ export function CouponsDirectoryPage() {
       {/* Main Table */}
       <div className="border border-[#E8E3D8] bg-white rounded-[6px] shadow-2xs overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[700px] text-left text-xs">
-            <thead className="border-b border-[#E8E3D8] bg-[#FAF8F5] text-[10px] font-semibold text-stone-600 uppercase tracking-wider">
+          <table className="w-full min-w-[700px] text-left text-xs" style={{ fontWeight: 500 }}>
+            <thead className="border-b-2 border-[#E8E3D8] bg-[#F5F2EB] text-[11px] text-stone-700 uppercase tracking-wider" style={{ fontWeight: 700 }}>
               <tr>
-                <th className="px-4 py-2.5 w-10">#</th>
-                <th className="px-4 py-2.5">Serial No</th>
-                <th className="px-4 py-2.5">Coupon Code</th>
-                <th className="px-4 py-2.5">Status</th>
-                <th className="px-4 py-2.5">Participant</th>
-                <th className="px-4 py-2.5">Phone</th>
-                <th className="px-4 py-2.5">Date</th>
+                <th className="px-4 py-3 w-10">#</th>
+                <th className="px-4 py-3">Serial No</th>
+                <th className="px-4 py-3">Coupon Code</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Participant</th>
+                <th className="px-4 py-3">Phone</th>
+                <th className="px-4 py-3">Date</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#F2EFE9]">
@@ -323,22 +323,22 @@ export function CouponsDirectoryPage() {
                 const isRegistered = item.status === 'Used'
 
                 return (
-                  <tr key={item.id || idx} className="hover:bg-[#FAF8F5] transition text-stone-900">
-                    <td className="px-4 py-2.5 text-stone-500 font-mono text-[11px] font-medium">{rowNum}</td>
+                  <tr key={item.id || idx} className="hover:bg-[#FAF8F5] transition" style={{ color: '#1c1917' }}>
+                    <td className="px-4 py-3 font-mono text-[11px]" style={{ color: '#78716c', fontWeight: 600 }}>{rowNum}</td>
 
-                    <td className="px-4 py-2.5">
+                    <td className="px-4 py-3">
                       {item.serialNo ? (
-                        <span className="font-mono text-xs text-stone-800 bg-[#FAF8F5] px-2 py-0.5 rounded-[4px] border border-[#E8E3D8]">
+                        <span className="font-mono text-xs bg-[#FAF8F5] px-2 py-0.5 rounded-[4px] border border-[#E8E3D8]" style={{ color: '#1c1917', fontWeight: 700 }}>
                           {item.serialNo}
                         </span>
                       ) : (
-                        <span className="text-stone-400">—</span>
+                        <span style={{ color: '#a8a29e' }}>—</span>
                       )}
                     </td>
 
-                    <td className="px-4 py-2.5">
+                    <td className="px-4 py-3">
                       <div className="flex items-center gap-1.5">
-                        <span className="font-mono text-xs text-stone-900 bg-[#F5F2EB] px-2 py-0.5 rounded-[4px] border border-[#E8E3D8]">
+                        <span className="font-mono text-xs bg-[#F5F2EB] px-2 py-0.5 rounded-[4px] border border-[#E8E3D8]" style={{ color: '#1c1917', fontWeight: 700 }}>
                           {formatCouponDisplay(item.id)}
                         </span>
                         <button
@@ -365,29 +365,29 @@ export function CouponsDirectoryPage() {
                       )}
                     </td>
 
-                    <td className="px-4 py-2.5">
+                    <td className="px-4 py-3">
                       {item.participantName ? (
-                        <div className="flex items-center gap-1 text-stone-900 font-medium">
+                        <div className="flex items-center gap-1" style={{ fontWeight: 600, color: '#1c1917' }}>
                           <User size={11} className="text-stone-400" />
                           <span>{item.participantName}</span>
                         </div>
                       ) : (
-                        <span className="text-stone-400 font-light">—</span>
+                        <span style={{ color: '#a8a29e' }}>—</span>
                       )}
                     </td>
 
-                    <td className="px-4 py-2.5">
+                    <td className="px-4 py-3">
                       {item.participantPhone ? (
-                        <div className="flex items-center gap-1 font-mono text-stone-700 font-medium">
+                        <div className="flex items-center gap-1 font-mono" style={{ fontWeight: 600, color: '#292524' }}>
                           <Phone size={11} className="text-stone-400" />
                           <span>{item.participantPhone}</span>
                         </div>
                       ) : (
-                        <span className="text-stone-400">—</span>
+                        <span style={{ color: '#a8a29e' }}>—</span>
                       )}
                     </td>
 
-                    <td className="px-4 py-2.5 text-stone-600 text-[11px] font-normal">
+                    <td className="px-4 py-3 text-[11px]" style={{ color: '#57534e', fontWeight: 600 }}>
                       {formatShortDate(item.usedAt || item.createdAt)}
                     </td>
                   </tr>
