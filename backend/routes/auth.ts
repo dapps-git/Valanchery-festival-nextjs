@@ -126,24 +126,30 @@ router.post('/forgot-password', async (req, res) => {
     if (smtpUser && smtpPass) {
       try {
         const transporter = nodemailer.createTransport({
-          host: smtpHost,
-          port: smtpPort,
-          secure: isSecure,
-          auth: { user: smtpUser, pass: smtpPass },
-          tls: {
-            rejectUnauthorized: false,
+          service: 'gmail',
+          auth: {
+            user: smtpUser,
+            pass: smtpPass,
           },
-          connectionTimeout: 8000,
-          greetingTimeout: 8000,
-          socketTimeout: 8000,
         })
 
-        await transporter.sendMail({
+        const info = await transporter.sendMail({
           from: `"Lucky Draw Admin" <${smtpUser}>`,
           to: otpDestination,
           subject: `Admin Reset OTP: ${otp}`,
           text: `Your Lucky Draw Admin Password Reset OTP is: ${otp}\n\nThis OTP is for the admin account (admin@valancheryfestival.com) and expires in 10 minutes.`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
+              <h2 style="color: #1a202c; text-align: center;">Lucky Draw Admin Reset OTP</h2>
+              <p style="color: #4a5568; font-size: 15px;">You requested a password reset for the admin dashboard (<strong>admin@valancheryfestival.com</strong>).</p>
+              <div style="background: #f7fafc; border-radius: 6px; padding: 16px; text-align: center; margin: 20px 0;">
+                <span style="font-size: 32px; font-weight: bold; letter-spacing: 6px; color: #2b6cb0;">${otp}</span>
+              </div>
+              <p style="color: #718096; font-size: 13px; text-align: center;">This code is valid for 10 minutes. If you did not request this, please ignore this email.</p>
+            </div>
+          `,
         })
+        console.log('[AUTH EMAIL SENT] Message ID:', info.messageId)
         emailSent = true
       } catch (mailErr) {
         console.error('[AUTH SMTP ERROR] Failed to send email:', mailErr)
