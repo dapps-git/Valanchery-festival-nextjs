@@ -242,7 +242,7 @@ export function ParticipantsPage() {
       <div className="border border-[#E8E3D8] bg-white rounded-[6px] shadow-2xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[680px] text-left text-xs">
-            <thead className="border-b border-[#E8E3D8] bg-[#FAF8F5] text-[11px] font-normal text-stone-500">
+            <thead className="border-b border-[#E8E3D8] bg-[#FAF8F5] text-[11px] font-semibold text-stone-600">
               <tr>
                 <th className="w-12 px-4 py-3 text-center">#</th>
                 <th className="px-4 py-3">Name</th>
@@ -263,11 +263,11 @@ export function ParticipantsPage() {
                       {slNo}
                     </td>
 
-                    <td className="px-4 py-3 font-normal text-stone-900">
+                    <td className="px-4 py-3 font-medium text-stone-900">
                       {p.name || 'Participant'}
                     </td>
 
-                    <td className="px-4 py-3 font-mono text-xs text-stone-700">
+                    <td className="px-4 py-3 font-mono text-xs text-stone-800 font-medium">
                       {p.phone}
                     </td>
 
@@ -281,7 +281,7 @@ export function ParticipantsPage() {
                       )}
                     </td>
 
-                    <td className="px-4 py-3 text-stone-500 font-light whitespace-nowrap">
+                    <td className="px-4 py-3 text-stone-600 font-normal whitespace-nowrap">
                       {formatShortDate(p.registeredAt || p.createdAt || '')}
                     </td>
 
@@ -336,7 +336,7 @@ export function ParticipantsPage() {
         </div>
 
         {/* Pagination Footer */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#E8E3D8] bg-[#FAF8F5] px-4 py-2.5 text-xs text-stone-500 font-light">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#E8E3D8] bg-[#FAF8F5] px-4 py-2.5 text-xs text-stone-600 font-normal">
           <p>
             Showing {filtered.length === 0 ? 0 : (page - 1) * PAGE + 1} to{' '}
             {Math.min(page * PAGE, filtered.length)} of {filtered.length} entries

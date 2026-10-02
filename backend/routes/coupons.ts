@@ -143,6 +143,7 @@ router.post('/generate', async (req, res) => {
       existingSet.add(id)
       newCoupons.push({
         id,
+        serialNo: existingCoupons.length + i + 1,
         batchId,
         status: 'Unused' as const,
         createdAt: now,
@@ -219,7 +220,7 @@ router.get('/', async (req, res) => {
     }
 
     const [coupons, batches] = await Promise.all([
-      Coupon.find({}, { id: 1, batchId: 1, status: 1, createdAt: 1, usedAt: 1, usedByParticipantName: 1, usedByParticipantPhone: 1, usedByParticipantId: 1 }).sort({ createdAt: -1 }).lean(),
+      Coupon.find({}, { id: 1, serialNo: 1, batchId: 1, status: 1, createdAt: 1, usedAt: 1, usedByParticipantName: 1, usedByParticipantPhone: 1, usedByParticipantId: 1 }).sort({ serialNo: 1 }).lean(),
       CouponBatch.find().sort({ createdAt: -1 }).lean(),
     ])
     res.json({ ok: true, coupons, batches })

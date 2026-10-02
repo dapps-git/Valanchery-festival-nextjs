@@ -306,7 +306,7 @@ export function CouponsDirectoryPage() {
       <div className="border border-[#E8E3D8] bg-white rounded-[6px] shadow-2xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[700px] text-left text-xs">
-            <thead className="border-b border-[#E8E3D8] bg-[#FAF8F5] text-[10px] font-normal text-stone-500 uppercase tracking-wider">
+            <thead className="border-b border-[#E8E3D8] bg-[#FAF8F5] text-[10px] font-semibold text-stone-600 uppercase tracking-wider">
               <tr>
                 <th className="px-4 py-2.5 w-10">#</th>
                 <th className="px-4 py-2.5">Serial No</th>
@@ -323,8 +323,8 @@ export function CouponsDirectoryPage() {
                 const isRegistered = item.status === 'Used'
 
                 return (
-                  <tr key={item.id || idx} className="hover:bg-[#FAF8F5] transition text-stone-800">
-                    <td className="px-4 py-2.5 text-stone-400 font-mono text-[11px]">{rowNum}</td>
+                  <tr key={item.id || idx} className="hover:bg-[#FAF8F5] transition text-stone-900">
+                    <td className="px-4 py-2.5 text-stone-500 font-mono text-[11px] font-medium">{rowNum}</td>
 
                     <td className="px-4 py-2.5">
                       {item.serialNo ? (
@@ -367,7 +367,7 @@ export function CouponsDirectoryPage() {
 
                     <td className="px-4 py-2.5">
                       {item.participantName ? (
-                        <div className="flex items-center gap-1 text-stone-900 font-normal">
+                        <div className="flex items-center gap-1 text-stone-900 font-medium">
                           <User size={11} className="text-stone-400" />
                           <span>{item.participantName}</span>
                         </div>
@@ -378,7 +378,7 @@ export function CouponsDirectoryPage() {
 
                     <td className="px-4 py-2.5">
                       {item.participantPhone ? (
-                        <div className="flex items-center gap-1 font-mono text-stone-600">
+                        <div className="flex items-center gap-1 font-mono text-stone-700 font-medium">
                           <Phone size={11} className="text-stone-400" />
                           <span>{item.participantPhone}</span>
                         </div>
@@ -387,7 +387,7 @@ export function CouponsDirectoryPage() {
                       )}
                     </td>
 
-                    <td className="px-4 py-2.5 text-stone-400 text-[11px] font-light">
+                    <td className="px-4 py-2.5 text-stone-600 text-[11px] font-normal">
                       {formatShortDate(item.usedAt || item.createdAt)}
                     </td>
                   </tr>

@@ -2,6 +2,7 @@ import mongoose, { Schema, Document } from 'mongoose'
 
 export interface ICoupon extends Document {
   id: string // 10-digit unique coupon token
+  serialNo: number  // sequential serial number within the batch
   batchId: string
   status: 'Unused' | 'Used'
   createdAt: string
@@ -14,6 +15,7 @@ export interface ICoupon extends Document {
 const CouponSchema = new Schema<ICoupon>(
   {
     id: { type: String, required: true, unique: true, index: true },
+    serialNo: { type: Number, index: true },
     batchId: { type: String, required: true, index: true },
     status: { type: String, enum: ['Unused', 'Used'], default: 'Unused', index: true },
     createdAt: { type: String, required: true },
