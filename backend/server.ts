@@ -38,13 +38,14 @@ app.use(express.json({ limit: '10mb' }))
 // Aggregated Data Route for ultra-fast single request app hydration
 app.get(['/api/all', '/all'], async (_req, res) => {
   try {
-    const [prizes, draws, participants, winners, coupons, batches] = await Promise.all([
+    const [prizes, draws, participants, winners, batches, totalCouponsCount, usedCouponsCount] = await Promise.all([
       Prize.find().lean(),
       Draw.find().sort({ number: 1 }).lean(),
       Participant.find().sort({ registeredAt: -1, createdAt: -1 }).lean(),
       Winner.find().sort({ date: -1, drawnAt: -1 }).lean(),
-      Coupon.find({}, { id: 1, batchId: 1, status: 1, createdAt: 1, usedAt: 1, usedByParticipantName: 1, usedByParticipantPhone: 1, usedByParticipantId: 1 }).sort({ createdAt: -1 }).lean(),
       CouponBatch.find().sort({ createdAt: -1 }).lean(),
+      Coupon.countDocuments({}),
+      Coupon.countDocuments({ status: 'Used' }),
     ])
     res.json({
       ok: true,
@@ -52,13 +53,16 @@ app.get(['/api/all', '/all'], async (_req, res) => {
       draws: draws || [],
       participants: participants || [],
       winners: winners || [],
-      coupons: coupons || [],
+      coupons: [],          // intentionally empty — directory page fetches its own page
       batches: batches || [],
+      totalCouponsCount,
+      usedCouponsCount,
     })
   } catch (error: any) {
     res.status(500).json({ ok: false, error: error.message })
   }
 })
+
 
 // Universal Health & Root Handler
 app.use((req, res, next) => {
