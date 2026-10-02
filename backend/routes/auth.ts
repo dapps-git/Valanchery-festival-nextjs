@@ -58,16 +58,9 @@ router.post('/login', async (req, res) => {
         isMatch = cleanPass === storedPass
       }
 
-      const isDefaultPassVariation = [
-        'admin@2026',
-        'admin2026',
-        'admin@2025',
-        'admin123',
-      ].includes(cleanPass.toLowerCase()) || cleanPass === 'Admin@2026'
-
-      // Universal fallback for default password
-      if (!isMatch && (!adminDoc.isCustomPassword || isDefaultPassVariation)) {
-        isMatch = isDefaultPassVariation
+      // Strict default password fallback
+      if (!isMatch && (!adminDoc.isCustomPassword || cleanPass === 'Admin@2026')) {
+        isMatch = cleanPass === 'Admin@2026'
       }
 
       if (isMatch) {
@@ -77,15 +70,8 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ ok: false, error: 'Invalid admin credentials' })
     }
 
-    // Fallback if DB is temporarily disconnected or fresh
-    const isDefaultPassVariation = [
-      'admin@2026',
-      'admin2026',
-      'admin@2025',
-      'admin123',
-    ].includes(cleanPass.toLowerCase()) || cleanPass === 'Admin@2026'
-
-    if (isDefaultPassVariation) {
+    // Fallback if DB is temporarily disconnected
+    if (cleanPass === 'Admin@2026') {
       const token = `admin_token_${Date.now()}_${Buffer.from(cleanEmail).toString('hex')}`
       return res.json({ ok: true, role: 'admin', token, email: cleanEmail })
     }
