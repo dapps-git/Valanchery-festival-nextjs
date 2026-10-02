@@ -149,7 +149,7 @@ router.post('/generate', async (req, res) => {
       existingSet.add(id)
       newCoupons.push({
         id,
-        serialNo: existingCoupons.length + i + 1,
+        serialNo: String(existingCoupons.length + i + 1).padStart(6, '0'),
         batchId,
         status: 'Unused' as const,
         createdAt: now,
@@ -239,9 +239,9 @@ router.get('/', async (req, res) => {
     if (status === 'Unused') filter.status = 'Unused'
     if (search) {
       filter.$or = [
-        { id:       { $regex: search, $options: 'i' } },
-        { serialNo: isNaN(Number(search)) ? undefined : Number(search) },
-      ].filter(Boolean)
+        { id: { $regex: search, $options: 'i' } },
+        { serialNo: { $regex: search, $options: 'i' } },
+      ]
     }
 
     const [totalCoupons, filteredCount, coupons, batches] = await Promise.all([

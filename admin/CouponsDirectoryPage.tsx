@@ -134,7 +134,7 @@ export function CouponsDirectoryPage() {
       list = list.filter(
         (c) =>
           c.id.toLowerCase().includes(q) ||
-          (c.serialNo && c.serialNo.toLowerCase().includes(q)) ||
+          (c.serialNo && String(c.serialNo).toLowerCase().includes(q)) ||
           (c.participantName && c.participantName.toLowerCase().includes(q)) ||
           (c.participantPhone && c.participantPhone.includes(q))
       )
@@ -330,7 +330,7 @@ export function CouponsDirectoryPage() {
                     <td className="px-4 py-3">
                       {item.serialNo ? (
                         <span className="font-mono text-xs bg-[#FAF8F5] px-2 py-0.5 rounded-[4px] border border-[#E8E3D8]" style={{ color: '#1c1917', fontWeight: 700 }}>
-                          {item.serialNo}
+                          {String(item.serialNo)}
                         </span>
                       ) : (
                         <span style={{ color: '#a8a29e' }}>—</span>
