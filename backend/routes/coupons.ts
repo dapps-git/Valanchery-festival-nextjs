@@ -65,13 +65,13 @@ function generateRandom13Char(): string {
   return chars.join('')
 }
 
-// 1. Validate a single coupon token (instant QR scan check)
-router.get('/validate/:id', async (req, res) => {
+// 1. Validate a single coupon token — accepts GET /validate/:id OR GET /validate?code=...
+router.get(['/validate', '/validate/:id'], async (req, res) => {
   try {
-    const rawId = req.params.id || ''
+    const rawId = (req.params.id || req.query.code || '') as string
     const cleanId = rawId.replace(/[^A-Za-z0-9]/g, '').trim().toUpperCase()
 
-    if (!cleanId || cleanId.length < 8 || cleanId.length > 16) {
+    if (!cleanId || cleanId.length < 8 || cleanId.length > 20) {
       return res.json({
         valid: false,
         status: 'Invalid',
@@ -111,11 +111,11 @@ router.get('/validate/:id', async (req, res) => {
       })
     }
 
+    // Coupon not found in DB
     return res.json({
-      valid: true,
-      status: 'Unused',
-      coupon: { id: cleanId, status: 'Unused' },
-      message: 'Valid Festival Coupon! Ready for registration.',
+      valid: false,
+      status: 'Invalid',
+      message: 'Coupon not found. Please check the ID and try again.',
     })
   } catch (error: any) {
     res.status(500).json({ valid: false, status: 'Invalid', message: error.message })
