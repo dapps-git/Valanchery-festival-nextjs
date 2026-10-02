@@ -289,6 +289,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       refreshData,
       login: async (email, password) => {
         const cleanEmail = email.trim().toLowerCase()
+        try {
           const res = await api.login(cleanEmail, password)
           if (res && res.ok) {
             const token = res.token || `admin_auth_${Date.now()}`
