@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { Confetti } from '@/components/Confetti'
 import { Toast } from '@/components/Toast'
 import { useApp } from '@/context/AppContext'
-import { GIFT_PRESETS } from '@/data/mockData'
+
 import type { Participant, Prize } from '@/types'
 import {
   Sparkles,
@@ -41,7 +41,7 @@ export function LuckyDrawPage() {
     name: '',
     value: '',
     description: '',
-    image: GIFT_PRESETS[0].image,
+    image: '',
   })
   const [isUploading, setIsUploading] = useState(false)
   const [uploadSuccess, setUploadSuccess] = useState('')
@@ -58,9 +58,9 @@ export function LuckyDrawPage() {
     return {
       id: 'default-gift',
       name: 'Festival Grand Prize',
-      value: '₹50,000',
-      description: 'Official Valanchery Festival Reward',
-      image: GIFT_PRESETS[0].image,
+      value: '',
+      description: '',
+      image: '',
       assignedDrawId: null,
       status: 'Available',
     }
@@ -235,7 +235,7 @@ export function LuckyDrawPage() {
       name: '',
       value: '',
       description: '',
-      image: GIFT_PRESETS[0].image,
+      image: '',
     })
   }
 

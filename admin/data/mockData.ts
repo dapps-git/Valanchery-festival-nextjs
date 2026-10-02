@@ -1,5 +1,6 @@
 export const ADMIN_EMAIL = 'admin@valancheryfestival.com'
 
+// Preset gift options for the prize image picker in the admin UI
 export const GIFT_PRESETS = [
   {
     name: 'Smart TV',
@@ -64,25 +65,4 @@ export const GIFT_PRESETS = [
     image: 'https://images.unsplash.com/photo-1585659722983-3a675dabf23d?auto=format&fit=crop&w=900&q=80',
     category: 'Kitchen',
   },
-]
-
-export const PRIZE_IMAGES = {
-  smartphone: GIFT_PRESETS[1].image,
-  tv: GIFT_PRESETS[0].image,
-  laptop: GIFT_PRESETS[2].image,
-  fridge: GIFT_PRESETS[3].image,
-  washer: GIFT_PRESETS[4].image,
-  voucher: GIFT_PRESETS[7].image,
-  festival: GIFT_PRESETS[5].image,
-}
-
-export const LOCATIONS = [
-  'Valanchery',
-  'Malappuram',
-  'Tirur',
-  'Kuttippuram',
-  'Edappal',
-  'Ponnani',
-  'Kottakkal',
-  'Perinthalmanna',
 ]

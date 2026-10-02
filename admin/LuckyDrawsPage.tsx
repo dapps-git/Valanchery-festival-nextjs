@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useApp } from '@/context/AppContext'
 import { formatDate } from '@/lib/format'
-import { PRIZE_IMAGES } from '@/data/mockData'
+
 import { Plus, X, ArrowRight, Calendar, Users, Sparkles } from 'lucide-react'
 
 export function LuckyDrawsPage() {
@@ -54,7 +54,7 @@ export function LuckyDrawsPage() {
               {/* Image Banner */}
               <div className="relative h-44 w-full overflow-hidden bg-[#FAF8F5]">
                 <img
-                  src={prize?.image ?? PRIZE_IMAGES.festival}
+                  src={prize?.image || ''}
                   alt={prize?.name ?? 'Prize'}
                   className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
                 />
