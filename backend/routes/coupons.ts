@@ -312,6 +312,12 @@ router.delete('/', async (req, res) => {
         CouponBatch.deleteOne({ id: batchId }),
         Coupon.deleteMany({ batchId }),
       ])
+
+      // Clean up any orphan coupons whose batch no longer exists
+      const allBatches = await CouponBatch.find({}, { id: 1 }).lean()
+      const activeIds = allBatches.map((b: any) => b.id)
+      await Coupon.deleteMany({ batchId: { $nin: activeIds } })
+
       return res.json({ ok: true, message: 'Batch and associated participants deleted' })
     }
 
@@ -347,6 +353,12 @@ router.delete('/batches/:id', async (req, res) => {
       CouponBatch.deleteOne({ id: batchId }),
       Coupon.deleteMany({ batchId }),
     ])
+
+    // Clean up any orphan coupons whose batch no longer exists
+    const allBatches = await CouponBatch.find({}, { id: 1 }).lean()
+    const activeIds = allBatches.map((b: any) => b.id)
+    await Coupon.deleteMany({ batchId: { $nin: activeIds } })
+
     res.json({ ok: true, message: 'Batch and associated participants deleted' })
   } catch (error: any) {
     res.status(500).json({ ok: false, error: error.message })

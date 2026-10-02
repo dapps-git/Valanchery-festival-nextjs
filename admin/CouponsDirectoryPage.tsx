@@ -14,6 +14,7 @@ import {
   FileSpreadsheet,
 } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
+import { api } from '@/lib/api'
 import { formatShortDate } from '@/lib/format'
 import { formatCouponDisplay } from '@/lib/tokenHelper'
 import { exportCouponsToXlsx } from '@/lib/exportCsv'
@@ -98,7 +99,7 @@ export function CouponsDirectoryPage() {
 
   const displayCoupons = useMemo(() => {
     if (serverCoupons.length > 0) {
-      return serverCoupons.map((c) => {
+      let list = serverCoupons.map((c) => {
         const p = participantMap.get(c.id.replace(/[^A-Za-z0-9]/g, '').toUpperCase())
         return {
           id: c.id,
@@ -112,6 +113,13 @@ export function CouponsDirectoryPage() {
           participantLocation: p?.location || c.participantLocation,
         }
       })
+      if (dateFilter) {
+        list = list.filter((c) => {
+          const d = (c.usedAt || c.createdAt || '').slice(0, 10)
+          return d === dateFilter
+        })
+      }
+      return list
     }
 
     let list = (coupons || []).map((c) => {

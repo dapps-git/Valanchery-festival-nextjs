@@ -320,8 +320,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const batchName = name || `Coupons Batch (${count} pcs)`
 
         const existingIds = new Set((coupons || []).map((c) => c.id))
-        const { coupons: newCoupons, batch } = createCouponBatch(count, existingIds, batchName)
-        batch.id = batchId
+        const { coupons: newCoupons, batch } = createCouponBatch(count, existingIds, batchName, batchId)
 
         // Stream to MongoDB in chunks of 5,000
         const CHUNK_SIZE = 5000

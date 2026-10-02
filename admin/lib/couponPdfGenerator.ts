@@ -47,9 +47,10 @@ export type CouponPrefix = (typeof PREFIXES)[number]
 export function createCouponBatch(
   count: number,
   existingIds: Set<string> = new Set(),
-  batchName?: string
+  batchName?: string,
+  batchIdOverride?: string
 ): { coupons: Coupon[]; batch: CouponBatch } {
-  const batchId = `BATCH-${Date.now()}`
+  const batchId = batchIdOverride || `BATCH-${Date.now()}`
   const now = new Date().toISOString()
   const total = Math.max(1, count)
 
