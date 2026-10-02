@@ -4,7 +4,7 @@ export async function sendOtpEmail(toEmail: string, otp: string): Promise<{ ok: 
   try {
     const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com'
     const smtpPort = Number(process.env.SMTP_PORT) || 465
-    const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER || 'admin@valancheryfestival.com'
+    const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER || process.env.ADMIN_EMAIL || ''
     const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS || ''
     const smtpFrom = process.env.SMTP_FROM || `"Lucky Draw Admin" <${smtpUser}>`
 

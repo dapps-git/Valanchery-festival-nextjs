@@ -19,7 +19,7 @@ import * as dotenv from 'dotenv'
 dotenv.config()
 
 const MONGODB_URI = process.env.MONGODB_URI!
-const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || 'admin@valancheryfestival.com').toLowerCase().trim()
+const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || '').toLowerCase().trim()
 const DEFAULT_PASSWORD = 'Admin@2026'
 
 async function seed() {

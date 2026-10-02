@@ -5,7 +5,7 @@ import nodemailer from 'nodemailer'
 
 const router = Router()
 
-const DEFAULT_ADMIN_EMAIL = (process.env.ADMIN_EMAIL || 'admin@valancheryfestival.com').toLowerCase().trim()
+const DEFAULT_ADMIN_EMAIL = (process.env.ADMIN_EMAIL || '').toLowerCase().trim()
 
 // Login route with bcrypt verification
 router.post('/login', async (req, res) => {
