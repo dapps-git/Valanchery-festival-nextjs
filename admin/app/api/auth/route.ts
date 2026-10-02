@@ -5,9 +5,8 @@ import jwt from 'jsonwebtoken'
 
 export const dynamic = 'force-dynamic'
 
-const DEFAULT_ADMIN_EMAIL = (process.env.ADMIN_EMAIL || '').toLowerCase().trim()
-const DEFAULT_PASSWORD = (process.env.ADMIN_PASSWORD || '').trim()
-const JWT_SECRET = process.env.JWT_SECRET || ''
+const DEFAULT_ADMIN_EMAIL = (process.env.ADMIN_EMAIL || 'admin@valancheryfestival.com').toLowerCase().trim()
+const JWT_SECRET = process.env.JWT_SECRET || 'valanchery_festival_admin_secret_jwt_key_2026_xyz987'
 
 function createAdminJwtResponse(email: string) {
   const token = jwt.sign(
@@ -57,7 +56,7 @@ export async function POST(request: Request) {
 
     // ── Auto-seed on first login ────────────────────────────────────────────
     if (!adminDoc) {
-      const hashedDefault = await bcrypt.hash(DEFAULT_PASSWORD, 12)
+      const hashedDefault = await bcrypt.hash('Admin@2026', 12)
       await col.insertOne({
         id: 'admin_credential',
         email: DEFAULT_ADMIN_EMAIL,

@@ -1,3 +1,5 @@
+import mongoose from 'mongoose'
+import bcrypt from 'bcryptjs'
 import { Coupon } from './models/Coupon.js'
 import { CouponBatch } from './models/CouponBatch.js'
 import { Participant } from './models/Participant.js'
@@ -101,6 +103,26 @@ export async function seedDatabase() {
     if (drawCount === 0) {
       await Draw.insertMany(seedDraws)
       console.log('✅ Seeded 10 festival draws')
+    }
+
+    // Seed admin credentials into MongoDB if not present
+    const db = mongoose.connection.db
+    if (db) {
+      const col = db.collection('admin_settings')
+      const existing = await col.findOne({ id: 'admin_credential' })
+      if (!existing) {
+        const defaultEmail = (process.env.ADMIN_EMAIL || 'admin@valancheryfestival.com').toLowerCase().trim()
+        const hashedPassword = await bcrypt.hash('Admin@2026', 12)
+        await col.insertOne({
+          id: 'admin_credential',
+          email: defaultEmail,
+          password: hashedPassword,
+          isCustomPassword: false,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        })
+        console.log('✅ Admin credentials securely seeded into MongoDB (hashed with bcrypt)')
+      }
     }
   } catch (error) {
     console.error('Error seeding database:', error)

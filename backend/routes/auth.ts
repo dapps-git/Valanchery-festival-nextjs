@@ -6,7 +6,6 @@ import nodemailer from 'nodemailer'
 const router = Router()
 
 const DEFAULT_ADMIN_EMAIL = (process.env.ADMIN_EMAIL || 'admin@valancheryfestival.com').toLowerCase().trim()
-const DEFAULT_PASSWORD = 'Admin@2026'
 
 // Login route with bcrypt verification
 router.post('/login', async (req, res) => {
@@ -25,8 +24,8 @@ router.post('/login', async (req, res) => {
       adminDoc = await db.collection('admin_settings').findOne({ id: 'admin_credential' })
     }
 
-    // If custom password was set by admin
-    if (adminDoc && adminDoc.isCustomPassword) {
+    // Verify against MongoDB admin_settings document using bcrypt
+    if (adminDoc) {
       const storedEmail = (adminDoc.email || DEFAULT_ADMIN_EMAIL).trim().toLowerCase()
       const storedPass = (adminDoc.password || '').trim()
 
@@ -41,11 +40,6 @@ router.post('/login', async (req, res) => {
         return res.json({ ok: true, role: 'admin' })
       }
       return res.status(401).json({ ok: false, error: 'Invalid admin credentials' })
-    }
-
-    // Default credentials when no custom password has been set yet
-    if (cleanEmail === DEFAULT_ADMIN_EMAIL && cleanPass === DEFAULT_PASSWORD) {
-      return res.json({ ok: true, role: 'admin' })
     }
 
     return res.status(401).json({ ok: false, error: 'Invalid admin credentials' })
