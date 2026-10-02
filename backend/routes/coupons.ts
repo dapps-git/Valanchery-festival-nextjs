@@ -71,7 +71,7 @@ router.get(['/validate', '/validate/:id'], async (req, res) => {
     const rawId = (req.params.id || req.query.code || '') as string
     const cleanId = rawId.replace(/[^A-Za-z0-9]/g, '').trim().toUpperCase()
 
-    if (!cleanId || cleanId.length < 8 || cleanId.length > 20) {
+    if (!cleanId || cleanId.length < 6 || cleanId.length > 20) {
       return res.json({
         valid: false,
         status: 'Invalid',
@@ -79,8 +79,10 @@ router.get(['/validate', '/validate/:id'], async (req, res) => {
       })
     }
 
-    // 1. Check if redeemed by any participant
-    const registeredUser = await Participant.findOne({ couponId: cleanId })
+    // 1. Check if already redeemed — search by couponId (which may be id or serialNo)
+    const registeredUser = await Participant.findOne({
+      $or: [{ couponId: cleanId }],
+    })
     if (registeredUser) {
       return res.json({
         valid: false,
@@ -91,8 +93,11 @@ router.get(['/validate', '/validate/:id'], async (req, res) => {
       })
     }
 
-    // 2. Check in coupon collection
-    const existingCoupon = await Coupon.findOne({ id: cleanId })
+    // 2. Search coupon by id OR serialNo (printed on physical coupon)
+    const existingCoupon = await Coupon.findOne({
+      $or: [{ id: cleanId }, { serialNo: cleanId }],
+    })
+
     if (existingCoupon) {
       if (existingCoupon.status === 'Used') {
         return res.json({
@@ -121,6 +126,7 @@ router.get(['/validate', '/validate/:id'], async (req, res) => {
     res.status(500).json({ valid: false, status: 'Invalid', message: error.message })
   }
 })
+
 
 // 2. Generate a new batch of unique coupons
 router.post('/generate', async (req, res) => {
