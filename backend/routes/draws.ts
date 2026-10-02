@@ -41,16 +41,26 @@ router.post('/confirm-winner', async (req, res) => {
   try {
     const { participantId, drawId, prizeId } = req.body
 
-    const draw = await Draw.findOne({ id: drawId })
-    if (!draw) return res.status(404).json({ ok: false, error: 'Draw not found' })
-
-    const awardedPrizeId = prizeId || draw.prizeId
+    const awardedPrizeId = prizeId || 'default-gift'
     const winnerId = `win-${Date.now()}`
     const now = new Date().toISOString().slice(0, 10)
 
+    let draw = await Draw.findOne({ id: drawId })
+    if (!draw) {
+      const count = await Draw.countDocuments()
+      draw = await Draw.create({
+        id: drawId || `draw-${Date.now()}`,
+        number: count + 1,
+        date: now,
+        prizeId: awardedPrizeId,
+        winnerCount: 1,
+        status: 'Completed',
+      })
+    }
+
     const winner = await Winner.create({
       id: winnerId,
-      drawId,
+      drawId: draw.id,
       participantId,
       prizeId: awardedPrizeId,
       date: now,

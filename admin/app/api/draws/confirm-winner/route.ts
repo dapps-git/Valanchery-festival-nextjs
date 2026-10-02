@@ -20,15 +20,27 @@ export async function POST(request: Request) {
     const drawsCol = db.collection('draws')
     const prizesCol = db.collection('prizes')
 
-    const draw = await drawsCol.findOne({ id: drawId })
-    if (!draw) {
-      return NextResponse.json({ ok: false, error: 'Draw not found' }, { status: 404 })
-    }
-
-    const awardedPrizeId = prizeId || draw.prizeId
+    const awardedPrizeId = prizeId || 'default-gift'
     const winnerId = `win-${Date.now()}`
     const now = new Date().toISOString()
     const dateStr = now.slice(0, 10)
+
+    let draw = await drawsCol.findOne({ id: drawId })
+    if (!draw) {
+      // Auto-create draw record so live draw winners are NEVER lost
+      const totalDraws = await drawsCol.countDocuments()
+      const newDraw = {
+        id: drawId || `draw-${Date.now()}`,
+        number: totalDraws + 1,
+        date: dateStr,
+        prizeId: awardedPrizeId,
+        winnerCount: 1,
+        status: 'Completed',
+        createdAt: now,
+      }
+      await drawsCol.insertOne(newDraw)
+      draw = newDraw
+    }
 
     const winner = {
       id: winnerId,

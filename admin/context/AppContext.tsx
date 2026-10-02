@@ -667,19 +667,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
           winners: [winner, ...prev.winners],
         }))
 
-        // Sync with server in background
-        api
-          .confirmWinner(participantId, drawId, awardedPrizeId)
-          .then((res) => {
-            if (res.ok && res.winner) {
-              refreshData().catch(() => {})
-            }
-          })
-          .catch((err) => {
-            console.warn('Backend sync deferred:', err)
-          })
-
-        return { ok: true, winnerId }
+        // Sync with server and refresh
+        try {
+          const res = await api.confirmWinner(participantId, activeDrawId, awardedPrizeId)
+          if (res.ok && res.winner) {
+            setData((prev) => ({
+              ...prev,
+              winners: [res.winner as Winner, ...prev.winners.filter((w) => w.id !== winnerId && w.id !== res.winner?.id)],
+            }))
+            refreshData().catch(() => {})
+            return { ok: true, winnerId: res.winner.id || winnerId }
+          }
+          return { ok: true, winnerId }
+        } catch (err: any) {
+          console.warn('Backend sync error:', err)
+          return { ok: true, winnerId }
+        }
       },
       getPrize,
       getParticipant,

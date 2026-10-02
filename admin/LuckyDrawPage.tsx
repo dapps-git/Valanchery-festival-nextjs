@@ -159,7 +159,9 @@ export function LuckyDrawPage() {
     if (!winner || !activePrize) return
     setIsConfirming(true)
     try {
-      const res = await confirmWinner(winner.id, 'live-draw', activePrize.id)
+      const matchingDraw = (data.draws || []).find((d) => d.prizeId === activePrize.id || d.status === 'Open' || d.status === 'Upcoming')
+      const drawIdToUse = matchingDraw ? matchingDraw.id : (activePrize.assignedDrawId || 'live-draw')
+      const res = await confirmWinner(winner.id, drawIdToUse, activePrize.id)
       if (res.ok) {
         setConfirmedWinnerInfo({
           winner,
