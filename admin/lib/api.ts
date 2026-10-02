@@ -1,16 +1,14 @@
 import type { AppData, Coupon, CouponBatch, Draw, Participant, Prize, Winner } from '../types'
 
-const API_BASE = '/api'
+const RAW_API = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/$/, '')
+const API_BASE = RAW_API ? (RAW_API.endsWith('/api') ? RAW_API : `${RAW_API}/api`) : '/api'
 
 async function fetchWithTimeout(urlOrPath: string, options: RequestInit = {}, timeoutMs = 15000): Promise<Response> {
-  const fullUrl = urlOrPath.startsWith('http://') || urlOrPath.startsWith('https://')
-    ? urlOrPath
-    : `${API_BASE}${urlOrPath.startsWith('/') ? urlOrPath.slice(4).startsWith('/') ? urlOrPath.slice(4) : urlOrPath : `/${urlOrPath}`}`
-
-  // Normalize path if url starts with /api
-  const targetUrl = urlOrPath.startsWith('http')
-    ? urlOrPath
-    : (urlOrPath.startsWith('/api') ? urlOrPath : `${API_BASE}${urlOrPath.startsWith('/') ? '' : '/'}${urlOrPath}`)
+  let targetUrl = urlOrPath
+  if (!urlOrPath.startsWith('http://') && !urlOrPath.startsWith('https://')) {
+    const cleanPath = urlOrPath.startsWith('/api') ? urlOrPath.slice(4) : (urlOrPath.startsWith('/') ? urlOrPath : `/${urlOrPath}`)
+    targetUrl = `${API_BASE}${cleanPath}`
+  }
 
   const headers = new Headers(options.headers || {})
   
