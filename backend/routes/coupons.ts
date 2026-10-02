@@ -208,26 +208,57 @@ router.post('/bulk-insert', async (req, res) => {
   }
 })
 
-// 3. Get coupons & batches
+
+// 3. Get coupons & batches (supports pagination, search, status filter for directory view)
 router.get('/', async (req, res) => {
   try {
     const batchId = req.query.batchId as string
-    const limit = Math.min(Math.max(1, Number(req.query.limit) || 50000), 100000)
 
+    // ── Batch-specific fetch (for Excel export) ──
     if (batchId) {
+      const limit = Math.min(Math.max(1, Number(req.query.limit) || 50000), 100000)
       const batchCoupons = await Coupon.find({ batchId }).limit(limit).lean()
       return res.json({ ok: true, coupons: batchCoupons })
     }
 
-    const [coupons, batches] = await Promise.all([
-      Coupon.find({}, { id: 1, serialNo: 1, batchId: 1, status: 1, createdAt: 1, usedAt: 1, usedByParticipantName: 1, usedByParticipantPhone: 1, usedByParticipantId: 1 }).sort({ serialNo: 1 }).lean(),
+    // ── Directory / paginated view ──
+    const page    = Math.max(1, Number(req.query.page)  || 1)
+    const perPage = Math.min(Math.max(1, Number(req.query.limit) || 50), 200)
+    const search  = ((req.query.search as string) || '').trim().toUpperCase()
+    const status  = (req.query.status as string) || 'all'
+
+    // Build filter
+    const filter: Record<string, any> = {}
+    if (status === 'Used')   filter.status = 'Used'
+    if (status === 'Unused') filter.status = 'Unused'
+    if (search) {
+      filter.$or = [
+        { id:       { $regex: search, $options: 'i' } },
+        { serialNo: isNaN(Number(search)) ? undefined : Number(search) },
+      ].filter(Boolean)
+    }
+
+    const [totalCoupons, filteredCount, coupons, batches] = await Promise.all([
+      Coupon.countDocuments({}),
+      Coupon.countDocuments(filter),
+      Coupon.find(filter, {
+        id: 1, serialNo: 1, batchId: 1, status: 1,
+        createdAt: 1, usedAt: 1,
+        usedByParticipantName: 1, usedByParticipantPhone: 1, usedByParticipantId: 1,
+      })
+        .sort({ serialNo: 1, createdAt: 1 })
+        .skip((page - 1) * perPage)
+        .limit(perPage)
+        .lean(),
       CouponBatch.find().sort({ createdAt: -1 }).lean(),
     ])
-    res.json({ ok: true, coupons, batches })
+
+    res.json({ ok: true, coupons, batches, totalCoupons, filteredCount })
   } catch (error: any) {
     res.status(500).json({ ok: false, error: error.message })
   }
 })
+
 
 // 4. Get all batches
 router.get('/batches', async (_req, res) => {

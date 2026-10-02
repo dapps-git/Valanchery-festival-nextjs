@@ -30,7 +30,8 @@ export function CouponsDirectoryPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [isLoadingServer, setIsLoadingServer] = useState(false)
   const [serverCoupons, setServerCoupons] = useState<any[]>([])
-  const [serverTotal, setServerTotal] = useState<number>(0)
+  const [serverTotal, setServerTotal] = useState<number>(-1)     // -1 = not yet loaded
+  const [serverFiltered, setServerFiltered] = useState<number>(-1) // filtered count for pagination
 
   const handleDownloadPageExcel = () => {
     if (displayCoupons.length === 0) return
@@ -52,7 +53,8 @@ export function CouponsDirectoryPage() {
         const d = await api.getDirectoryCoupons(queryParams)
         if (isMounted && d.ok && Array.isArray(d.coupons)) {
           setServerCoupons(d.coupons)
-          setServerTotal(d.filteredCount ?? d.totalCoupons ?? 0)
+          setServerTotal(d.totalCoupons ?? -1)
+          setServerFiltered(d.filteredCount ?? d.totalCoupons ?? 0)
           setIsLoadingServer(false)
           return
         }
@@ -80,20 +82,19 @@ export function CouponsDirectoryPage() {
     return map
   }, [data.participants])
 
-  // Aggregate stats
+  // Aggregate stats — use serverTotal once the API has responded (>= 0)
+  const batchSum = (data.batches || []).reduce((acc, b) => acc + (b.count || 0), 0)
   const totalCount =
-    serverTotal !== undefined
+    serverTotal >= 0
       ? serverTotal
-      : (typeof data.totalCouponsCount === 'number' ? data.totalCouponsCount : (data.batches || []).reduce((acc, b) => acc + (b.count || 0), 0))
+      : (typeof data.totalCouponsCount === 'number' ? data.totalCouponsCount : batchSum)
   const usedCount = data.usedCouponsCount ?? data.participants?.length ?? 0
   const activeCount = Math.max(0, totalCount - usedCount)
 
   const effectiveFilteredCount =
-    statusFilter === 'Used'
-      ? usedCount
-      : statusFilter === 'Unused'
-      ? activeCount
-      : serverTotal || totalCount
+    serverFiltered >= 0
+      ? serverFiltered
+      : (statusFilter === 'Used' ? usedCount : statusFilter === 'Unused' ? activeCount : totalCount)
 
   const displayCoupons = useMemo(() => {
     if (serverCoupons.length > 0) {
