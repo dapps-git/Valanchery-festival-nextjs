@@ -28,6 +28,13 @@ export async function POST(request: Request) {
 
     // 2. Check if this coupon has already been used by someone else
     if (cleanCouponId) {
+      if (cleanCouponId.length !== 13) {
+        return NextResponse.json(
+          { ok: false, error: 'Please enter a valid 13-character coupon code.' },
+          { status: 400 }
+        )
+      }
+
       const couponAlreadyUsed = await participantsCol.findOne({
         couponId: cleanCouponId,
       })
@@ -38,11 +45,15 @@ export async function POST(request: Request) {
         )
       }
 
-      // 3. Check if coupon is marked Used in coupons collection
-      const existingCouponDoc = await couponsCol.findOne({
-        $or: [{ id: cleanCouponId }, { serialNo: cleanCouponId }],
-      })
-      if (existingCouponDoc && existingCouponDoc.status === 'Used') {
+      // 3. Check if coupon exists and is marked Used in coupons collection
+      const existingCouponDoc = await couponsCol.findOne({ id: cleanCouponId })
+      if (!existingCouponDoc) {
+        return NextResponse.json(
+          { ok: false, error: 'Coupon not found. Please check the 13-character code.' },
+          { status: 400 }
+        )
+      }
+      if (existingCouponDoc.status === 'Used') {
         return NextResponse.json(
           { ok: false, error: 'This coupon has already been used and is no longer valid.' },
           { status: 400 }
@@ -99,7 +110,7 @@ export async function POST(request: Request) {
     // Mark coupon as used in MongoDB and update batch registered person count
     if (cleanCouponId) {
       const updatedCoupon = await couponsCol.findOneAndUpdate(
-        { $or: [{ id: cleanCouponId }, { serialNo: cleanCouponId }] },
+        { id: cleanCouponId },
         {
           $set: {
             status: 'Used',

@@ -71,18 +71,17 @@ router.get(['/validate', '/validate/:id'], async (req, res) => {
     const rawId = (req.params.id || req.query.code || '') as string
     const cleanId = rawId.replace(/[^A-Za-z0-9]/g, '').trim().toUpperCase()
 
-    if (!cleanId || cleanId.length < 6 || cleanId.length > 20) {
+    // Must be exactly 13 characters
+    if (!cleanId || cleanId.length !== 13) {
       return res.json({
         valid: false,
         status: 'Invalid',
-        message: 'Invalid festival coupon code.',
+        message: 'Please enter a valid 13-character festival coupon code.',
       })
     }
 
-    // 1. Check if already redeemed — search by couponId (which may be id or serialNo)
-    const registeredUser = await Participant.findOne({
-      $or: [{ couponId: cleanId }],
-    })
+    // 1. Check if already redeemed — search by 13-character code
+    const registeredUser = await Participant.findOne({ couponId: cleanId })
     if (registeredUser) {
       return res.json({
         valid: false,
@@ -93,10 +92,8 @@ router.get(['/validate', '/validate/:id'], async (req, res) => {
       })
     }
 
-    // 2. Search coupon by id OR serialNo (printed on physical coupon)
-    const existingCoupon = await Coupon.findOne({
-      $or: [{ id: cleanId }, { serialNo: cleanId }],
-    })
+    // 2. Search coupon by 13-character code (id) ONLY — NOT by serialNo
+    const existingCoupon = await Coupon.findOne({ id: cleanId })
 
     if (existingCoupon) {
       if (existingCoupon.status === 'Used') {
@@ -120,7 +117,7 @@ router.get(['/validate', '/validate/:id'], async (req, res) => {
     return res.json({
       valid: false,
       status: 'Invalid',
-      message: 'Coupon not found. Please check the ID and try again.',
+      message: 'Coupon not found. Please check the 13-character code and try again.',
     })
   } catch (error: any) {
     res.status(500).json({ valid: false, status: 'Invalid', message: error.message })

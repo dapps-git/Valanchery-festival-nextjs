@@ -39,21 +39,22 @@ router.post('/register', async (req, res) => {
     if (rawCoupon) {
       cleanCoupon = rawCoupon.replace(/[^A-Za-z0-9]/g, '').trim().toUpperCase()
     }
-    if (!cleanCoupon || cleanCoupon.length < 6 || cleanCoupon.length > 20) {
-      return res.status(400).json({ ok: false, error: 'Please enter a valid coupon code' })
+    if (!cleanCoupon || cleanCoupon.length !== 13) {
+      return res.status(400).json({ ok: false, error: 'Please enter a valid 13-character coupon code' })
     }
 
-    // Check if coupon already used by someone else (match by id or serialNo)
-    const usedBy = await Participant.findOne({ couponId: { $in: [cleanCoupon] } })
+    // Check if coupon already used by someone else
+    const usedBy = await Participant.findOne({ couponId: cleanCoupon })
     if (usedBy) {
       return res.status(400).json({ ok: false, error: 'This coupon has already been used and is no longer valid.' })
     }
 
-    // Resolve coupon — search by id OR serialNo
-    const existingCoupon = await Coupon.findOne({
-      $or: [{ id: cleanCoupon }, { serialNo: cleanCoupon }],
-    })
-    if (existingCoupon && existingCoupon.status === 'Used') {
+    // Resolve coupon — search by 13-character code (id) ONLY
+    const existingCoupon = await Coupon.findOne({ id: cleanCoupon })
+    if (!existingCoupon) {
+      return res.status(400).json({ ok: false, error: 'Coupon not found. Please check the 13-character code.' })
+    }
+    if (existingCoupon.status === 'Used') {
       return res.status(400).json({ ok: false, error: 'This coupon has already been used and is no longer valid.' })
     }
 

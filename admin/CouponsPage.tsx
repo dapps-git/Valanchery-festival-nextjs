@@ -23,6 +23,7 @@ export function CouponsPage() {
   const [count, setCount] = useState<number>(100)
   const [isGeneratingCsv, setIsGeneratingCsv] = useState(false)
   const [deletingBatchId, setDeletingBatchId] = useState<string | null>(null)
+  const [downloadingBatchId, setDownloadingBatchId] = useState<string | null>(null)
   const [progressMsg, setProgressMsg] = useState<string>('')
 
   // Confirmation modal state
@@ -82,20 +83,27 @@ export function CouponsPage() {
   }
 
   const handleDownloadBatch = async (batchId: string, batchName: string, batchCount: number) => {
-    let batchCoupons = (coupons || []).filter((c) => c.batchId === batchId)
-
-    if (batchCoupons.length < (batchCount || 1)) {
-      try {
-        const d = await api.getBatchCoupons(batchId, Math.min(batchCount || 10000, 50000))
-        if (d.ok && Array.isArray(d.coupons) && d.coupons.length > 0) {
-          batchCoupons = d.coupons
-        }
-      } catch {
-        // ignore
+    setDownloadingBatchId(batchId)
+    try {
+      let batchCoupons: any[] = []
+      const d = await api.getBatchCoupons(batchId, Math.min(batchCount || 10000, 50000))
+      if (d.ok && Array.isArray(d.coupons) && d.coupons.length > 0) {
+        batchCoupons = d.coupons
+      } else {
+        batchCoupons = (coupons || []).filter((c) => c.batchId === batchId)
       }
-    }
 
-    exportCouponsToXlsx(batchCoupons, `${batchName.replace(/\s+/g, '_')}.xlsx`)
+      if (batchCoupons.length === 0) {
+        alert('No coupons found for this batch in the database.')
+        return
+      }
+
+      exportCouponsToXlsx(batchCoupons, `${batchName.replace(/\s+/g, '_')}.xlsx`)
+    } catch (err: any) {
+      alert('Failed to download batch: ' + (err.message || err))
+    } finally {
+      setDownloadingBatchId(null)
+    }
   }
 
   const batches = data.batches || []
@@ -234,9 +242,14 @@ export function CouponsPage() {
                   <div className="flex items-center gap-2 shrink-0">
                     <button
                       onClick={() => handleDownloadBatch(b.id, b.name || `Batch_${idx + 1}`, totalCount)}
-                      className="inline-flex items-center gap-1 border border-[#E8E3D8] bg-white hover:bg-stone-50 px-2.5 py-1.5 text-xs font-normal text-stone-700 transition rounded-[6px] shadow-2xs cursor-pointer"
+                      disabled={downloadingBatchId === b.id}
+                      className="inline-flex items-center gap-1 border border-[#E8E3D8] bg-white hover:bg-stone-50 px-2.5 py-1.5 text-xs font-normal text-stone-700 transition rounded-[6px] shadow-2xs cursor-pointer disabled:opacity-50"
                     >
-                      <Download size={12} className="text-stone-500" />
+                      {downloadingBatchId === b.id ? (
+                        <Loader2 size={12} className="animate-spin text-stone-600" />
+                      ) : (
+                        <Download size={12} className="text-stone-500" />
+                      )}
                       <span>Excel</span>
                     </button>
 

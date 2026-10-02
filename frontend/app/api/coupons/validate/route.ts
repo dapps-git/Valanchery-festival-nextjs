@@ -12,6 +12,10 @@ export async function GET(request: Request) {
     }
 
     const clean = id.replace(/[^A-Za-z0-9]/g, '').toUpperCase()
+    if (!clean || clean.length !== 13) {
+      return NextResponse.json({ valid: false, status: 'Invalid', message: 'Please enter a valid 13-character coupon code.' }, { status: 400 })
+    }
+
     const db = await connectDB()
 
     // 1. Check participants
@@ -25,23 +29,22 @@ export async function GET(request: Request) {
       })
     }
 
-    const coupon = await db.collection('coupons').findOne({
-      $or: [{ id: clean }, { serialNo: clean }],
-    })
-    if (coupon && coupon.status === 'Used') {
+    // 2. Search coupon by 13-character code (id) ONLY
+    const coupon = await db.collection('coupons').findOne({ id: clean })
+    if (!coupon) {
+      return NextResponse.json({
+        valid: false,
+        status: 'Invalid',
+        message: 'Coupon not found. Please check the 13-character code and try again.',
+      })
+    }
+
+    if (coupon.status === 'Used') {
       return NextResponse.json({
         valid: false,
         status: 'Used',
         coupon,
         message: 'This coupon has already been used and is no longer valid.',
-      })
-    }
-
-    if (!coupon) {
-      return NextResponse.json({
-        valid: false,
-        status: 'Invalid',
-        message: 'Coupon not found. Please check the ID and try again.',
       })
     }
 

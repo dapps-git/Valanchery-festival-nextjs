@@ -70,7 +70,7 @@ export function RegisterPage() {
       setTokenStatus({ status: 'Idle', message: '' })
       return
     }
-    if (clean.length < 8 || clean.length > 16) {
+    if (clean.length !== 13) {
       setTokenStatus({
         status: 'Invalid',
         message: 'Please enter a valid 13-character coupon code.',

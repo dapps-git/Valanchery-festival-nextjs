@@ -1,12 +1,15 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AnimatedNumber } from '@/components/AnimatedNumber'
 import { useApp } from '@/context/AppContext'
 import { formatDate, formatShortDate } from '@/lib/format'
 import { exportCouponsToXlsx } from '@/lib/exportCsv'
-import { Sparkles, Ticket, Layers, Download, ListFilter, Gift, Users, Trophy, CheckCircle2 } from 'lucide-react'
+import { api } from '@/lib/api'
+import { Sparkles, Ticket, Layers, Download, ListFilter, Gift, Users, Trophy, CheckCircle2, Loader2 } from 'lucide-react'
 
 export function DashboardPage() {
   const { data, coupons, batches, getPrize, getParticipant } = useApp()
+  const [downloadingBatchId, setDownloadingBatchId] = useState<string | null>(null)
   const recent = [...data.winners]
     .sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime() || b.id.localeCompare(a.id))
     .slice(0, 5)
@@ -25,9 +28,28 @@ export function DashboardPage() {
     (p) => p.status === 'Active' && !winnerParticipantIds.has(p.id)
   ).length
 
-  const handleDownloadBatch = (batchId: string, batchName: string) => {
-    const batchCoupons = (coupons || []).filter((c) => c.batchId === batchId)
-    exportCouponsToXlsx(batchCoupons, `${batchName.replace(/\s+/g, '_')}.xlsx`)
+  const handleDownloadBatch = async (batchId: string, batchName: string, batchCount = 10000) => {
+    setDownloadingBatchId(batchId)
+    try {
+      let batchCoupons: any[] = []
+      const d = await api.getBatchCoupons(batchId, Math.min(batchCount || 10000, 50000))
+      if (d.ok && Array.isArray(d.coupons) && d.coupons.length > 0) {
+        batchCoupons = d.coupons
+      } else {
+        batchCoupons = (coupons || []).filter((c) => c.batchId === batchId)
+      }
+
+      if (batchCoupons.length === 0) {
+        alert('No coupons found for this batch in the database.')
+        return
+      }
+
+      exportCouponsToXlsx(batchCoupons, `${batchName.replace(/\s+/g, '_')}.xlsx`)
+    } catch (err: any) {
+      alert('Failed to download batch: ' + (err.message || err))
+    } finally {
+      setDownloadingBatchId(null)
+    }
   }
 
   return (
@@ -224,10 +246,15 @@ export function DashboardPage() {
                       View
                     </Link>
                     <button
-                      onClick={() => handleDownloadBatch(b.id, b.name || `Batch_${idx + 1}`)}
-                      className="inline-flex items-center justify-center gap-1.5 border border-[#E8E3D8] bg-white hover:bg-stone-50 px-3 py-1.5 text-xs font-medium text-stone-700 transition cursor-pointer rounded-[6px]"
+                      onClick={() => handleDownloadBatch(b.id, b.name || `Batch_${idx + 1}`, count)}
+                      disabled={downloadingBatchId === b.id}
+                      className="inline-flex items-center justify-center gap-1.5 border border-[#E8E3D8] bg-white hover:bg-stone-50 px-3 py-1.5 text-xs font-medium text-stone-700 transition cursor-pointer rounded-[6px] disabled:opacity-50"
                     >
-                      <Download size={12} />
+                      {downloadingBatchId === b.id ? (
+                        <Loader2 size={12} className="animate-spin text-stone-600" />
+                      ) : (
+                        <Download size={12} />
+                      )}
                       <span>Excel</span>
                     </button>
                   </div>
