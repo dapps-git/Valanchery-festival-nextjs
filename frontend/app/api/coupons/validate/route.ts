@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic'
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
-    const id = searchParams.get('id') || searchParams.get('couponId') || ''
+    const id = searchParams.get('code') || searchParams.get('id') || searchParams.get('couponId') || ''
     if (!id) {
       return NextResponse.json({ valid: false, status: 'Invalid', message: 'Coupon ID required' }, { status: 400 })
     }
@@ -37,10 +37,18 @@ export async function GET(request: Request) {
       })
     }
 
+    if (!coupon) {
+      return NextResponse.json({
+        valid: false,
+        status: 'Invalid',
+        message: 'Coupon not found. Please check the ID and try again.',
+      })
+    }
+
     return NextResponse.json({
       valid: true,
       status: 'Unused',
-      coupon: coupon || { id: clean, status: 'Unused' },
+      coupon,
       message: 'Valid Festival Coupon! Ready for registration.',
     })
   } catch (err: any) {

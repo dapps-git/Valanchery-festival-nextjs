@@ -11,6 +11,7 @@ import {
   X,
 } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
+import { api } from '@/lib/api'
 import { exportCouponsToXlsx } from '@/lib/exportCsv'
 import { formatShortDate } from '@/lib/format'
 
