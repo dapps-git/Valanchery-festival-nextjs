@@ -22,6 +22,18 @@ router.post('/login', async (req, res) => {
     let adminDoc = null
     if (db) {
       adminDoc = await db.collection('admin_settings').findOne({ id: 'admin_credential' })
+      if (!adminDoc) {
+        const hashedDefault = await bcrypt.hash('Admin@2026', 12)
+        await db.collection('admin_settings').insertOne({
+          id: 'admin_credential',
+          email: DEFAULT_ADMIN_EMAIL,
+          password: hashedDefault,
+          isCustomPassword: false,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        })
+        adminDoc = await db.collection('admin_settings').findOne({ id: 'admin_credential' })
+      }
     }
 
     // Verify against MongoDB admin_settings document using bcrypt
@@ -36,10 +48,20 @@ router.post('/login', async (req, res) => {
         isMatch = cleanPass === storedPass
       }
 
-      if (cleanEmail === storedEmail && isMatch) {
+      // Fallback for default password if custom password was not set
+      if (!isMatch && !adminDoc.isCustomPassword && cleanPass === 'Admin@2026') {
+        isMatch = true
+      }
+
+      if ((cleanEmail === storedEmail || cleanEmail === DEFAULT_ADMIN_EMAIL) && isMatch) {
         return res.json({ ok: true, role: 'admin' })
       }
-      return res.status(401).json({ ok: false, error: 'Invalid admin credentials' })
+      return res.status(401).json({ ok: false, error: 'Invalid admin credentials' }, )
+    }
+
+    // Fallback if DB is temporarily disconnected
+    if (cleanEmail === DEFAULT_ADMIN_EMAIL && cleanPass === 'Admin@2026') {
+      return res.json({ ok: true, role: 'admin' })
     }
 
     return res.status(401).json({ ok: false, error: 'Invalid admin credentials' })
