@@ -322,7 +322,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const existingIds = new Set((coupons || []).map((c) => c.id))
         const { coupons: newCoupons, batch } = createCouponBatch(count, existingIds, batchName, batchId)
 
-        // Stream to MongoDB in chunks of 5,000
+        // Stream to MongoDB in chunks of 5,000 with retry
         const CHUNK_SIZE = 5000
         let savedCount = 0
 
@@ -330,10 +330,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
           const chunk = newCoupons.slice(i, i + CHUNK_SIZE)
           const isLast = i + CHUNK_SIZE >= newCoupons.length
           
-          await api.bulkInsertCoupons({
-            batch: isLast ? batch : { id: batchId, name: batchName, count, startId: batch.startId, endId: batch.endId, createdAt: now, unusedCount: count, usedCount: 0 },
-            coupons: chunk,
-          })
+          let inserted = false
+          let lastErr: any = null
+          for (let attempt = 1; attempt <= 3; attempt++) {
+            try {
+              const res = await api.bulkInsertCoupons({
+                batch: isLast ? batch : { id: batchId, name: batchName, count, startId: batch.startId, endId: batch.endId, createdAt: now, unusedCount: count, usedCount: 0 },
+                coupons: chunk,
+              })
+              if (res && res.ok) {
+                inserted = true
+                break
+              }
+              lastErr = new Error(res?.error || 'Bulk insert failed')
+            } catch (err: any) {
+              lastErr = err
+              if (attempt < 3) {
+                await new Promise((r) => setTimeout(r, 1000 * attempt))
+              }
+            }
+          }
+
+          if (!inserted && lastErr) {
+            throw lastErr
+          }
 
           savedCount += chunk.length
           if (onProgress) {

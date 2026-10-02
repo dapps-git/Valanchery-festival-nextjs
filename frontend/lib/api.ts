@@ -1,19 +1,39 @@
 import type { Participant, Winner } from '../types'
 
-const RAW_API = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/$/, '')
+const envUrl = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/$/, '')
+const RAW_API = envUrl.includes('onrender.com') ? '' : envUrl
 const API_BASE = RAW_API ? (RAW_API.endsWith('/api') ? RAW_API : `${RAW_API}/api`) : '/api'
 
 async function fetchWithTimeout(urlOrPath: string, options: RequestInit = {}, timeoutMs = 15000): Promise<Response> {
   let targetUrl = urlOrPath
+  let fallbackUrl = ''
+
   if (!urlOrPath.startsWith('http://') && !urlOrPath.startsWith('https://')) {
     const cleanPath = urlOrPath.startsWith('/api') ? urlOrPath.slice(4) : (urlOrPath.startsWith('/') ? urlOrPath : `/${urlOrPath}`)
     targetUrl = `${API_BASE}${cleanPath}`
+    fallbackUrl = `/api${cleanPath}`
+  } else {
+    try {
+      const u = new URL(urlOrPath)
+      fallbackUrl = u.pathname.startsWith('/api') ? `${u.pathname}${u.search}` : `/api${u.pathname}${u.search}`
+    } catch {}
   }
 
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), timeoutMs)
   try {
-    return await fetch(targetUrl, { ...options, signal: controller.signal })
+    const res = await fetch(targetUrl, { ...options, signal: controller.signal })
+    if (!res.ok && (res.status === 404 || res.status >= 500) && fallbackUrl && targetUrl !== fallbackUrl) {
+      return await fetch(fallbackUrl, { ...options, signal: controller.signal })
+    }
+    return res
+  } catch (err: any) {
+    if (fallbackUrl && targetUrl !== fallbackUrl) {
+      try {
+        return await fetch(fallbackUrl, { ...options, signal: controller.signal })
+      } catch {}
+    }
+    throw err
   } finally {
     clearTimeout(timer)
   }

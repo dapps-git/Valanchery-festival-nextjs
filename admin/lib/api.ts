@@ -1,13 +1,23 @@
 import type { AppData, Coupon, CouponBatch, Draw, Participant, Prize, Winner } from '../types'
 
-const RAW_API = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/$/, '')
+const envUrl = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/$/, '')
+// Ignore dead onrender.com URLs and use same-domain /api
+const RAW_API = envUrl.includes('onrender.com') ? '' : envUrl
 const API_BASE = RAW_API ? (RAW_API.endsWith('/api') ? RAW_API : `${RAW_API}/api`) : '/api'
 
 async function fetchWithTimeout(urlOrPath: string, options: RequestInit = {}, timeoutMs = 15000): Promise<Response> {
   let targetUrl = urlOrPath
+  let fallbackUrl = ''
+
   if (!urlOrPath.startsWith('http://') && !urlOrPath.startsWith('https://')) {
     const cleanPath = urlOrPath.startsWith('/api') ? urlOrPath.slice(4) : (urlOrPath.startsWith('/') ? urlOrPath : `/${urlOrPath}`)
     targetUrl = `${API_BASE}${cleanPath}`
+    fallbackUrl = `/api${cleanPath}`
+  } else {
+    try {
+      const u = new URL(urlOrPath)
+      fallbackUrl = u.pathname.startsWith('/api') ? `${u.pathname}${u.search}` : `/api${u.pathname}${u.search}`
+    } catch {}
   }
 
   const headers = new Headers(options.headers || {})
@@ -29,6 +39,11 @@ async function fetchWithTimeout(urlOrPath: string, options: RequestInit = {}, ti
       signal: controller.signal,
     })
 
+    // If external server 404s/fails, fallback to same-domain Vercel /api
+    if (!res.ok && (res.status === 404 || res.status >= 500) && fallbackUrl && targetUrl !== fallbackUrl) {
+      return await fetch(fallbackUrl, { ...options, headers, signal: controller.signal })
+    }
+
     // If session expired (401), clear local session
     if (res.status === 401 && typeof localStorage !== 'undefined') {
       const isLoginRequest = targetUrl.includes('/auth/login')
@@ -41,6 +56,13 @@ async function fetchWithTimeout(urlOrPath: string, options: RequestInit = {}, ti
 
     return res
   } catch (err: any) {
+    // If network error (DNS failure, net::ERR_NAME_NOT_RESOLVED), try local /api
+    if (fallbackUrl && targetUrl !== fallbackUrl) {
+      try {
+        return await fetch(fallbackUrl, { ...options, headers, signal: controller.signal })
+      } catch {}
+    }
+
     if (err.name === 'AbortError' || err.message?.includes('aborted')) {
       throw new Error('Server took too long to respond. Please try again.')
     }
@@ -198,7 +220,7 @@ export const api = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
-    }, 30000)
+    }, 60000)
     return res.json()
   },
 
