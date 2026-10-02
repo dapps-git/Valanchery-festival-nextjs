@@ -116,9 +116,10 @@ router.post('/forgot-password', async (req, res) => {
 
     // Send via nodemailer to valancheryfestival@gmail.com
     const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com'
-    const smtpPort = Number(process.env.SMTP_PORT) || 465
+    const smtpPort = Number(process.env.SMTP_PORT) || 587
+    const isSecure = smtpPort === 465
     const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER || 'valancheryfestival@gmail.com'
-    const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS
+    const smtpPass = (process.env.SMTP_PASS || process.env.EMAIL_PASS || '').trim()
     const otpDestination = smtpUser || 'valancheryfestival@gmail.com'
     let emailSent = false
 
@@ -127,11 +128,14 @@ router.post('/forgot-password', async (req, res) => {
         const transporter = nodemailer.createTransport({
           host: smtpHost,
           port: smtpPort,
-          secure: smtpPort === 465,
+          secure: isSecure,
           auth: { user: smtpUser, pass: smtpPass },
-          connectionTimeout: 5000,
-          greetingTimeout: 5000,
-          socketTimeout: 5000,
+          tls: {
+            rejectUnauthorized: false,
+          },
+          connectionTimeout: 8000,
+          greetingTimeout: 8000,
+          socketTimeout: 8000,
         })
 
         await transporter.sendMail({
