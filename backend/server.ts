@@ -107,37 +107,34 @@ app.use('/draws', drawsRouter)
 app.use('/winners', winnersRouter)
 app.use('/auth', authRouter)
 
-// Database Connection & Server Start
-async function startServer() {
+// ── Start listening FIRST so Render port-scanner succeeds immediately ──
+app.listen(PORT, () => {
+  console.log(`🚀 Valanchery Festival Backend running on http://localhost:${PORT}`)
+})
+
+// ── Then connect to MongoDB asynchronously ──
+async function connectDB() {
   try {
     console.log('Connecting to MongoDB Atlas...')
     await mongoose.connect(MONGODB_URI, {
-      serverSelectionTimeoutMS: 8000,
+      serverSelectionTimeoutMS: 10000,
     })
     console.log('✅ Connected to MongoDB Atlas (Database: FESTIVAL)')
 
     // Seed database if empty
     await seedDatabase()
 
-    // Enforce unique indexes for coupons and participants
+    // Enforce unique indexes
     await Promise.allSettled([
       Coupon.collection.createIndex({ id: 1 }, { unique: true }),
       Participant.collection.createIndex({ couponId: 1 }, { unique: true, sparse: true }),
     ])
     console.log('✅ Unique coupon indexes verified.')
-
-    app.listen(PORT, () => {
-      console.log(`🚀 Valanchery Festival Backend running on http://localhost:${PORT}`)
-    })
   } catch (error) {
     console.error('❌ MongoDB Connection Error:', error)
-    // Fallback: Start express server anyway so it handles requests with informative error
-    app.listen(PORT, () => {
-      console.log(`⚠️ Server running in offline/unconnected mode on http://localhost:${PORT}`)
-    })
   }
 }
 
-startServer()
+connectDB()
 
 export default app
