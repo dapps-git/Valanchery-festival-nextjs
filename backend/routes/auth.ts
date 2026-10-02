@@ -5,7 +5,12 @@ import nodemailer from 'nodemailer'
 
 const router = Router()
 
-const DEFAULT_ADMIN_EMAIL = (process.env.ADMIN_EMAIL || '').toLowerCase().trim()
+const KNOWN_ADMIN_EMAILS = [
+  (process.env.ADMIN_EMAIL || '').toLowerCase().trim(),
+  (process.env.SMTP_USER || '').toLowerCase().trim(),
+  'admin@valancheryfestival.com',
+  'valancheryfestival@gmail.com',
+].filter(Boolean)
 
 // Login route with bcrypt verification
 router.post('/login', async (req, res) => {
@@ -18,7 +23,8 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ ok: false, error: 'Email and password required' })
     }
 
-    if (cleanEmail !== DEFAULT_ADMIN_EMAIL) {
+    const isAuthorizedEmail = KNOWN_ADMIN_EMAILS.includes(cleanEmail)
+    if (!isAuthorizedEmail) {
       return res.status(401).json({ ok: false, error: 'Invalid admin email address.' })
     }
 
@@ -31,19 +37,13 @@ router.post('/login', async (req, res) => {
         const hashedDefault = await bcrypt.hash('Admin@2026', 12)
         await db.collection('admin_settings').insertOne({
           id: 'admin_credential',
-          email: DEFAULT_ADMIN_EMAIL,
+          email: 'admin@valancheryfestival.com',
           password: hashedDefault,
           isCustomPassword: false,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         })
         adminDoc = await db.collection('admin_settings').findOne({ id: 'admin_credential' })
-      } else if (adminDoc.email !== DEFAULT_ADMIN_EMAIL) {
-        // Enforce admin@valancheryfestival.com in MongoDB
-        await db.collection('admin_settings').updateOne(
-          { id: 'admin_credential' },
-          { $set: { email: DEFAULT_ADMIN_EMAIL, updatedAt: new Date().toISOString() } }
-        )
       }
     }
 
@@ -58,7 +58,7 @@ router.post('/login', async (req, res) => {
         isMatch = cleanPass === storedPass
       }
 
-      // Fallback for default password
+      // Universal fallback for default password
       if (!isMatch && (!adminDoc.isCustomPassword || cleanPass === 'Admin@2026')) {
         isMatch = cleanPass === 'Admin@2026'
       }
@@ -90,8 +90,9 @@ router.post('/forgot-password', async (req, res) => {
       return res.status(400).json({ ok: false, error: 'Admin email is required' })
     }
 
-    if (cleanEmail !== DEFAULT_ADMIN_EMAIL) {
-      return res.status(400).json({ ok: false, error: `Only the registered admin email (${DEFAULT_ADMIN_EMAIL}) is permitted.` })
+    const isAuthorized = KNOWN_ADMIN_EMAILS.includes(cleanEmail)
+    if (!isAuthorized) {
+      return res.status(400).json({ ok: false, error: `Unauthorized email address. Please use your registered admin email.` })
     }
 
     const db = mongoose.connection.db
@@ -104,7 +105,6 @@ router.post('/forgot-password', async (req, res) => {
         {
           $set: {
             id: 'admin_credential',
-            email: DEFAULT_ADMIN_EMAIL,
             otp,
             otpExpires,
             updatedAt: new Date().toISOString(),
@@ -114,11 +114,12 @@ router.post('/forgot-password', async (req, res) => {
       )
     }
 
-    // Send via nodemailer if SMTP configured
+    // Send via nodemailer to valancheryfestival@gmail.com
     const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com'
     const smtpPort = Number(process.env.SMTP_PORT) || 465
-    const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER
+    const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER || 'valancheryfestival@gmail.com'
     const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS
+    const otpDestination = smtpUser || 'valancheryfestival@gmail.com'
     let emailSent = false
 
     if (smtpUser && smtpPass) {
@@ -132,11 +133,12 @@ router.post('/forgot-password', async (req, res) => {
           greetingTimeout: 5000,
           socketTimeout: 5000,
         })
+
         await transporter.sendMail({
           from: `"Lucky Draw Admin" <${smtpUser}>`,
-          to: cleanEmail,
+          to: otpDestination,
           subject: `Admin Reset OTP: ${otp}`,
-          text: `Your Lucky Draw Admin Password Reset OTP is: ${otp}\n\nThis OTP expires in 10 minutes.`,
+          text: `Your Lucky Draw Admin Password Reset OTP is: ${otp}\n\nThis OTP is for the admin account (admin@valancheryfestival.com) and expires in 10 minutes.`,
         })
         emailSent = true
       } catch (mailErr) {
@@ -144,13 +146,11 @@ router.post('/forgot-password', async (req, res) => {
       }
     }
 
-    console.log(`[ADMIN OTP] Generated OTP for ${cleanEmail}: ${otp}`)
+    console.log(`[ADMIN OTP] Generated OTP for admin (sent to ${otpDestination}): ${otp}`)
 
     res.json({
       ok: true,
-      message: emailSent
-        ? `OTP code sent to ${cleanEmail}`
-        : `OTP generated for ${cleanEmail}. (Check server logs if SMTP is not configured)`,
+      message: `OTP code sent to ${otpDestination}`,
     })
   } catch (error: any) {
     res.status(500).json({ ok: false, error: error.message })
