@@ -40,6 +40,11 @@ async function fetchWithTimeout(urlOrPath: string, options: RequestInit = {}, ti
     }
 
     return res
+  } catch (err: any) {
+    if (err.name === 'AbortError' || err.message?.includes('aborted')) {
+      throw new Error('Server took too long to respond. Please try again.')
+    }
+    throw err
   } finally {
     clearTimeout(timer)
   }

@@ -105,24 +105,39 @@ router.post('/forgot-password', async (req, res) => {
     const smtpPort = Number(process.env.SMTP_PORT) || 465
     const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER
     const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS
+    let emailSent = false
+
     if (smtpUser && smtpPass) {
-      const transporter = nodemailer.createTransport({
-        host: smtpHost,
-        port: smtpPort,
-        secure: smtpPort === 465,
-        auth: { user: smtpUser, pass: smtpPass },
-      })
-      await transporter.sendMail({
-        from: `"Lucky Draw Admin" <${smtpUser}>`,
-        to: cleanEmail,
-        subject: `Admin Reset OTP: ${otp}`,
-        text: `Your OTP is: ${otp}`,
-      })
-    } else {
-      console.log(`[EXPRESS MOCK EMAIL] OTP for ${cleanEmail}: ${otp}`)
+      try {
+        const transporter = nodemailer.createTransport({
+          host: smtpHost,
+          port: smtpPort,
+          secure: smtpPort === 465,
+          auth: { user: smtpUser, pass: smtpPass },
+          connectionTimeout: 5000,
+          greetingTimeout: 5000,
+          socketTimeout: 5000,
+        })
+        await transporter.sendMail({
+          from: `"Lucky Draw Admin" <${smtpUser}>`,
+          to: cleanEmail,
+          subject: `Admin Reset OTP: ${otp}`,
+          text: `Your Lucky Draw Admin Password Reset OTP is: ${otp}\n\nThis OTP expires in 10 minutes.`,
+        })
+        emailSent = true
+      } catch (mailErr) {
+        console.error('[AUTH SMTP ERROR] Failed to send email:', mailErr)
+      }
     }
 
-    res.json({ ok: true, message: `OTP sent to ${cleanEmail}` })
+    console.log(`[ADMIN OTP] Generated OTP for ${cleanEmail}: ${otp}`)
+
+    res.json({
+      ok: true,
+      message: emailSent
+        ? `OTP code sent to ${cleanEmail}`
+        : `OTP generated for ${cleanEmail}. (Check server logs if SMTP is not configured)`,
+    })
   } catch (error: any) {
     res.status(500).json({ ok: false, error: error.message })
   }
