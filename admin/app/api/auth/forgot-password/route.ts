@@ -25,7 +25,11 @@ export async function POST(request: Request) {
 
     const mailResult = await sendOtpEmail(cleanEmail, otp)
     if (!mailResult.ok) {
-      console.warn(`[OTP EMAIL] Warning: ${mailResult.error}`)
+      console.warn(`[OTP EMAIL ERROR] ${mailResult.error}`)
+      return NextResponse.json(
+        { ok: false, error: mailResult.error || 'Failed to send OTP email via SMTP' },
+        { status: 500 }
+      )
     }
 
     return NextResponse.json({ ok: true, message: `OTP sent to ${cleanEmail}` })

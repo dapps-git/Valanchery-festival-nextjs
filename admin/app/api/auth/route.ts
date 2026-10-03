@@ -11,7 +11,7 @@ const ALLOWED_ADMIN_EMAILS = [
   'admin@valancheryfestival.com',
   'valancheryfestival@gmail.com',
 ].filter(Boolean)
-const JWT_SECRET = process.env.JWT_SECRET || 'valanchery_festival_admin_secret_jwt_key_2026_xyz987'
+const JWT_SECRET = process.env.JWT_SECRET || 'vf2026_token_sign_key'
 
 function createAdminJwtResponse(email: string) {
   const token = jwt.sign(

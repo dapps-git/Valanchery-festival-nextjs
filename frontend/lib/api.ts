@@ -1,50 +1,24 @@
 import type { Participant, Winner } from '../types'
 
 const envUrl = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/$/, '')
-const RAW_API = envUrl.includes('onrender.com') ? '' : envUrl
-const API_BASE = RAW_API ? (RAW_API.endsWith('/api') ? RAW_API : `${RAW_API}/api`) : '/api'
+const API_BASE = envUrl ? (envUrl.endsWith('/api') ? envUrl : `${envUrl}/api`) : '/api'
 
 async function fetchWithTimeout(urlOrPath: string, options: RequestInit = {}, timeoutMs = 20000): Promise<Response> {
   let targetUrl = urlOrPath
-  let fallbackUrl = ''
 
   if (!urlOrPath.startsWith('http://') && !urlOrPath.startsWith('https://')) {
     const cleanPath = urlOrPath.startsWith('/api') ? urlOrPath.slice(4) : (urlOrPath.startsWith('/') ? urlOrPath : `/${urlOrPath}`)
     targetUrl = `${API_BASE}${cleanPath}`
-    fallbackUrl = `/api${cleanPath}`
-  } else {
-    try {
-      const u = new URL(urlOrPath)
-      fallbackUrl = u.pathname.startsWith('/api') ? `${u.pathname}${u.search}` : `/api${u.pathname}${u.search}`
-    } catch {}
   }
 
-  // Attempt targetUrl first
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), timeoutMs)
   try {
     const res = await fetch(targetUrl, { ...options, signal: controller.signal })
-    if (!res.ok && (res.status === 404 || res.status >= 502) && fallbackUrl && targetUrl !== fallbackUrl) {
-      const fbController = new AbortController()
-      const fbTimer = setTimeout(() => fbController.abort(), 8000)
-      try {
-        return await fetch(fallbackUrl, { ...options, signal: fbController.signal })
-      } finally {
-        clearTimeout(fbTimer)
-      }
-    }
     return res
   } catch (err: any) {
-    if (fallbackUrl && targetUrl !== fallbackUrl) {
-      const fbController = new AbortController()
-      const fbTimer = setTimeout(() => fbController.abort(), 8000)
-      try {
-        return await fetch(fallbackUrl, { ...options, signal: fbController.signal })
-      } catch {
-        // ignore fallback error and throw original
-      } finally {
-        clearTimeout(fbTimer)
-      }
+    if (err.name === 'AbortError' || err.message?.includes('aborted')) {
+      throw new Error('Server took too long to respond. Please try again.')
     }
     throw err
   } finally {

@@ -4,7 +4,7 @@ import { connectDB } from '@/lib/db'
 
 export const dynamic = 'force-dynamic'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'valanchery_festival_admin_secret_jwt_key_2026_xyz987'
+const JWT_SECRET = process.env.JWT_SECRET || 'vf2026_token_sign_key'
 
 export async function GET(request: Request) {
   try {
