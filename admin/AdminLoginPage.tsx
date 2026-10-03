@@ -14,6 +14,8 @@ import {
   CheckCircle2,
   AlertCircle,
   Loader2,
+  Eye,
+  EyeOff,
 } from 'lucide-react'
 
 export function AdminLoginPage() {
@@ -28,9 +30,22 @@ export function AdminLoginPage() {
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+
+  // Load remembered credentials from localStorage on mount
+  useEffect(() => {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const savedEmail = localStorage.getItem('admin_saved_email')
+        const savedPassword = localStorage.getItem('admin_saved_password')
+        if (savedEmail) setEmail(savedEmail)
+        if (savedPassword) setPassword(savedPassword)
+      }
+    } catch {}
+  }, [])
 
   // Forgot Password State
   const [showForgotModal, setShowForgotModal] = useState(false)
@@ -39,6 +54,8 @@ export function AdminLoginPage() {
   const [forgotOtp, setForgotOtp] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [forgotLoading, setForgotLoading] = useState(false)
   const [forgotError, setForgotError] = useState('')
   const [forgotSuccessMessage, setForgotSuccessMessage] = useState('')
@@ -55,6 +72,15 @@ export function AdminLoginPage() {
         setLoading(false)
         return
       }
+
+      // Store credentials in localStorage on successful login
+      try {
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem('admin_saved_email', email.trim().toLowerCase())
+          localStorage.setItem('admin_saved_password', password.trim())
+        }
+      } catch {}
+
       setSuccess(true)
       setTimeout(() => {
         navigate('/admin/dashboard', { replace: true })
@@ -145,9 +171,16 @@ export function AdminLoginPage() {
       if (res.ok) {
         setEmail(forgotEmail.trim())
         setPassword(newPassword.trim())
+        try {
+          if (typeof localStorage !== 'undefined') {
+            localStorage.removeItem('admin_saved_password')
+            localStorage.setItem('admin_saved_email', forgotEmail.trim().toLowerCase())
+            localStorage.setItem('admin_saved_password', newPassword.trim())
+          }
+        } catch {}
         setShowForgotModal(false)
         setError('')
-        alert('Password reset successfully! Default password (Admin@2026) is now disabled. Please log in with your new password.')
+        alert('Password reset successfully! Default password is now disabled and all sessions on other devices have been logged out. Please log in with your new password.')
       } else {
         setForgotError(res.error || 'Failed to update password. Please try again.')
       }
@@ -217,18 +250,26 @@ export function AdminLoginPage() {
                     Forgot Password?
                   </button>
                 </div>
-                <div className="flex rounded-[6px] border border-[#E8E3D8] overflow-hidden focus-within:border-[#9A7B4F] transition bg-white shadow-2xs">
+                <div className="flex rounded-[6px] border border-[#E8E3D8] overflow-hidden focus-within:border-[#9A7B4F] transition bg-white shadow-2xs relative">
                   <span className="bg-[#FAF8F5] px-3.5 py-2.5 text-stone-500 border-r border-[#E8E3D8] flex items-center justify-center">
                     <Lock size={14} />
                   </span>
                   <input
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full px-3.5 py-2.5 text-xs text-stone-900 placeholder:text-stone-400 outline-none font-normal bg-white"
+                    className="w-full px-3.5 py-2.5 pr-10 text-xs text-stone-900 placeholder:text-stone-400 outline-none font-normal bg-white"
                     required
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 transition p-1 cursor-pointer"
+                    title={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                  </button>
                 </div>
               </div>
 
@@ -411,28 +452,48 @@ export function AdminLoginPage() {
                   <label className="block text-[11px] font-normal text-stone-600 mb-1">
                     New Admin Password
                   </label>
-                  <input
-                    type="password"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="At least 6 characters"
-                    className="w-full rounded-[4px] border border-[#E8E3D8] px-3 py-1.5 text-xs text-stone-900 outline-none focus:border-[#9A7B4F] transition"
-                    required
-                  />
+                  <div className="relative">
+                    <input
+                      type={showNewPassword ? 'text' : 'password'}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="At least 6 characters"
+                      className="w-full rounded-[4px] border border-[#E8E3D8] px-3 py-1.5 pr-9 text-xs text-stone-900 outline-none focus:border-[#9A7B4F] transition"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 transition p-0.5 cursor-pointer"
+                      title={showNewPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showNewPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                    </button>
+                  </div>
                 </div>
 
                 <div>
                   <label className="block text-[11px] font-normal text-stone-600 mb-1">
                     Confirm New Password
                   </label>
-                  <input
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Re-enter password"
-                    className="w-full rounded-[4px] border border-[#E8E3D8] px-3 py-1.5 text-xs text-stone-900 outline-none focus:border-[#9A7B4F] transition"
-                    required
-                  />
+                  <div className="relative">
+                    <input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Re-enter password"
+                      className="w-full rounded-[4px] border border-[#E8E3D8] px-3 py-1.5 pr-9 text-xs text-stone-900 outline-none focus:border-[#9A7B4F] transition"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 transition p-0.5 cursor-pointer"
+                      title={showConfirmPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showConfirmPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                    </button>
+                  </div>
                 </div>
 
                 <p className="text-[10px] text-stone-400 font-light leading-normal">

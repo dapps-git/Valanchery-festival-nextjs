@@ -39,7 +39,16 @@ export async function POST(request: Request) {
       { upsert: true }
     )
 
-    return NextResponse.json({ ok: true, message: 'Password reset successfully.' })
+    return NextResponse.json(
+      { ok: true, message: 'Password reset successfully.' },
+      {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          Pragma: 'no-cache',
+          Expires: '0',
+        },
+      }
+    )
   } catch (err: any) {
     return NextResponse.json({ ok: false, error: err.message }, { status: 500 })
   }

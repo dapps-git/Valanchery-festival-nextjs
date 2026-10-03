@@ -43,15 +43,34 @@ export async function GET(request: Request) {
       // If DB error, proceed with decoded JWT
     }
 
-    return NextResponse.json({
-      ok: true,
-      admin: {
-        email: decoded.email,
-        role: decoded.role || 'admin',
-        exp: decoded.exp,
+    return NextResponse.json(
+      {
+        ok: true,
+        admin: {
+          email: decoded.email,
+          role: decoded.role || 'admin',
+          exp: decoded.exp,
+        },
       },
-    })
+      {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          Pragma: 'no-cache',
+          Expires: '0',
+        },
+      }
+    )
   } catch {
-    return NextResponse.json({ ok: false, error: 'Session expired or invalid. Please login again.' }, { status: 401 })
+    return NextResponse.json(
+      { ok: false, error: 'Session expired or invalid. Please login again.' },
+      {
+        status: 401,
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          Pragma: 'no-cache',
+          Expires: '0',
+        },
+      }
+    )
   }
 }
