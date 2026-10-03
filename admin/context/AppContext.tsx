@@ -104,21 +104,38 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<AppData>(loadLocalData)
   const [isOnline, setIsOnline] = useState(false)
 
-  // 10-minute auto logout monitor
+  // 10-minute auto logout monitor + password change verification
   useEffect(() => {
-    const checkSessionExpiry = () => {
-      if (isAdmin && !isSessionValid()) {
+    const checkSessionExpiry = async () => {
+      if (!isAdmin) return
+      if (!isSessionValid()) {
         setIsAdmin(false)
         api.logout()
         alert('Your admin session has expired (10 minutes). Please log in again.')
+        return
+      }
+
+      // Verify with backend if password was changed on another system
+      try {
+        const res = await api.verifySession()
+        if (!res.ok) {
+          localStorage.removeItem(TOKEN_KEY)
+          localStorage.removeItem(TOKEN_EXP_KEY)
+          localStorage.removeItem(AUTH_KEY)
+          setIsAdmin(false)
+          api.logout()
+          alert(res.error || 'Admin password was changed. You have been logged out from all systems.')
+        }
+      } catch {
+        // ignore temporary network blip
       }
     }
 
-    const interval = setInterval(checkSessionExpiry, 10000)
+    const interval = setInterval(checkSessionExpiry, 15000)
     return () => clearInterval(interval)
   }, [isAdmin])
 
-  // Verify active session with backend on load
+  // Verify active session with backend on load / refresh
   useEffect(() => {
     if (isAdmin) {
       api.verifySession().then((res) => {
@@ -127,6 +144,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
           localStorage.removeItem(TOKEN_EXP_KEY)
           localStorage.removeItem(AUTH_KEY)
           setIsAdmin(false)
+          if (res.error && res.error.toLowerCase().includes('password')) {
+            alert(res.error)
+          }
         }
       }).catch(() => {})
     }

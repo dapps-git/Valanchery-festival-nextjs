@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server'
 import jwt from 'jsonwebtoken'
+import { connectDB } from '@/lib/db'
 
 export const dynamic = 'force-dynamic'
 
-const JWT_SECRET = process.env.JWT_SECRET || ''
+const JWT_SECRET = process.env.JWT_SECRET || 'valanchery_festival_admin_secret_jwt_key_2026_xyz987'
 
 export async function GET(request: Request) {
   try {
@@ -22,6 +23,26 @@ export async function GET(request: Request) {
     }
 
     const decoded = jwt.verify(token, JWT_SECRET) as any
+
+    // Invalidate sessions issued before password change
+    try {
+      const db = await connectDB()
+      const adminDoc = await db.collection('admin_settings').findOne({ id: 'admin_credential' })
+      if (adminDoc?.passwordChangedAt) {
+        const pwdChangedTime = new Date(adminDoc.passwordChangedAt).getTime()
+        const tokenIssuedAt = decoded.iat ? decoded.iat * 1000 : 0
+        // Invalidate old tokens
+        if (tokenIssuedAt < pwdChangedTime - 1000) {
+          return NextResponse.json(
+            { ok: false, error: 'Admin password was changed. Please log in again with the new password.' },
+            { status: 401 }
+          )
+        }
+      }
+    } catch {
+      // If DB error, proceed with decoded JWT
+    }
+
     return NextResponse.json({
       ok: true,
       admin: {

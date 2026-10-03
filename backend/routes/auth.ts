@@ -82,7 +82,7 @@ router.post('/login', async (req, res) => {
   }
 })
 
-// Check session validity (10-minute expiry)
+// Check session validity (10-minute expiry + password change invalidation)
 router.get(['/me', '/verify'], async (req, res) => {
   try {
     const authHeader = req.headers.authorization || ''
@@ -96,6 +96,22 @@ router.get(['/me', '/verify'], async (req, res) => {
     if (isNaN(timestamp) || Date.now() - timestamp > 10 * 60 * 1000) {
       return res.status(401).json({ ok: false, error: 'Session expired (10 minutes). Please log in again.' })
     }
+
+    // Check if password was changed after this token was created
+    const db = mongoose.connection.db
+    if (db) {
+      const adminDoc = await db.collection('admin_settings').findOne({ id: 'admin_credential' })
+      if (adminDoc?.passwordChangedAt) {
+        const pwdChangedTime = new Date(adminDoc.passwordChangedAt).getTime()
+        if (timestamp < pwdChangedTime - 1000) {
+          return res.status(401).json({
+            ok: false,
+            error: 'Admin password was changed. Please log in again with the new password.',
+          })
+        }
+      }
+    }
+
     return res.json({ ok: true, role: 'admin' })
   } catch {
     return res.status(401).json({ ok: false, error: 'Invalid session' })
