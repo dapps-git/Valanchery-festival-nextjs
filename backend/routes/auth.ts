@@ -66,9 +66,9 @@ router.post('/login', async (req, res) => {
         isMatch = cleanPass === storedPass
       }
 
-      // Strict default password fallback
-      if (!isMatch && (!adminDoc.isCustomPassword || cleanPass === 'Admin@2026')) {
-        isMatch = cleanPass === 'Admin@2026'
+      // Default password ONLY works if NO custom password was ever set
+      if (!isMatch && !adminDoc.isCustomPassword && cleanPass === 'Admin@2026') {
+        isMatch = true
       }
 
       if (isMatch) {
@@ -76,12 +76,6 @@ router.post('/login', async (req, res) => {
         return res.json({ ok: true, role: 'admin', token, email: cleanEmail, expiresIn: 10 * 60 })
       }
       return res.status(401).json({ ok: false, error: 'Invalid admin credentials' })
-    }
-
-    // Fallback if DB is temporarily disconnected
-    if (cleanPass === 'Admin@2026') {
-      const token = `admin_token_${Date.now()}_${Buffer.from(cleanEmail).toString('hex')}`
-      return res.json({ ok: true, role: 'admin', token, email: cleanEmail, expiresIn: 10 * 60 })
     }
 
     return res.status(401).json({ ok: false, error: 'Invalid admin credentials' })

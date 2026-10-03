@@ -5,7 +5,12 @@ import jwt from 'jsonwebtoken'
 
 export const dynamic = 'force-dynamic'
 
-const DEFAULT_ADMIN_EMAIL = (process.env.ADMIN_EMAIL || '').toLowerCase().trim()
+const DEFAULT_ADMIN_EMAIL = (process.env.ADMIN_EMAIL || 'admin@valancheryfestival.com').toLowerCase().trim()
+const ALLOWED_ADMIN_EMAILS = [
+  DEFAULT_ADMIN_EMAIL,
+  'admin@valancheryfestival.com',
+  'valancheryfestival@gmail.com',
+].filter(Boolean)
 const JWT_SECRET = process.env.JWT_SECRET || 'valanchery_festival_admin_secret_jwt_key_2026_xyz987'
 
 function createAdminJwtResponse(email: string) {
@@ -73,15 +78,9 @@ export async function POST(request: Request) {
       console.log('[ADMIN] Auto-seeded default credentials on first login')
     }
 
-    if (cleanEmail !== DEFAULT_ADMIN_EMAIL) {
+    const isAuthorized = ALLOWED_ADMIN_EMAILS.includes(cleanEmail) || (adminDoc?.email && cleanEmail === adminDoc.email.toLowerCase().trim())
+    if (!isAuthorized) {
       return NextResponse.json({ ok: false, error: 'Invalid admin credentials' }, { status: 401 })
-    }
-
-    if (adminDoc?.email && adminDoc.email.toLowerCase().trim() !== DEFAULT_ADMIN_EMAIL) {
-      await col.updateOne(
-        { id: 'admin_credential' },
-        { $set: { email: DEFAULT_ADMIN_EMAIL, updatedAt: new Date().toISOString() } }
-      )
     }
 
     const storedHash = (adminDoc?.password || '').trim()
@@ -92,9 +91,9 @@ export async function POST(request: Request) {
       isMatch = cleanPass === storedHash
     }
 
-    // Fallback for default password
-    if (!isMatch && (!adminDoc?.isCustomPassword || cleanPass === 'Admin@2026')) {
-      isMatch = cleanPass === 'Admin@2026'
+    // Default password ONLY works if NO custom password has ever been set
+    if (!isMatch && !adminDoc?.isCustomPassword && cleanPass === 'Admin@2026') {
+      isMatch = true
     }
 
     if (isMatch) {
