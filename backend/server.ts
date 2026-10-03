@@ -5,7 +5,7 @@ import mongoose from 'mongoose'
 import { seedDatabase } from './seed.js'
 
 import couponsRouter from './routes/coupons.js'
-import participantsRouter from './routes/participants.js'
+import participantsRouter, { initParticipantCounter } from './routes/participants.js'
 import prizesRouter from './routes/prizes.js'
 import drawsRouter from './routes/draws.js'
 import winnersRouter from './routes/winners.js'
@@ -121,19 +121,26 @@ async function connectDB() {
   try {
     console.log('Connecting to MongoDB Atlas...')
     await mongoose.connect(MONGODB_URI, {
-      serverSelectionTimeoutMS: 10000,
+      serverSelectionTimeoutMS: 20000,
+      maxPoolSize: 100,
+      minPoolSize: 10,
     })
     console.log('✅ Connected to MongoDB Atlas (Database: FESTIVAL)')
 
     // Seed database if empty
     await seedDatabase()
 
-    // Enforce unique indexes
+    // Initialize atomic participant counter
+    await initParticipantCounter()
+
+    // Enforce unique and lookup indexes for sub-millisecond concurrent queries
     await Promise.allSettled([
       Coupon.collection.createIndex({ id: 1 }, { unique: true }),
+      Participant.collection.createIndex({ id: 1 }, { unique: true }),
       Participant.collection.createIndex({ couponId: 1 }, { unique: true, sparse: true }),
+      Participant.collection.createIndex({ phone: 1 }),
     ])
-    console.log('✅ Unique coupon indexes verified.')
+    console.log('✅ High-concurrency database indexes verified.')
   } catch (error) {
     console.error('❌ MongoDB Connection Error:', error)
   }

@@ -233,7 +233,7 @@ export const api = {
   }> {
     const cleanId = (couponId || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase()
     try {
-      const res = await fetchWithTimeout(`${API_BASE}/coupons/validate?id=${encodeURIComponent(cleanId)}`, {}, 8000)
+      const res = await fetchWithTimeout(`${API_BASE}/coupons/validate?id=${encodeURIComponent(cleanId)}`, {}, 15000)
       if (res.ok) {
         return await res.json()
       } else {

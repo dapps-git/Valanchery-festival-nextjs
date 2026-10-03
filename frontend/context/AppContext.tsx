@@ -36,7 +36,8 @@ const DEFAULT_PRIZES: Prize[] = GIFT_PRESETS.map((p, idx) => ({
   value: p.value,
   description: p.description,
   image: p.image,
-  category: p.category,
+  assignedDrawId: null,
+  status: 'Available' as const,
 }))
 
 export function AppProvider({ children }: { children: ReactNode }) {
@@ -122,7 +123,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const getPrize = (id: string) => data.prizes.find((p) => p.id === id)
   const getParticipant = (id: string) => data.participants.find((p) => p.id === id)
   const getDraw = (id: string) => data.draws.find((d) => d.id === id)
-  const nextDraw = data.draws.find((d) => d.status === 'Upcoming' || d.status === 'Open')
+  const nextDraw = data.draws.find((d) => d.status === 'Upcoming' || d.status === 'Live')
 
   const winnerParticipantIds = new Set(data.winners.map((w) => w.participantId))
   const eligibleParticipants: Participant[] = []

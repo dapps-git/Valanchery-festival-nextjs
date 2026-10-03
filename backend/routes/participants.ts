@@ -2,24 +2,44 @@ import { Router } from 'express'
 import { Participant } from '../models/Participant.js'
 import { Coupon } from '../models/Coupon.js'
 import { CouponBatch } from '../models/CouponBatch.js'
+import { Counter } from '../models/Counter.js'
 
 const router = Router()
 
-// Helper to generate next sequential participant ID (guaranteed max suffix)
-async function getNextParticipantId(): Promise<string> {
-  const participants = await Participant.find({}, { id: 1 }).lean()
-  if (!participants.length) return 'VF2026-00101'
-
-  let maxNum = 100
-  for (const p of participants) {
-    const match = p.id.match(/\d+$/)
-    if (match) {
-      const num = parseInt(match[0], 10)
-      if (num > maxNum) maxNum = num
+// Initialize counter if needed (aligns with highest existing ID in DB)
+export async function initParticipantCounter() {
+  try {
+    const existing = await Counter.findById('participant_id')
+    if (!existing) {
+      const participants = await Participant.find({}, { id: 1 }).lean()
+      let maxNum = 100
+      for (const p of participants) {
+        const match = p.id?.match(/\d+$/)
+        if (match) {
+          const num = parseInt(match[0], 10)
+          if (num > maxNum) maxNum = num
+        }
+      }
+      await Counter.findByIdAndUpdate(
+        'participant_id',
+        { $setOnInsert: { seq: maxNum } },
+        { upsert: true }
+      )
+      console.log(`✅ Participant sequence initialized at ${maxNum}`)
     }
+  } catch (err) {
+    console.error('Failed to initialize participant counter:', err)
   }
+}
 
-  return `VF2026-${String(maxNum + 1).padStart(5, '0')}`
+// Atomic sequential ID generator (100% collision-free even under 100+ concurrent requests)
+export async function getNextParticipantId(): Promise<string> {
+  const counter = await Counter.findByIdAndUpdate(
+    'participant_id',
+    { $inc: { seq: 1 } },
+    { new: true, upsert: true, setDefaultsOnInsert: true }
+  )
+  return `VF2026-${String(counter.seq).padStart(5, '0')}`
 }
 
 // 1. Register a single participant
@@ -43,14 +63,14 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ ok: false, error: 'Please enter a valid 13-character coupon code' })
     }
 
-    // Check if coupon already used by someone else
-    const usedBy = await Participant.findOne({ couponId: cleanCoupon })
+    // Check if coupon already used by someone else (indexed lean lookup)
+    const usedBy = await Participant.findOne({ couponId: cleanCoupon }).select('name registeredAt').lean()
     if (usedBy) {
       return res.status(400).json({ ok: false, error: 'This coupon has already been used and is no longer valid.' })
     }
 
     // Resolve coupon — search by 13-character code (id) ONLY
-    const existingCoupon = await Coupon.findOne({ id: cleanCoupon })
+    const existingCoupon = await Coupon.findOne({ id: cleanCoupon }).lean()
     if (!existingCoupon) {
       return res.status(400).json({ ok: false, error: 'Coupon not found. Please check the 13-character code.' })
     }
@@ -58,12 +78,13 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ ok: false, error: 'This coupon has already been used and is no longer valid.' })
     }
 
-    // Use the canonical coupon id for storage (not the serialNo the user typed)
+    // Use the canonical coupon id for storage
     const canonicalCouponId = existingCoupon?.id || cleanCoupon
 
     const participantName = name?.trim() || `Shopper ${phone.slice(-4)}`
     const now = new Date().toISOString().slice(0, 10)
     let newParticipant: any = null
+
     for (let attempt = 0; attempt < 5; attempt++) {
       try {
         const id = await getNextParticipantId()
@@ -82,35 +103,46 @@ router.post('/register', async (req, res) => {
       } catch (err: any) {
         if (err?.code === 11000) {
           if (err.keyPattern?.couponId || err.message?.includes('couponId')) {
-            return res.status(400).json({ ok: false, error: 'This coupon is already taken.' })
+            return res.status(400).json({ ok: false, error: 'This coupon has already been registered.' })
           }
+          // In the rare event of ID collision, retry with next atomic ID
           if (attempt < 4) {
-            // Retry on concurrent sequential ID collision
-            await new Promise((r) => setTimeout(r, 40 * (attempt + 1)))
+            await new Promise((r) => setTimeout(r, 20 * (attempt + 1)))
             continue
           }
         }
         throw err
       }
     }
+
+    if (!newParticipant) {
+      return res.status(500).json({ ok: false, error: 'Unable to complete registration. Please try again.' })
+    }
+
     const id = newParticipant.id
 
-    // Update coupon state in DB
+    // Update coupon state in DB atomically
     if (cleanCoupon) {
-      const existingCoupon = await Coupon.findOne({ id: cleanCoupon })
-      if (existingCoupon) {
-        existingCoupon.status = 'Used'
-        existingCoupon.usedAt = now
-        existingCoupon.usedByParticipantId = id
-        existingCoupon.usedByParticipantName = participantName
-        existingCoupon.usedByParticipantPhone = phone
-        await existingCoupon.save()
+      const updatedCoupon = await Coupon.findOneAndUpdate(
+        { id: cleanCoupon },
+        {
+          $set: {
+            status: 'Used',
+            usedAt: now,
+            usedByParticipantId: id,
+            usedByParticipantName: participantName,
+            usedByParticipantPhone: phone,
+          },
+        },
+        { new: true }
+      )
 
-        // Update batch counts
+      if (updatedCoupon) {
+        // Update batch counts safely
         await CouponBatch.updateOne(
-          { id: existingCoupon.batchId },
+          { id: updatedCoupon.batchId },
           { $inc: { unusedCount: -1, usedCount: 1 } }
-        )
+        ).catch(() => {})
       } else {
         // Record coupon in database
         await Coupon.create({
@@ -122,13 +154,13 @@ router.post('/register', async (req, res) => {
           usedByParticipantId: id,
           usedByParticipantName: participantName,
           usedByParticipantPhone: phone,
-        })
+        }).catch(() => {})
       }
     }
 
     res.status(201).json({ ok: true, id, participant: newParticipant })
   } catch (error: any) {
-    res.status(500).json({ ok: false, error: error.message })
+    res.status(500).json({ ok: false, error: error.message || 'Internal server error' })
   }
 })
 

@@ -80,8 +80,8 @@ router.get(['/validate', '/validate/:id'], async (req, res) => {
       })
     }
 
-    // 1. Check if already redeemed — search by 13-character code
-    const registeredUser = await Participant.findOne({ couponId: cleanId })
+    // 1. Check if already redeemed — search by 13-character code (indexed lean lookup)
+    const registeredUser = await Participant.findOne({ couponId: cleanId }).select('registeredAt name').lean()
     if (registeredUser) {
       return res.json({
         valid: false,
@@ -92,8 +92,8 @@ router.get(['/validate', '/validate/:id'], async (req, res) => {
       })
     }
 
-    // 2. Search coupon by 13-character code (id) ONLY — NOT by serialNo
-    const existingCoupon = await Coupon.findOne({ id: cleanId })
+    // 2. Search coupon by 13-character code (id) ONLY — indexed lean lookup
+    const existingCoupon = await Coupon.findOne({ id: cleanId }).lean()
 
     if (existingCoupon) {
       if (existingCoupon.status === 'Used') {

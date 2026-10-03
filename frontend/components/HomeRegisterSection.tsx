@@ -41,6 +41,10 @@ export function HomeRegisterSection() {
     message: string
   }>({ status: 'Idle', message: '' })
 
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const latestRequestIdRef = useRef<number>(0)
+  const lastValidatedTokenRef = useRef<string>('')
+
   // Auto-fill from URL query params
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -54,11 +58,15 @@ export function HomeRegisterSection() {
     const extracted = extractCouponId(rawParam)
     if (extracted) {
       setForm((f) => ({ ...f, couponId: extracted }))
-      checkToken(extracted)
+      checkToken(extracted, true)
     }
   }, [])
 
-  const checkToken = async (tokenInput: string) => {
+  const checkToken = (tokenInput: string, immediate = false) => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current)
+    }
+
     const clean = extractCouponId(tokenInput) || tokenInput.replace(/[^A-Za-z0-9]/g, '').trim().toUpperCase()
     if (!clean) {
       setTokenStatus({ status: 'Idle', message: '' })
@@ -72,29 +80,45 @@ export function HomeRegisterSection() {
       return
     }
 
-    setIsValidatingToken(true)
-    try {
-      const result = await validateCouponAsync(clean)
-      if (result.valid && result.status === 'Unused') {
-        setTokenStatus({
-          status: 'Valid',
-          message: 'Valid Festival Coupon! Ready for entry.',
-        })
-      } else if (result.status === 'Used') {
-        setTokenStatus({
-          status: 'Used',
-          message: result.message || 'This coupon has already been used and is no longer valid.',
-        })
-      } else {
-        setTokenStatus({
-          status: 'Invalid',
-          message: result.message || 'Invalid coupon code.',
-        })
+    const runValidation = async () => {
+      const currentReqId = ++latestRequestIdRef.current
+      setIsValidatingToken(true)
+      try {
+        const result = await validateCouponAsync(clean)
+        if (currentReqId !== latestRequestIdRef.current) return
+
+        if (result.valid && result.status === 'Unused') {
+          lastValidatedTokenRef.current = clean
+          setTokenStatus({
+            status: 'Valid',
+            message: 'Valid Festival Coupon! Ready for entry.',
+          })
+        } else if (result.status === 'Used') {
+          setTokenStatus({
+            status: 'Used',
+            message: result.message || 'This coupon has already been used and is no longer valid.',
+          })
+        } else {
+          setTokenStatus({
+            status: 'Invalid',
+            message: result.message || 'Invalid coupon code.',
+          })
+        }
+      } catch {
+        if (currentReqId === latestRequestIdRef.current) {
+          setTokenStatus({ status: 'Invalid', message: 'Could not verify coupon. Please try again.' })
+        }
+      } finally {
+        if (currentReqId === latestRequestIdRef.current) {
+          setIsValidatingToken(false)
+        }
       }
-    } catch {
-      setTokenStatus({ status: 'Invalid', message: 'Could not verify coupon. Please try again.' })
-    } finally {
-      setIsValidatingToken(false)
+    }
+
+    if (immediate) {
+      runValidation()
+    } else {
+      debounceTimerRef.current = setTimeout(runValidation, 350)
     }
   }
 
@@ -102,15 +126,17 @@ export function HomeRegisterSection() {
     const extracted = extractCouponId(val)
     const cleaned = extracted || val.replace(/[^A-Za-z0-9]/g, '').slice(0, 16).toUpperCase()
     setForm((f) => ({ ...f, couponId: cleaned }))
-    checkToken(cleaned)
+    checkToken(cleaned, false)
   }
 
   const handleScanSuccess = (scannedToken: string) => {
     setForm((f) => ({ ...f, couponId: scannedToken }))
-    checkToken(scannedToken)
+    checkToken(scannedToken, true)
   }
 
   const clearCoupon = () => {
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
+    lastValidatedTokenRef.current = ''
     setForm((f) => ({ ...f, couponId: '' }))
     setTokenStatus({ status: 'Idle', message: '' })
   }
@@ -126,6 +152,8 @@ export function HomeRegisterSection() {
   }
 
   const resetForm = () => {
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
+    lastValidatedTokenRef.current = ''
     setSuccessId(null)
     setRegisteredCoupon(null)
     setRegisteredName(null)
@@ -154,13 +182,18 @@ export function HomeRegisterSection() {
       if (cleanToken.length < 5 || cleanToken.length > 16) {
         next.couponId = 'Please enter a valid coupon code.'
       } else {
-        const check = await validateCouponAsync(cleanToken)
-        if (!check.valid) {
-          next.couponId = check.message
-          setTokenStatus({
-            status: check.status === 'Used' ? 'Used' : 'Invalid',
-            message: check.message,
-          })
+        // Skip redundant check if already validated as Valid
+        if (tokenStatus.status === 'Valid' && lastValidatedTokenRef.current === cleanToken) {
+          // already verified
+        } else {
+          const check = await validateCouponAsync(cleanToken)
+          if (!check.valid) {
+            next.couponId = check.message
+            setTokenStatus({
+              status: check.status === 'Used' ? 'Used' : 'Invalid',
+              message: check.message,
+            })
+          }
         }
       }
     }

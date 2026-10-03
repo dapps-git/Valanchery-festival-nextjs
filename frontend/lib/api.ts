@@ -4,7 +4,7 @@ const envUrl = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/$/, '')
 const RAW_API = envUrl.includes('onrender.com') ? '' : envUrl
 const API_BASE = RAW_API ? (RAW_API.endsWith('/api') ? RAW_API : `${RAW_API}/api`) : '/api'
 
-async function fetchWithTimeout(urlOrPath: string, options: RequestInit = {}, timeoutMs = 15000): Promise<Response> {
+async function fetchWithTimeout(urlOrPath: string, options: RequestInit = {}, timeoutMs = 20000): Promise<Response> {
   let targetUrl = urlOrPath
   let fallbackUrl = ''
 
@@ -19,19 +19,32 @@ async function fetchWithTimeout(urlOrPath: string, options: RequestInit = {}, ti
     } catch {}
   }
 
+  // Attempt targetUrl first
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), timeoutMs)
   try {
     const res = await fetch(targetUrl, { ...options, signal: controller.signal })
-    if (!res.ok && (res.status === 404 || res.status >= 500) && fallbackUrl && targetUrl !== fallbackUrl) {
-      return await fetch(fallbackUrl, { ...options, signal: controller.signal })
+    if (!res.ok && (res.status === 404 || res.status >= 502) && fallbackUrl && targetUrl !== fallbackUrl) {
+      const fbController = new AbortController()
+      const fbTimer = setTimeout(() => fbController.abort(), 8000)
+      try {
+        return await fetch(fallbackUrl, { ...options, signal: fbController.signal })
+      } finally {
+        clearTimeout(fbTimer)
+      }
     }
     return res
   } catch (err: any) {
     if (fallbackUrl && targetUrl !== fallbackUrl) {
+      const fbController = new AbortController()
+      const fbTimer = setTimeout(() => fbController.abort(), 8000)
       try {
-        return await fetch(fallbackUrl, { ...options, signal: controller.signal })
-      } catch {}
+        return await fetch(fallbackUrl, { ...options, signal: fbController.signal })
+      } catch {
+        // ignore fallback error and throw original
+      } finally {
+        clearTimeout(fbTimer)
+      }
     }
     throw err
   } finally {
@@ -41,39 +54,68 @@ async function fetchWithTimeout(urlOrPath: string, options: RequestInit = {}, ti
 
 export const api = {
   async health(): Promise<{ status: string; database: string }> {
-    const res = await fetchWithTimeout(`${API_BASE}/health`, {}, 5000)
-    return res.json()
+    try {
+      const res = await fetchWithTimeout(`${API_BASE}/health`, {}, 8000)
+      return await res.json()
+    } catch {
+      return { status: 'offline', database: 'disconnected' }
+    }
   },
 
   async validateCoupon(code: string): Promise<{ valid: boolean; status: string; coupon?: any; message: string }> {
     try {
-      const res = await fetchWithTimeout(`${API_BASE}/coupons/validate?code=${encodeURIComponent(code)}`, {}, 8000)
+      const res = await fetchWithTimeout(`${API_BASE}/coupons/validate?code=${encodeURIComponent(code)}`, {}, 18000)
       if (res.ok) {
         return await res.json()
       }
       return { valid: false, status: 'Invalid', message: 'Unable to validate coupon' }
     } catch (err: any) {
-      return { valid: false, status: 'Invalid', message: err.message || 'Validation request failed' }
+      const isAbort = err?.name === 'AbortError' || err?.message?.toLowerCase().includes('abort')
+      return {
+        valid: false,
+        status: 'Invalid',
+        message: isAbort
+          ? 'Network is busy. Please tap verify or try again.'
+          : 'Unable to verify coupon online. Please check your connection.',
+      }
     }
   },
 
   async registerParticipant(participant: any): Promise<{ ok: boolean; id?: string; error?: string }> {
-    const res = await fetchWithTimeout(`${API_BASE}/participants/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(participant),
-    }, 15000)
-    return res.json()
+    try {
+      const res = await fetchWithTimeout(
+        `${API_BASE}/participants/register`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(participant),
+        },
+        25000
+      )
+      return await res.json()
+    } catch (err: any) {
+      const isAbort = err?.name === 'AbortError' || err?.message?.toLowerCase().includes('abort')
+      return {
+        ok: false,
+        error: isAbort
+          ? 'Registration timed out due to high traffic. Please check your connection and tap Submit again.'
+          : (err.message || 'Registration request failed. Please try again.'),
+      }
+    }
   },
 
   async getParticipant(id: string): Promise<{ ok: boolean; participant?: Participant; error?: string }> {
-    const res = await fetchWithTimeout(`${API_BASE}/participants/${encodeURIComponent(id)}`, {}, 8000)
-    return res.json()
+    try {
+      const res = await fetchWithTimeout(`${API_BASE}/participants/${encodeURIComponent(id)}`, {}, 12000)
+      return await res.json()
+    } catch (err: any) {
+      return { ok: false, error: err.message || 'Failed to fetch registration pass' }
+    }
   },
 
   async getWinners(): Promise<{ ok: boolean; winners?: Winner[]; error?: string }> {
     try {
-      const res = await fetchWithTimeout(`${API_BASE}/winners`, {}, 8000)
+      const res = await fetchWithTimeout(`${API_BASE}/winners`, {}, 10000)
       if (res.ok) {
         return await res.json()
       }
