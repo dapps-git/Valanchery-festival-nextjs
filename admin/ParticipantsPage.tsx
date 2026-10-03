@@ -110,6 +110,7 @@ export function ParticipantsPage() {
     const res = await registerParticipant({
       name: newParticipant.name.trim(),
       phone: cleanPhone,
+      address: 'Valanchery',
     })
     if (!res.ok) {
       setAddError(res.error)

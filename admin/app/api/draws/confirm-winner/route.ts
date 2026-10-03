@@ -39,7 +39,7 @@ export async function POST(request: Request) {
         createdAt: now,
       }
       await drawsCol.insertOne(newDraw)
-      draw = newDraw
+      draw = newDraw as any
     }
 
     const winner = {

@@ -65,7 +65,7 @@ router.post('/login', async (req, res) => {
 
       if (isMatch) {
         const token = `admin_token_${Date.now()}_${Buffer.from(cleanEmail).toString('hex')}`
-        return res.json({ ok: true, role: 'admin', token, email: cleanEmail })
+        return res.json({ ok: true, role: 'admin', token, email: cleanEmail, expiresIn: 10 * 60 })
       }
       return res.status(401).json({ ok: false, error: 'Invalid admin credentials' })
     }
@@ -73,13 +73,38 @@ router.post('/login', async (req, res) => {
     // Fallback if DB is temporarily disconnected
     if (cleanPass === 'Admin@2026') {
       const token = `admin_token_${Date.now()}_${Buffer.from(cleanEmail).toString('hex')}`
-      return res.json({ ok: true, role: 'admin', token, email: cleanEmail })
+      return res.json({ ok: true, role: 'admin', token, email: cleanEmail, expiresIn: 10 * 60 })
     }
 
     return res.status(401).json({ ok: false, error: 'Invalid admin credentials' })
   } catch (error: any) {
     res.status(500).json({ ok: false, error: error.message })
   }
+})
+
+// Check session validity (10-minute expiry)
+router.get(['/me', '/verify'], async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization || ''
+    const token = authHeader.replace(/^Bearer\s+/i, '').trim()
+    if (!token || !token.startsWith('admin_token_')) {
+      return res.status(401).json({ ok: false, error: 'No active session or invalid token' })
+    }
+    const parts = token.split('_')
+    const timestamp = parseInt(parts[2], 10)
+    // 10 minutes in milliseconds = 600,000
+    if (isNaN(timestamp) || Date.now() - timestamp > 10 * 60 * 1000) {
+      return res.status(401).json({ ok: false, error: 'Session expired (10 minutes). Please log in again.' })
+    }
+    return res.json({ ok: true, role: 'admin' })
+  } catch {
+    return res.status(401).json({ ok: false, error: 'Invalid session' })
+  }
+})
+
+// Logout route
+router.post('/logout', async (_req, res) => {
+  res.json({ ok: true, message: 'Logged out successfully' })
 })
 
 // Forgot Password -> Send OTP
