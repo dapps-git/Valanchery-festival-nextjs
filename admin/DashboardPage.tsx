@@ -16,8 +16,9 @@ export function DashboardPage() {
 
   const allBatches = batches && batches.length > 0 ? batches : data.batches || []
   const totalFromBatches = allBatches.reduce((acc, b) => acc + (b.count || 0), 0)
-  const totalCouponsCount = typeof data.totalCouponsCount === 'number' ? data.totalCouponsCount : totalFromBatches
-  const usedCount = typeof data.usedCouponsCount === 'number' ? data.usedCouponsCount : data.participants.length
+  const usedFromBatches = allBatches.reduce((acc, b) => acc + (b.usedCount || 0), 0)
+  const totalCouponsCount = typeof data.totalCouponsCount === 'number' && data.totalCouponsCount > 0 ? data.totalCouponsCount : totalFromBatches
+  const usedCount = typeof data.usedCouponsCount === 'number' ? data.usedCouponsCount : usedFromBatches
   const unusedCount = Math.max(0, totalCouponsCount - usedCount)
 
   // Map winner participant IDs

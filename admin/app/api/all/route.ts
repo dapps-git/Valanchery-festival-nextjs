@@ -70,8 +70,9 @@ export async function GET() {
 
     const batchesTotal = (calculatedBatches || []).reduce((sum: number, b: any) => sum + (b.count || 0), 0)
     const totalCouponsCount = batchesTotal > 0 ? batchesTotal : (estimatedTotal || 0)
-    // Derive usedCount from participants instead of a slow countDocuments on 50k docs
-    const usedCouponsCount = participants ? participants.length : 0
+    // Sum real used coupons belonging to batches (so available coupons = 10 - 3 = 7)
+    const totalUsedInBatches = (calculatedBatches || []).reduce((sum: number, b: any) => sum + (b.usedCount || 0), 0)
+    const usedCouponsCount = totalUsedInBatches
 
     return NextResponse.json(
       {
