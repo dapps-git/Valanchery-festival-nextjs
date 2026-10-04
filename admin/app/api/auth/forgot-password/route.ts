@@ -6,12 +6,8 @@ import { connectDB } from '@/lib/db'
 
 export const dynamic = 'force-dynamic'
 
+const ADMIN_LOGIN_EMAIL = 'admin@valancheryfestival.com'
 const OTP_RECIPIENT_EMAIL = 'valancheryfestival@gmail.com'
-const ALLOWED_EMAILS = [
-  'valancheryfestival@gmail.com',
-  'admin@valancheryfestival.com',
-  (process.env.ADMIN_EMAIL || '').toLowerCase().trim(),
-].filter(Boolean)
 
 function signOtpToken(email: string, otp: string, expiresAt: number): string {
   const secret = process.env.JWT_SECRET || process.env.NEXTAUTH_SECRET || 'vf2026-secret'
@@ -29,8 +25,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: 'Email address is required' }, { status: 400 })
     }
 
-    // Only allow verified admin email or recovery email
-    if (!ALLOWED_EMAILS.includes(cleanEmail)) {
+    // Only allow the exact registered admin email
+    if (cleanEmail !== ADMIN_LOGIN_EMAIL) {
       return NextResponse.json(
         { ok: false, error: 'Invalid email' },
         { status: 403 }
@@ -39,7 +35,7 @@ export async function POST(request: Request) {
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString()
     const expiresAt = Date.now() + 10 * 60 * 1000 // 10 min
-    const token = signOtpToken(OTP_RECIPIENT_EMAIL, otp, expiresAt)
+    const token = signOtpToken(ADMIN_LOGIN_EMAIL, otp, expiresAt)
 
     // Save to DB in background so verify-otp / reset-password work reliably
     connectDB()

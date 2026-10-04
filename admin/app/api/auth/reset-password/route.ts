@@ -5,10 +5,7 @@ import crypto from 'crypto'
 
 export const dynamic = 'force-dynamic'
 
-const ALLOWED_ADMIN_EMAILS = [
-  'valancheryfestival@gmail.com',
-  'admin@valancheryfestival.com',
-]
+const ADMIN_EMAIL = 'admin@valancheryfestival.com'
 
 function verifyOtpToken(token: string, email: string, otp: string): boolean {
   try {
@@ -23,9 +20,8 @@ function verifyOtpToken(token: string, email: string, otp: string): boolean {
     if (Number(tokExpires) < Date.now()) return false
     if (tokOtp !== otp.trim()) return false
 
-    const cleanTok = (tokEmail || '').toLowerCase().trim()
     const cleanIn = (email || '').toLowerCase().trim()
-    if (cleanTok !== cleanIn && !(ALLOWED_ADMIN_EMAILS.includes(cleanTok) && ALLOWED_ADMIN_EMAILS.includes(cleanIn))) {
+    if (cleanIn !== ADMIN_EMAIL || tokEmail.toLowerCase().trim() !== ADMIN_EMAIL) {
       return false
     }
     return true
@@ -41,6 +37,10 @@ export async function POST(request: Request) {
     const cleanOtp = (body.otp || '').trim()
     const cleanPass = (body.newPassword || '').trim()
     const token = (body.token || '').trim()
+
+    if (cleanEmail !== ADMIN_EMAIL) {
+      return NextResponse.json({ ok: false, error: 'Invalid email' }, { status: 400 })
+    }
 
     if (!cleanPass || cleanPass.length < 6) {
       return NextResponse.json({ ok: false, error: 'Password must be at least 6 characters' }, { status: 400 })

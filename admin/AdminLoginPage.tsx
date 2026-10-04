@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Confetti } from '@/components/Confetti'
 import { useApp } from '@/context/AppContext'
-import { ADMIN_EMAIL, ADMIN_OTP_EMAIL } from '@/data/mockData'
+import { ADMIN_EMAIL } from '@/data/mockData'
 import { api } from '@/lib/api'
 import {
   Lock,
@@ -114,9 +114,8 @@ export function AdminLoginPage() {
       return
     }
 
-    // Client-side validation: must be registered admin email or recovery email
-    const allowed = [ADMIN_OTP_EMAIL.toLowerCase(), ADMIN_EMAIL.toLowerCase()]
-    if (!allowed.includes(targetEmail)) {
+    // Client-side validation: must be exactly admin@valancheryfestival.com
+    if (targetEmail !== ADMIN_EMAIL.toLowerCase()) {
       setForgotError('Invalid email')
       return
     }

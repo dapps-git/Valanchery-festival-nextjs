@@ -5,12 +5,7 @@ import jwt from 'jsonwebtoken'
 
 export const dynamic = 'force-dynamic'
 
-const DEFAULT_ADMIN_EMAIL = (process.env.ADMIN_EMAIL || 'admin@valancheryfestival.com').toLowerCase().trim()
-const ALLOWED_ADMIN_EMAILS = [
-  DEFAULT_ADMIN_EMAIL,
-  'admin@valancheryfestival.com',
-  'valancheryfestival@gmail.com',
-].filter(Boolean)
+const ADMIN_EMAIL = 'admin@valancheryfestival.com'
 const JWT_SECRET = process.env.JWT_SECRET || 'vf2026_token_sign_key'
 
 function createAdminJwtResponse(email: string) {
@@ -68,7 +63,7 @@ export async function POST(request: Request) {
       const hashedDefault = await bcrypt.hash('Admin@2026', 12)
       await col.insertOne({
         id: 'admin_credential',
-        email: DEFAULT_ADMIN_EMAIL,
+        email: ADMIN_EMAIL,
         password: hashedDefault,
         isCustomPassword: false,
         createdAt: new Date().toISOString(),
@@ -78,8 +73,7 @@ export async function POST(request: Request) {
       console.log('[ADMIN] Auto-seeded default credentials on first login')
     }
 
-    const isAuthorized = ALLOWED_ADMIN_EMAILS.includes(cleanEmail) || (adminDoc?.email && cleanEmail === adminDoc.email.toLowerCase().trim())
-    if (!isAuthorized) {
+    if (cleanEmail !== ADMIN_EMAIL) {
       return NextResponse.json({ ok: false, error: 'Invalid admin credentials' }, { status: 401 })
     }
 
