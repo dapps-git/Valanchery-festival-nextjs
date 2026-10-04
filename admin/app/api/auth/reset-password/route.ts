@@ -5,6 +5,11 @@ import crypto from 'crypto'
 
 export const dynamic = 'force-dynamic'
 
+const ALLOWED_ADMIN_EMAILS = [
+  'valancheryfestival@gmail.com',
+  'admin@valancheryfestival.com',
+]
+
 function verifyOtpToken(token: string, email: string, otp: string): boolean {
   try {
     const secret = process.env.JWT_SECRET || process.env.NEXTAUTH_SECRET || 'vf2026-secret'
@@ -16,8 +21,13 @@ function verifyOtpToken(token: string, email: string, otp: string): boolean {
     const expectedSig = crypto.createHmac('sha256', secret).update(payload).digest('hex')
     if (tokSig !== expectedSig) return false
     if (Number(tokExpires) < Date.now()) return false
-    if (tokEmail !== email.trim().toLowerCase()) return false
     if (tokOtp !== otp.trim()) return false
+
+    const cleanTok = (tokEmail || '').toLowerCase().trim()
+    const cleanIn = (email || '').toLowerCase().trim()
+    if (cleanTok !== cleanIn && !(ALLOWED_ADMIN_EMAILS.includes(cleanTok) && ALLOWED_ADMIN_EMAILS.includes(cleanIn))) {
+      return false
+    }
     return true
   } catch {
     return false
@@ -57,12 +67,14 @@ export async function POST(request: Request) {
       {
         $set: {
           id: 'admin_credential',
-          email: cleanEmail,
+          email: 'admin@valancheryfestival.com',
+          recoveryEmail: 'valancheryfestival@gmail.com',
           password: hashedPassword,
           isCustomPassword: true,
           otp: null,
           otpExpires: null,
           passwordChangedAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         },
       },
       { upsert: true }

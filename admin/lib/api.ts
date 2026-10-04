@@ -96,21 +96,21 @@ export const api = {
     return res.json()
   },
 
-  async verifyOtp(email: string, otp: string): Promise<{ ok: boolean; message?: string; error?: string }> {
+  async verifyOtp(email: string, otp: string, token?: string): Promise<{ ok: boolean; message?: string; error?: string }> {
     const res = await fetchWithTimeout(`${API_BASE}/auth/verify-otp`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, otp }),
-    }, 10000)
+      body: JSON.stringify({ email, otp, token }),
+    }, 15000)
     return res.json()
   },
 
-  async resetPassword(email: string, otp: string, newPassword: string): Promise<{ ok: boolean; message?: string; error?: string }> {
+  async resetPassword(email: string, otp: string, newPassword: string, token?: string): Promise<{ ok: boolean; message?: string; error?: string }> {
     const res = await fetchWithTimeout(`${API_BASE}/auth/reset-password`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, otp, newPassword }),
-    }, 12000)
+      body: JSON.stringify({ email, otp, newPassword, token }),
+    }, 15000)
     return res.json()
   },
 
