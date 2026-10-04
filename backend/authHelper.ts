@@ -1,8 +1,7 @@
 import bcrypt from 'bcryptjs'
 
-// Default fallback admin credentials
-export const DEFAULT_ADMIN_EMAIL = 'admin@valancheryfestival.com'
-export const DEFAULT_PASSWORD_HASH = bcrypt.hashSync('Admin@2026', 10)
+export const DEFAULT_ADMIN_EMAIL = (process.env.ADMIN_EMAIL || '').toLowerCase().trim()
+export const DEFAULT_PASSWORD_HASH = ''
 
 /**
  * Securely hashes a plain text password with salt

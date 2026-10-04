@@ -1,4 +1,4 @@
-export const ADMIN_EMAIL = 'admin@valancheryfestival.com'
+export const ADMIN_EMAIL = (typeof process !== 'undefined' && process.env.ADMIN_EMAIL ? process.env.ADMIN_EMAIL : '').toLowerCase().trim()
 
 // Preset gift options (empty - gifts are managed dynamically from database)
 export const GIFT_PRESETS: Array<{

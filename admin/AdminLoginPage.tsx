@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Confetti } from '@/components/Confetti'
 import { useApp } from '@/context/AppContext'
-import { ADMIN_EMAIL } from '@/data/mockData'
+
 import { api } from '@/lib/api'
 import {
   Lock,
@@ -41,15 +41,8 @@ export function AdminLoginPage() {
       if (typeof localStorage !== 'undefined') {
         const savedEmail = localStorage.getItem('admin_saved_email')
         const savedPassword = localStorage.getItem('admin_saved_password')
-        // Only restore if it's the actual admin login email
-        if (savedEmail && savedEmail === ADMIN_EMAIL) {
-          setEmail(savedEmail)
-          if (savedPassword) setPassword(savedPassword)
-        } else {
-          // Wipe any stale/wrong email that got saved before
-          localStorage.removeItem('admin_saved_email')
-          localStorage.removeItem('admin_saved_password')
-        }
+        if (savedEmail) setEmail(savedEmail)
+        if (savedPassword) setPassword(savedPassword)
       }
     } catch {}
   }, [])
@@ -182,15 +175,7 @@ export function AdminLoginPage() {
     try {
       const res = await api.resetPassword(forgotEmail.trim(), forgotOtp.trim(), newPassword.trim(), forgotToken)
       if (res.ok) {
-        setEmail(ADMIN_EMAIL)
         setPassword(newPassword.trim())
-        try {
-          if (typeof localStorage !== 'undefined') {
-            // Always save admin login email (not OTP email) for next login
-            localStorage.setItem('admin_saved_email', ADMIN_EMAIL)
-            localStorage.setItem('admin_saved_password', newPassword.trim())
-          }
-        } catch {}
         setShowForgotModal(false)
         setError('')
         alert('Password reset successfully! You can now log into the dashboard with your new password.')
@@ -242,7 +227,7 @@ export function AdminLoginPage() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="admin@valancheryfestival.com"
+                    placeholder="Enter admin email"
                     className="w-full px-3.5 py-2.5 text-xs text-stone-900 placeholder:text-stone-400 outline-none font-normal bg-white"
                     required
                   />
