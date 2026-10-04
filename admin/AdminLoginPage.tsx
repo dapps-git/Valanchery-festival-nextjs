@@ -111,6 +111,12 @@ export function AdminLoginPage() {
       return
     }
 
+    // Client-side validation — only allow the registered admin email
+    if (forgotEmail.trim().toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
+      setForgotError(`Only the registered admin email can reset the password.`)
+      return
+    }
+
     setForgotLoading(true)
     try {
       const res = await api.forgotPassword(forgotEmail.trim())
