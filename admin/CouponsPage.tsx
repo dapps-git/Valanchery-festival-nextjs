@@ -14,6 +14,7 @@ import { useApp } from '@/context/AppContext'
 import { api } from '@/lib/api'
 import { exportCouponsToXlsx } from '@/lib/exportCsv'
 import { formatShortDate } from '@/lib/format'
+import { DeleteConfirmModal } from '@/components/DeleteConfirmModal'
 
 type DeleteTarget = { id: string; name: string }
 
@@ -28,21 +29,18 @@ export function CouponsPage() {
 
   // Confirmation modal state
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null)
-  const [confirmText, setConfirmText] = useState('')
 
   const openDeleteModal = (id: string, name: string) => {
     setDeleteTarget({ id, name })
-    setConfirmText('')
   }
 
   const closeDeleteModal = () => {
     setDeleteTarget(null)
-    setConfirmText('')
   }
 
   const handleDeleteBatch = async () => {
-    if (!deleteTarget || confirmText !== 'DELETE') return
-    const { id, name } = deleteTarget
+    if (!deleteTarget) return
+    const { id } = deleteTarget
     closeDeleteModal()
     setDeletingBatchId(id)
     try {
@@ -276,70 +274,25 @@ export function CouponsPage() {
         )}
       </div>
 
-      {/* ── Delete Confirmation Modal ── */}
-      {deleteTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.45)' }}>
-          <div className="relative w-full max-w-md bg-white rounded-[10px] shadow-2xl border border-stone-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-            {/* Header */}
-            <div className="flex items-start justify-between gap-3 px-6 pt-5 pb-4 border-b border-[#F2EFE9]">
-              <div className="flex items-center gap-2.5">
-                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-red-50 border border-red-100">
-                  <AlertTriangle size={15} className="text-red-600" />
-                </span>
-                <div>
-                  <p className="text-sm font-medium text-stone-900">Delete Batch</p>
-                  <p className="text-[11px] text-stone-500 font-light mt-0.5">This action is irreversible</p>
-                </div>
-              </div>
-              <button onClick={closeDeleteModal} className="text-stone-400 hover:text-stone-700 transition mt-0.5 cursor-pointer">
-                <X size={16} />
-              </button>
-            </div>
-
-            {/* Body */}
-            <div className="px-6 py-5 space-y-4">
-              <p className="text-xs text-stone-600 font-light leading-relaxed">
-                You are about to permanently delete&nbsp;
-                <span className="font-medium text-stone-900">"{deleteTarget.name}"</span>&nbsp;
-                and all its coupons. Registered participants linked to these coupons will also be removed.
-              </p>
-
-              <div className="space-y-1.5">
-                <label className="block text-[11px] font-normal text-stone-500 tracking-wide uppercase">
-                  Type&nbsp;<span className="font-semibold text-red-600">DELETE</span>&nbsp;to confirm
-                </label>
-                <input
-                  autoFocus
-                  type="text"
-                  value={confirmText}
-                  onChange={(e) => setConfirmText(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleDeleteBatch()}
-                  placeholder="DELETE"
-                  className="w-full border border-[#E8E3D8] focus:border-red-400 bg-white px-3.5 py-2 text-sm font-light text-stone-900 outline-none rounded-[6px] transition placeholder:text-stone-300"
-                />
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="flex items-center justify-end gap-2 px-6 pb-5">
-              <button
-                onClick={closeDeleteModal}
-                className="px-4 py-2 text-xs font-normal text-stone-600 border border-[#E8E3D8] bg-white hover:bg-stone-50 rounded-[6px] transition cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDeleteBatch}
-                disabled={confirmText !== 'DELETE'}
-                className="px-4 py-2 text-xs font-normal text-white bg-red-600 hover:bg-red-700 border border-red-600 rounded-[6px] transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1.5"
-              >
-                <Trash2 size={12} />
-                Delete Batch
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* ── Double Confirmation Delete Modal (Type DELETE + Confirm) ── */}
+      <DeleteConfirmModal
+        isOpen={Boolean(deleteTarget)}
+        title="Delete Coupon Batch"
+        itemName={deleteTarget?.name || ''}
+        itemType="Coupon Batch"
+        warningDetails={
+          deleteTarget ? (
+            <>
+              You are about to permanently delete{' '}
+              <strong className="font-semibold text-red-950">"{deleteTarget.name}"</strong>.
+              If this batch has gone to printing, <strong>all printed physical coupons will become invalid</strong>, and shoppers scanning their QR codes will see an "Invalid Coupon" error!
+            </>
+          ) : undefined
+        }
+        isDeleting={Boolean(deletingBatchId)}
+        onClose={closeDeleteModal}
+        onConfirm={handleDeleteBatch}
+      />
     </div>
   )
 }

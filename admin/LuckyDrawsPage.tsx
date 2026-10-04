@@ -2,12 +2,14 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useApp } from '@/context/AppContext'
 import { formatDate } from '@/lib/format'
-
-import { Plus, X, ArrowRight, Calendar, Users, Sparkles } from 'lucide-react'
+import { Plus, X, ArrowRight, Calendar, Users, Sparkles, Trash2 } from 'lucide-react'
+import { DeleteConfirmModal } from '@/components/DeleteConfirmModal'
+import type { Draw } from '@/types'
 
 export function LuckyDrawsPage() {
-  const { data, getPrize, addDraw } = useApp()
+  const { data, getPrize, addDraw, deleteDraw } = useApp()
   const [open, setOpen] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<Draw | null>(null)
   const [form, setForm] = useState({
     number: data.draws.length + 1,
     date: new Date().toISOString().slice(0, 10),
@@ -100,13 +102,23 @@ export function LuckyDrawsPage() {
 
                 {/* Card Footer */}
                 <div className="flex items-center justify-between border-t border-[#F2EFE9] pt-3">
-                  <Link
-                    to="/admin/lucky-draw"
-                    className="inline-flex items-center gap-1 text-xs font-normal text-stone-700 hover:text-stone-900 transition"
-                  >
-                    <span>Live Stage</span>
-                    <ArrowRight size={12} />
-                  </Link>
+                  <div className="flex items-center gap-2">
+                    <Link
+                      to="/admin/lucky-draw"
+                      className="inline-flex items-center gap-1 text-xs font-normal text-stone-700 hover:text-stone-900 transition"
+                    >
+                      <span>Live Stage</span>
+                      <ArrowRight size={12} />
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => setDeleteTarget(d)}
+                      className="inline-flex items-center p-1 text-stone-400 hover:text-red-600 transition rounded hover:bg-red-50 cursor-pointer"
+                      title="Delete Lucky Draw"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
                   <span className="font-mono text-xs font-normal text-stone-800 bg-[#FAF8F5] px-2 py-0.5 rounded-[4px] border border-[#E8E3D8]">
                     {prize?.value ?? '₹0'}
                   </span>
@@ -182,6 +194,31 @@ export function LuckyDrawsPage() {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal (Type DELETE + Double Confirm) */}
+      <DeleteConfirmModal
+        isOpen={Boolean(deleteTarget)}
+        title="Delete Festival Lucky Draw"
+        itemName={deleteTarget ? `Draw #${deleteTarget.number} (${getPrize(deleteTarget.prizeId)?.name || 'Prize'})` : ''}
+        itemType="Lucky Draw"
+        warningDetails={
+          deleteTarget ? (
+            <>
+              You are about to permanently delete{' '}
+              <strong className="font-semibold text-red-950">Draw #{deleteTarget.number}</strong> (
+              {getPrize(deleteTarget.prizeId)?.name || 'Prize'}). If winners were already declared
+              for this draw, their records may be affected.
+            </>
+          ) : undefined
+        }
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={async () => {
+          if (!deleteTarget) return
+          const id = deleteTarget.id
+          setDeleteTarget(null)
+          deleteDraw(id)
+        }}
+      />
     </div>
   )
 }

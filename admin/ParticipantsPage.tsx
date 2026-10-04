@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useApp } from '@/context/AppContext'
 import { formatShortDate } from '@/lib/format'
 import { formatParticipantsForExcelCsv, downloadCsvFile } from '@/lib/exportCsv'
+import { DeleteConfirmModal } from '@/components/DeleteConfirmModal'
 import type { Participant } from '@/types'
 import {
   Search,
@@ -27,6 +28,7 @@ export function ParticipantsPage() {
   const [page, setPage] = useState(1)
   const [view, setView] = useState<Participant | null>(null)
   const [showAddModal, setShowAddModal] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<Participant | null>(null)
   const [newParticipant, setNewParticipant] = useState({
     name: '',
     phone: '',
@@ -319,12 +321,9 @@ export function ParticipantsPage() {
                           <Eye size={11} /> View
                         </button>
                         <button
-                          onClick={async () => {
-                            if (window.confirm(`Delete entry for "${p.name || p.phone}"?`)) {
-                              await deleteParticipant(p.id)
-                            }
-                          }}
+                          onClick={() => setDeleteTarget(p)}
                           className="inline-flex items-center gap-1 border border-stone-200 bg-white hover:bg-red-50 hover:text-red-700 text-stone-400 px-2 py-1 text-[11px] rounded-[4px] transition cursor-pointer"
+                          title="Delete participant"
                         >
                           <Trash2 size={11} />
                         </button>
@@ -485,6 +484,29 @@ export function ParticipantsPage() {
           </div>
         </Modal>
       )}
+
+      {/* Delete Confirmation Modal (Type DELETE + Secondary Confirm) */}
+      <DeleteConfirmModal
+        isOpen={Boolean(deleteTarget)}
+        title="Delete Participant"
+        itemName={`${deleteTarget?.name || 'Participant'} (${deleteTarget?.phone})`}
+        itemType="Participant"
+        warningDetails={
+          deleteTarget ? (
+            <>
+              You are about to delete registration for <strong className="font-semibold text-red-950">"{deleteTarget.name}"</strong> (Coupon: <span className="font-mono">{deleteTarget.couponId || 'None'}</span>).
+              Their coupon will be released back to <strong>Unused</strong> status.
+            </>
+          ) : undefined
+        }
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={async () => {
+          if (!deleteTarget) return
+          const id = deleteTarget.id
+          setDeleteTarget(null)
+          await deleteParticipant(id)
+        }}
+      />
     </div>
   )
 }

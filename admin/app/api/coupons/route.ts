@@ -150,18 +150,13 @@ export async function DELETE(request: Request) {
     }
 
     if (all) {
-      const [batchRes, couponsRes, partRes] = await Promise.all([
-        batchesCol.deleteMany({}),
-        couponsCol.deleteMany({}),
-        participantsCol.deleteMany({}),
-      ])
-      return NextResponse.json({
-        ok: true,
-        message: 'Deleted all batches, coupons, and participants successfully',
-        deletedBatches: batchRes.deletedCount,
-        deletedCoupons: couponsRes.deletedCount,
-        deletedParticipants: partRes.deletedCount,
-      })
+      return NextResponse.json(
+        {
+          ok: false,
+          error: 'Mass deletion of all coupons is disabled to protect printed batches and live festival data.',
+        },
+        { status: 403 }
+      )
     }
 
     return NextResponse.json({ ok: false, error: 'Specify ?batchId=<id>, ?cleanOrphans=true, or ?all=true' }, { status: 400 })

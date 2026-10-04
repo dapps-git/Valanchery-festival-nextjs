@@ -4,11 +4,13 @@ import { useApp } from '@/context/AppContext'
 import { GIFT_PRESETS } from '@/data/mockData'
 import type { Prize } from '@/types'
 import { Plus, X, Edit3, Trash2, Upload, Sparkles, Loader2, CheckCircle2 } from 'lucide-react'
+import { DeleteConfirmModal } from '@/components/DeleteConfirmModal'
 
 export function PrizesPage() {
   const { data, addPrize, updatePrize, deletePrize } = useApp()
   const navigate = useNavigate()
   const [edit, setEdit] = useState<Partial<Prize> | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<Prize | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
   const [uploadSuccess, setUploadSuccess] = useState('')
@@ -161,11 +163,7 @@ export function PrizesPage() {
                       <span>Edit</span>
                     </button>
                     <button
-                      onClick={() => {
-                        if (window.confirm(`Delete "${p.name}"?`)) {
-                          deletePrize(p.id)
-                        }
-                      }}
+                      onClick={() => setDeleteTarget(p)}
                       className="inline-flex items-center gap-1 border border-stone-200 bg-white hover:bg-red-50 hover:text-red-700 text-stone-400 px-2.5 py-1 text-xs font-normal rounded-[4px] transition cursor-pointer"
                     >
                       <Trash2 size={11} />
@@ -373,6 +371,29 @@ export function PrizesPage() {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal (Type DELETE + Secondary Confirm) */}
+      <DeleteConfirmModal
+        isOpen={Boolean(deleteTarget)}
+        title="Delete Festival Prize"
+        itemName={deleteTarget?.name || 'Prize'}
+        itemType="Prize"
+        warningDetails={
+          deleteTarget ? (
+            <>
+              You are about to permanently delete <strong className="font-semibold text-red-950">"{deleteTarget.name}"</strong> ({deleteTarget.value || 'Valanchery Prize'}).
+              If this prize was assigned to any draws, the draw will lose its prize assignment!
+            </>
+          ) : undefined
+        }
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={async () => {
+          if (!deleteTarget) return
+          const id = deleteTarget.id
+          setDeleteTarget(null)
+          await deletePrize(id)
+        }}
+      />
     </div>
   )
 }

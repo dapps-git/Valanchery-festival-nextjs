@@ -45,7 +45,7 @@ export function SettingsPage() {
           Running in offline-first client storage mode. All participant registrations and lucky draw winners are safely preserved in this browser.
         </div>
 
-        <div className="pt-2 flex flex-wrap gap-3">
+        <div className="pt-2 flex flex-wrap items-center gap-3">
           <button
             type="button"
             onClick={() => setToast('Settings successfully saved!')}
@@ -53,18 +53,10 @@ export function SettingsPage() {
           >
             SAVE SETTINGS
           </button>
-          <button
-            type="button"
-            onClick={() => {
-              if (window.confirm('Reset all participants, draws and winners to default initial demo dataset?')) {
-                resetToDefaultData()
-                setToast('Demo data restored to original initial state!')
-              }
-            }}
-            className="border border-black/20 bg-[#f7f0e6] px-5 py-2.5 text-xs font-light tracking-wider text-black transition hover:bg-black/5"
-          >
-            RESET TO DEFAULT DEMO DATA
-          </button>
+          <div className="flex items-center gap-2 border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-normal text-emerald-800 rounded-[4px]">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>Production Safety Lock Active (Printed coupons & database records protected)</span>
+          </div>
         </div>
       </div>
     </div>

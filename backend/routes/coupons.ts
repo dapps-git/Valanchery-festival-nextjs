@@ -280,12 +280,10 @@ router.delete('/', async (req, res) => {
     const isAll = req.query.all === 'true'
 
     if (isAll) {
-      await Promise.all([
-        CouponBatch.deleteMany({}),
-        Coupon.deleteMany({}),
-        Participant.deleteMany({}),
-      ])
-      return res.json({ ok: true, message: 'All batches, coupons, and participants deleted' })
+      return res.status(403).json({
+        ok: false,
+        error: 'Mass deletion of all coupons is disabled to protect printed batches and live festival data.',
+      })
     }
 
     if (batchId) {
