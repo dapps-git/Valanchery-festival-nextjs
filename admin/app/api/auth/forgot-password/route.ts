@@ -1,10 +1,15 @@
 import { NextResponse } from 'next/server'
-import { connectDB } from '@/lib/db'
 import { sendOtpEmail } from '@/lib/mailer'
+import crypto from 'crypto'
 
 export const dynamic = 'force-dynamic'
-// Increase Vercel function max duration to 30s (Pro) or leave at 10s (Hobby)
-export const maxDuration = 10
+
+function signOtpToken(email: string, otp: string, expiresAt: number): string {
+  const secret = process.env.JWT_SECRET || process.env.NEXTAUTH_SECRET || 'vf2026-secret'
+  const payload = `${email}|${otp}|${expiresAt}`
+  const sig = crypto.createHmac('sha256', secret).update(payload).digest('hex')
+  return Buffer.from(`${payload}|${sig}`).toString('base64url')
+}
 
 export async function POST(request: Request) {
   try {
@@ -15,26 +20,29 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: 'Admin email is required' }, { status: 400 })
     }
 
-    const db = await connectDB()
+    // Only allow OTP for the registered admin email — never for random emails
+    const adminEmail = (process.env.ADMIN_EMAIL || 'admin@valancheryfestival.com').trim().toLowerCase()
+    const altAdminEmail = 'valancheryfestival@gmail.com' // secondary allowed email
+
+    if (cleanEmail !== adminEmail && cleanEmail !== altAdminEmail) {
+      return NextResponse.json(
+        { ok: false, error: 'This email is not registered as an admin account.' },
+        { status: 403 }
+      )
+    }
+
     const otp = Math.floor(100000 + Math.random() * 900000).toString()
-    const otpExpires = new Date(Date.now() + 10 * 60 * 1000)
+    const expiresAt = Date.now() + 10 * 60 * 1000 // 10 min
+    const token = signOtpToken(cleanEmail, otp, expiresAt)
 
-    // Save OTP to DB first
-    await db.collection('admin_settings').updateOne(
-      { id: 'admin_credential' },
-      { $set: { id: 'admin_credential', email: cleanEmail, otp, otpExpires, updatedAt: new Date().toISOString() } },
-      { upsert: true }
-    )
-
-    // Fire email in background — DO NOT await. Respond immediately so Vercel doesn't timeout.
-    // The OTP is already saved in DB. Admin can use it even if email fails.
-    sendOtpEmail(cleanEmail, otp).catch(() => {/* silent — OTP is in DB */})
+    // Fire email in background — no await, respond instantly
+    sendOtpEmail(cleanEmail, otp).catch(() => {/* silent */})
 
     return NextResponse.json({
       ok: true,
-      message: `OTP sent to ${cleanEmail}. Check inbox & spam. If email is slow, wait 30 seconds and check again.`,
-      // Also return otp as fallback so admin is never locked out if SMTP is blocked on Vercel
-      otp,
+      message: `OTP sent to ${cleanEmail}. Check your inbox & spam folder.`,
+      otp,      // fallback: show on screen if email fails
+      token,    // signed token for verify/reset steps
     })
   } catch (err: any) {
     return NextResponse.json({ ok: false, error: err.message }, { status: 500 })
