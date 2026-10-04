@@ -32,7 +32,7 @@ const getAdminLoginEmail = () => {
 }
 const getOtpEmail = () => {
   ensureEnvLoaded()
-  return (process.env.SMTP_USER || '').toLowerCase().trim()
+  return (process.env.RESEND_MAIL || '').toLowerCase().trim()
 }
 const getJwtSecret = () => {
   ensureEnvLoaded()
