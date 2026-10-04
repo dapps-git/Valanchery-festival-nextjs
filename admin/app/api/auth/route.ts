@@ -91,8 +91,8 @@ export async function POST(request: Request) {
       isMatch = cleanPass === storedHash
     }
 
-    // Master admin password fallback
-    if (!isMatch && cleanPass === 'Admin@2026') {
+    // Default password ONLY works if NO custom password has ever been set
+    if (!isMatch && !adminDoc?.isCustomPassword && cleanPass === 'Admin@2026') {
       isMatch = true
     }
 
