@@ -9,36 +9,24 @@ export async function sendOtpEmail(toEmail: string, otp: string): Promise<{ ok: 
     const smtpFrom = process.env.SMTP_FROM || (smtpUser ? `"Lucky Draw Admin" <${smtpUser}>` : '')
 
     if (!smtpUser || !smtpPass) {
-      return { ok: false, error: 'SMTP credentials missing: SMTP_USER and SMTP_PASS must be configured in environment' }
+      return { ok: false, error: 'SMTP credentials missing: Please add SMTP_USER and SMTP_PASS to Vercel Environment Variables.' }
     }
 
-    const isGmail = smtpHost.toLowerCase().includes('gmail')
-    const isSecure = process.env.SMTP_SECURE !== undefined
-      ? process.env.SMTP_SECURE === 'true'
-      : smtpPort === 465
-
-    const transportConfig: any = isGmail
-      ? {
-          service: 'gmail',
-          auth: {
-            user: smtpUser,
-            pass: smtpPass,
-          },
-        }
-      : {
-          host: smtpHost,
-          port: smtpPort,
-          secure: isSecure,
-          auth: {
-            user: smtpUser,
-            pass: smtpPass,
-          },
-          tls: {
-            rejectUnauthorized: false,
-          },
-        }
-
-    const transporter = nodemailer.createTransport(transportConfig)
+    const transporter = nodemailer.createTransport({
+      host: isGmail ? 'smtp.gmail.com' : smtpHost,
+      port: isGmail ? 465 : smtpPort,
+      secure: isGmail ? true : isSecure,
+      auth: {
+        user: smtpUser,
+        pass: smtpPass,
+      },
+      connectionTimeout: 7000,
+      greetingTimeout: 7000,
+      socketTimeout: 7000,
+      tls: {
+        rejectUnauthorized: false,
+      },
+    })
 
     await transporter.sendMail({
       from: smtpFrom,
