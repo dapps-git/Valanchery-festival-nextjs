@@ -20,11 +20,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: 'Admin email is required' }, { status: 400 })
     }
 
-    // Only allow OTP for the registered admin email — never for random emails
-    const adminEmail = (process.env.ADMIN_EMAIL || 'admin@valancheryfestival.com').trim().toLowerCase()
-    const altAdminEmail = 'valancheryfestival@gmail.com' // secondary allowed email
+    // Only allow OTP for the single registered admin email
+    const adminEmail = 'valancheryfestival@gmail.com'
 
-    if (cleanEmail !== adminEmail && cleanEmail !== altAdminEmail) {
+    if (cleanEmail !== adminEmail) {
       return NextResponse.json(
         { ok: false, error: 'This email is not registered as an admin account.' },
         { status: 403 }
