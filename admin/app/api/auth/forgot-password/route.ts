@@ -32,19 +32,21 @@ export async function POST(request: Request) {
 
     const token = signOtpToken(otpEmail, otp, expiresAt)
 
-    connectDB()
-      .then((db) =>
-        db.collection('admin_settings').updateOne(
-          { id: 'admin_credential' },
-          { $set: { otp, otpExpires: new Date(expiresAt).toISOString(), updatedAt: new Date().toISOString() } },
-          { upsert: true }
-        )
-      )
-      .catch((err) => console.error('[FORGOT-PASSWORD] DB error:', err))
-
-    sendOtpEmail(otpEmail, otp).catch((err) =>
-      console.error('[FORGOT-PASSWORD] Mailer error:', err)
+    const db = await connectDB()
+    await db.collection('admin_settings').updateOne(
+      { id: 'admin_credential' },
+      { $set: { otp, otpExpires: new Date(expiresAt).toISOString(), updatedAt: new Date().toISOString() } },
+      { upsert: true }
     )
+
+    const mailRes = await sendOtpEmail(otpEmail, otp)
+    if (!mailRes.ok) {
+      console.error('[FORGOT-PASSWORD] Mailer error:', mailRes.error)
+      return NextResponse.json({
+        ok: false,
+        error: mailRes.error || 'Failed to dispatch email. Check SMTP/Resend configuration or spam folder.',
+      }, { status: 500 })
+    }
 
     return NextResponse.json({
       ok: true,
