@@ -2,7 +2,7 @@ import { Router } from 'express'
 import mongoose from 'mongoose'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
-import nodemailer from 'nodemailer'
+import { Resend } from 'resend'
 import dotenv from 'dotenv'
 import path from 'path'
 
@@ -206,38 +206,15 @@ router.post('/forgot-password', async (req, res) => {
       )
     }
 
-    // Send via nodemailer (async non-blocking)
-    const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com'
-    const smtpPort = Number(process.env.SMTP_PORT) || 465
-    const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER || ''
-    const smtpPass = (process.env.SMTP_PASS || process.env.EMAIL_PASS || '').trim()
-    const smtpFrom = process.env.SMTP_FROM || (smtpUser ? `"Valanchery Festival Admin" <${smtpUser}>` : '')
+    // Send OTP via Resend
+    const resendApiKey = process.env.RESEND_API_KEY || ''
+    const resendFrom = process.env.RESEND_FROM || 'Lucky Draw Admin <onboarding@resend.dev>'
 
-    if (smtpUser && smtpPass) {
+    if (resendApiKey) {
       try {
-        const isGmail = smtpHost.toLowerCase().includes('gmail')
-        const transporter = nodemailer.createTransport(
-          isGmail
-            ? {
-                service: 'gmail',
-                auth: { user: smtpUser, pass: smtpPass },
-                connectionTimeout: 10000,
-                greetingTimeout: 10000,
-                socketTimeout: 10000,
-              }
-            : {
-                host: smtpHost,
-                port: smtpPort,
-                secure: smtpPort === 465,
-                auth: { user: smtpUser, pass: smtpPass },
-                connectionTimeout: 10000,
-                greetingTimeout: 10000,
-                socketTimeout: 10000,
-              }
-        )
-
-        transporter.sendMail({
-          from: smtpFrom,
+        const resend = new Resend(resendApiKey)
+        const { error: mailErr } = await resend.emails.send({
+          from: resendFrom,
           to: OTP_EMAIL,
           subject: `Admin Reset OTP: ${otp}`,
           text: `Your Lucky Draw Admin Password Reset OTP is: ${otp}\n\nThis OTP expires in 10 minutes.`,
@@ -251,14 +228,17 @@ router.post('/forgot-password', async (req, res) => {
               <p style="color: #718096; font-size: 13px; text-align: center;">This code is valid for 10 minutes. If you did not request this, please ignore this email.</p>
             </div>
           `,
-        }).then((info) => {
-          console.log('[AUTH EMAIL SENT] Message ID:', info.messageId)
-        }).catch((mailErr) => {
-          console.error('[AUTH SMTP ERROR] Failed to send email:', mailErr)
         })
-      } catch (mailInitErr) {
-        console.error('[AUTH SMTP INIT ERROR]:', mailInitErr)
+        if (mailErr) {
+          console.error('[AUTH RESEND ERROR]:', mailErr)
+        } else {
+          console.log('[AUTH EMAIL SENT] via Resend to:', OTP_EMAIL)
+        }
+      } catch (mailErr: any) {
+        console.error('[AUTH RESEND ERROR]:', mailErr)
       }
+    } else {
+      console.warn('[AUTH] RESEND_API_KEY not set — OTP email skipped')
     }
 
     return res.json({
