@@ -1,4 +1,5 @@
-export const ADMIN_EMAIL = 'valancheryfestival@gmail.com'
+export const ADMIN_EMAIL = 'admin@valancheryfestival.com'
+export const ADMIN_OTP_EMAIL = 'valancheryfestival@gmail.com'
 
 // Preset gift options (empty - gifts are managed dynamically from database)
 export const GIFT_PRESETS: Array<{

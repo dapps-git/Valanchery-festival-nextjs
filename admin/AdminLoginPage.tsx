@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Confetti } from '@/components/Confetti'
 import { useApp } from '@/context/AppContext'
-import { ADMIN_EMAIL } from '@/data/mockData'
+import { ADMIN_EMAIL, ADMIN_OTP_EMAIL } from '@/data/mockData'
 import { api } from '@/lib/api'
 import {
   Lock,
@@ -52,6 +52,7 @@ export function AdminLoginPage() {
   const [forgotStep, setForgotStep] = useState<1 | 2 | 3>(1)
   const [forgotEmail, setForgotEmail] = useState('')
   const [forgotOtp, setForgotOtp] = useState('')
+  const [forgotToken, setForgotToken] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showNewPassword, setShowNewPassword] = useState(false)
@@ -92,8 +93,9 @@ export function AdminLoginPage() {
   }
 
   const openForgotModal = () => {
-    setForgotEmail(email || ADMIN_EMAIL)
+    setForgotEmail(email || '')
     setForgotOtp('')
+    setForgotToken('')
     setNewPassword('')
     setConfirmPassword('')
     setForgotError('')
@@ -106,23 +108,26 @@ export function AdminLoginPage() {
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault()
     setForgotError('')
-    if (!forgotEmail.trim()) {
-      setForgotError('Please enter the admin email address')
+    const targetEmail = forgotEmail.trim().toLowerCase()
+    if (!targetEmail) {
+      setForgotError('Please enter your admin email address')
       return
     }
 
-    // Client-side validation — only allow the registered admin email
-    if (forgotEmail.trim().toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
-      setForgotError(`Only the registered admin email can reset the password.`)
+    // Client-side validation: must be registered admin email or recovery email
+    const allowed = [ADMIN_OTP_EMAIL.toLowerCase(), ADMIN_EMAIL.toLowerCase()]
+    if (!allowed.includes(targetEmail)) {
+      setForgotError('Invalid email')
       return
     }
 
     setForgotLoading(true)
     try {
-      const res = await api.forgotPassword(forgotEmail.trim())
+      const res = await api.forgotPassword(targetEmail)
       if (res.ok) {
+        if (res.token) setForgotToken(res.token)
         setForgotStep(2)
-        setForgotSuccessMessage(res.message || `OTP sent to ${forgotEmail.trim()}`)
+        setForgotSuccessMessage(res.message || 'OTP sent. Please check your inbox & spam folder.')
       } else {
         setForgotError(res.error || 'Failed to send OTP. Please check email address.')
       }
@@ -144,7 +149,7 @@ export function AdminLoginPage() {
 
     setForgotLoading(true)
     try {
-      const res = await api.verifyOtp(forgotEmail.trim(), forgotOtp.trim())
+      const res = await api.verifyOtp(forgotEmail.trim(), forgotOtp.trim(), forgotToken)
       if (res.ok) {
         setForgotStep(3)
         setForgotSuccessMessage('OTP verified! Now choose your new admin password.')
@@ -173,20 +178,19 @@ export function AdminLoginPage() {
 
     setForgotLoading(true)
     try {
-      const res = await api.resetPassword(forgotEmail.trim(), forgotOtp.trim(), newPassword.trim())
+      const res = await api.resetPassword(forgotEmail.trim(), forgotOtp.trim(), newPassword.trim(), forgotToken)
       if (res.ok) {
-        setEmail(forgotEmail.trim())
+        setEmail(ADMIN_EMAIL)
         setPassword(newPassword.trim())
         try {
           if (typeof localStorage !== 'undefined') {
-            localStorage.removeItem('admin_saved_password')
-            localStorage.setItem('admin_saved_email', forgotEmail.trim().toLowerCase())
+            localStorage.setItem('admin_saved_email', ADMIN_EMAIL)
             localStorage.setItem('admin_saved_password', newPassword.trim())
           }
         } catch {}
         setShowForgotModal(false)
         setError('')
-        alert('Password reset successfully! Default password is now disabled and all sessions on other devices have been logged out. Please log in with your new password.')
+        alert('Password reset successfully! You can now log into the dashboard with admin@valancheryfestival.com and your new password.')
       } else {
         setForgotError(res.error || 'Failed to update password. Please try again.')
       }
@@ -366,7 +370,7 @@ export function AdminLoginPage() {
                     required
                   />
                   <p className="mt-1 text-[10px] text-stone-400 font-light">
-                    A 6-digit OTP verification code will be sent to this email via Nodemailer.
+                    A 6-digit OTP verification code will be sent to the registered email.
                   </p>
                 </div>
 
@@ -413,7 +417,7 @@ export function AdminLoginPage() {
                     required
                   />
                   <div className="mt-1.5 flex items-center justify-between text-[10px]">
-                    <span className="text-stone-400 font-light">Sent to: {forgotEmail}</span>
+                    <span className="text-stone-400 font-light">Sent to registered admin email</span>
                     <button
                       type="button"
                       onClick={handleSendOtp}
