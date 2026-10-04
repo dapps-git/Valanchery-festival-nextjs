@@ -3,9 +3,20 @@ import mongoose from 'mongoose'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import nodemailer from 'nodemailer'
+import dotenv from 'dotenv'
+import path from 'path'
 
 const router = Router()
-const JWT_SECRET = process.env.JWT_SECRET || 'vf2026_token_sign_key'
+
+function ensureEnvLoaded() {
+  if (!process.env.ADMIN_EMAIL || !process.env.SMTP_USER) {
+    try {
+      dotenv.config({ path: path.resolve(process.cwd(), 'backend/.env') })
+      dotenv.config({ path: path.resolve(process.cwd(), '.env') })
+      dotenv.config()
+    } catch {}
+  }
+}
 
 // Anti-caching for all authentication routes
 router.use((_req, res, next) => {
@@ -15,9 +26,18 @@ router.use((_req, res, next) => {
   next()
 })
 
-const getAdminLoginEmail = () => (process.env.ADMIN_EMAIL || '').toLowerCase().trim()
-const getOtpEmail = () => (process.env.SMTP_USER || '').toLowerCase().trim()
-const getJwtSecret = () => process.env.JWT_SECRET || 'vf2026_token_sign_key'
+const getAdminLoginEmail = () => {
+  ensureEnvLoaded()
+  return (process.env.ADMIN_EMAIL || '').toLowerCase().trim()
+}
+const getOtpEmail = () => {
+  ensureEnvLoaded()
+  return (process.env.SMTP_USER || '').toLowerCase().trim()
+}
+const getJwtSecret = () => {
+  ensureEnvLoaded()
+  return process.env.JWT_SECRET || 'vf2026_token_sign_key'
+}
 
 // Login route with bcrypt verification & cryptographic 24h JWT
 router.post('/login', async (req, res) => {
@@ -76,7 +96,7 @@ router.post('/login', async (req, res) => {
             email: cleanEmail,
             role: 'admin',
           },
-          JWT_SECRET,
+          getJwtSecret(),
           { expiresIn: '24h' }
         )
         return res.json({ ok: true, role: 'admin', token, email: cleanEmail, expiresIn: 24 * 60 * 60 })
@@ -118,7 +138,7 @@ router.get(['/me', '/verify'], async (req, res) => {
     } else {
       // Cryptographic JWT Verification
       try {
-        const decoded = jwt.verify(token, JWT_SECRET) as any
+        const decoded = jwt.verify(token, getJwtSecret()) as any
         tokenEmail = decoded.email || ''
         tokenIssuedAt = decoded.iat ? decoded.iat * 1000 : 0
       } catch (jwtErr: any) {
