@@ -15,12 +15,8 @@ router.use((_req, res, next) => {
   next()
 })
 
-const KNOWN_ADMIN_EMAILS = [
-  (process.env.ADMIN_EMAIL || '').toLowerCase().trim(),
-  (process.env.SMTP_USER || '').toLowerCase().trim(),
-  'admin@valancheryfestival.com',
-  'valancheryfestival@gmail.com',
-].filter(Boolean)
+const ADMIN_LOGIN_EMAIL = (process.env.ADMIN_EMAIL || '').toLowerCase().trim()
+const OTP_EMAIL = (process.env.SMTP_USER || '').toLowerCase().trim()
 
 // Login route with bcrypt verification & cryptographic 24h JWT
 router.post('/login', async (req, res) => {
@@ -33,9 +29,8 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ ok: false, error: 'Email and password required' })
     }
 
-    const isAuthorizedEmail = KNOWN_ADMIN_EMAILS.includes(cleanEmail)
-    if (!isAuthorizedEmail) {
-      return res.status(401).json({ ok: false, error: 'Invalid admin email address.' })
+    if (!ADMIN_LOGIN_EMAIL || cleanEmail !== ADMIN_LOGIN_EMAIL) {
+      return res.status(401).json({ ok: false, error: 'Invalid admin credentials' })
     }
 
     const db = mongoose.connection.db
@@ -165,9 +160,8 @@ router.post('/forgot-password', async (req, res) => {
       return res.status(400).json({ ok: false, error: 'Admin email is required' })
     }
 
-    const isAuthorized = KNOWN_ADMIN_EMAILS.includes(cleanEmail)
-    if (!isAuthorized) {
-      return res.status(400).json({ ok: false, error: `Unauthorized email address. Please use your registered admin email.` })
+    if (!OTP_EMAIL || cleanEmail !== OTP_EMAIL) {
+      return res.status(400).json({ ok: false, error: 'Invalid email' })
     }
 
     const db = mongoose.connection.db
@@ -189,13 +183,13 @@ router.post('/forgot-password', async (req, res) => {
       )
     }
 
-    // Send via nodemailer to valancheryfestival@gmail.com
+    // Send via nodemailer
     const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com'
     const smtpPort = Number(process.env.SMTP_PORT) || 587
     const isSecure = smtpPort === 465
-    const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER || 'valancheryfestival@gmail.com'
+    const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER || ''
     const smtpPass = (process.env.SMTP_PASS || process.env.EMAIL_PASS || '').trim()
-    const otpDestination = smtpUser || 'valancheryfestival@gmail.com'
+    const otpDestination = OTP_EMAIL
     let emailSent = false
 
     if (!smtpUser || !smtpPass) {
@@ -258,7 +252,12 @@ router.post('/forgot-password', async (req, res) => {
 router.post('/verify-otp', async (req, res) => {
   try {
     const { email, otp } = req.body || {}
+    const cleanEmail = (email || '').trim().toLowerCase()
     const cleanOtp = (otp || '').trim()
+
+    if (!OTP_EMAIL || cleanEmail !== OTP_EMAIL) {
+      return res.status(400).json({ ok: false, error: 'Invalid email' })
+    }
 
     const db = mongoose.connection.db
     if (!db) return res.status(500).json({ ok: false, error: 'Database not connected' })
@@ -288,6 +287,10 @@ router.post('/reset-password', async (req, res) => {
     const cleanOtp = (otp || '').trim()
     const cleanPass = (newPassword || '').trim()
 
+    if (!OTP_EMAIL || cleanEmail !== OTP_EMAIL) {
+      return res.status(400).json({ ok: false, error: 'Invalid email' })
+    }
+
     if (!cleanPass || cleanPass.length < 6) {
       return res.status(400).json({ ok: false, error: 'Password must be at least 6 characters' })
     }
@@ -307,7 +310,7 @@ router.post('/reset-password', async (req, res) => {
       {
         $set: {
           id: 'admin_credential',
-          email: cleanEmail,
+          email: ADMIN_LOGIN_EMAIL,
           password: hashedPassword,
           isCustomPassword: true,
           otp: null,
