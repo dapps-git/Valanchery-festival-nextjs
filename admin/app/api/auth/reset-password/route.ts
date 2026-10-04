@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'
 
 function verifyOtpToken(token: string, otp: string): boolean {
   try {
-    const secret = process.env.JWT_SECRET || 'vf2026-secret'
+    const secret = process.env.JWT_SECRET || ''
     const otpEmail = (process.env.SMTP_USER || '').toLowerCase().trim()
     const decoded = Buffer.from(token, 'base64url').toString('utf8')
     const parts = decoded.split('|')

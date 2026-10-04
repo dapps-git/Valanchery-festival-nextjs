@@ -5,8 +5,8 @@ import jwt from 'jsonwebtoken'
 
 export const dynamic = 'force-dynamic'
 
-const ADMIN_EMAIL = 'admin@valancheryfestival.com'
-const JWT_SECRET = process.env.JWT_SECRET || 'vf2026_token_sign_key'
+const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || '').toLowerCase().trim()
+const JWT_SECRET = process.env.JWT_SECRET || ''
 
 function createAdminJwtResponse(email: string) {
   const token = jwt.sign(
