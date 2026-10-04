@@ -73,7 +73,7 @@ router.post('/login', async (req, res) => {
 
       if (isMatch) {
         const token = `admin_token_${Date.now()}_${Buffer.from(cleanEmail).toString('hex')}`
-        return res.json({ ok: true, role: 'admin', token, email: cleanEmail, expiresIn: 10 * 60 })
+        return res.json({ ok: true, role: 'admin', token, email: cleanEmail, expiresIn: 24 * 60 * 60 })
       }
       return res.status(401).json({ ok: false, error: 'Invalid admin credentials' })
     }
@@ -84,7 +84,7 @@ router.post('/login', async (req, res) => {
   }
 })
 
-// Check session validity (10-minute expiry + password change invalidation)
+// Check session validity (24-hour expiry + password change invalidation)
 router.get(['/me', '/verify'], async (req, res) => {
   try {
     const authHeader = req.headers.authorization || ''
@@ -94,9 +94,9 @@ router.get(['/me', '/verify'], async (req, res) => {
     }
     const parts = token.split('_')
     const timestamp = parseInt(parts[2], 10)
-    // 10 minutes in milliseconds = 600,000
-    if (isNaN(timestamp) || Date.now() - timestamp > 10 * 60 * 1000) {
-      return res.status(401).json({ ok: false, error: 'Session expired (10 minutes). Please log in again.' })
+    // 24 hours in milliseconds = 86,400,000
+    if (isNaN(timestamp) || Date.now() - timestamp > 24 * 60 * 60 * 1000) {
+      return res.status(401).json({ ok: false, error: 'Session expired (24 hours). Please log in again.' })
     }
 
     // Check if password was changed after this token was created

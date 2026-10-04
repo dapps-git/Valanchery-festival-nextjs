@@ -104,14 +104,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<AppData>(loadLocalData)
   const [isOnline, setIsOnline] = useState(false)
 
-  // 10-minute auto logout monitor + password change verification
+  // 24-hour auto logout monitor + password change verification
   useEffect(() => {
     const checkSessionExpiry = async () => {
       if (!isAdmin) return
       if (!isSessionValid()) {
         setIsAdmin(false)
         api.logout()
-        alert('Your admin session has expired (10 minutes). Please log in again.')
+        alert('Your admin session has expired (24 hours). Please log in again.')
         return
       }
 
@@ -313,7 +313,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           const res = await api.login(cleanEmail, password)
           if (res && res.ok) {
             const token = res.token || `admin_auth_${Date.now()}`
-            const expTime = Date.now() + 10 * 60 * 1000 // 10 minutes
+            const expTime = Date.now() + 24 * 60 * 60 * 1000 // 24 hours
             localStorage.setItem(TOKEN_KEY, token)
             localStorage.setItem(TOKEN_EXP_KEY, expTime.toString())
             localStorage.setItem(AUTH_KEY, '1')

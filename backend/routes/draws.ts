@@ -36,6 +36,26 @@ router.put('/:id', async (req, res) => {
   }
 })
 
+// Delete draw (and revert assigned prize)
+router.delete('/:id', async (req, res) => {
+  try {
+    const draw = await Draw.findOne({ id: req.params.id })
+    if (draw) {
+      if (draw.prizeId) {
+        await Prize.updateOne(
+          { id: draw.prizeId },
+          { $set: { status: 'Available' }, $unset: { assignedDrawId: 1 } }
+        ).catch(() => {})
+      }
+      await Winner.deleteMany({ drawId: draw.id }).catch(() => {})
+      await Draw.deleteOne({ id: req.params.id })
+    }
+    res.json({ ok: true, message: 'Draw deleted' })
+  } catch (error: any) {
+    res.status(500).json({ ok: false, error: error.message })
+  }
+})
+
 // Confirm lucky draw winner (atomic winner recording & status updates)
 router.post('/confirm-winner', async (req, res) => {
   try {

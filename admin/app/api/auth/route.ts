@@ -20,25 +20,25 @@ function createAdminJwtResponse(email: string) {
       role: 'admin',
     },
     JWT_SECRET,
-    { expiresIn: '10m' }
+    { expiresIn: '24h' }
   )
 
   const response = NextResponse.json({
     ok: true,
     role: 'admin',
     token,
-    expiresIn: 10 * 60, // 10 minutes in seconds (600)
+    expiresIn: 24 * 60 * 60, // 24 hours in seconds (86400)
     email,
   })
 
-  // Set 10-minute admin session cookie
+  // Set 24-hour admin session cookie
   response.cookies.set({
     name: 'admin_token',
     value: token,
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
-    maxAge: 10 * 60, // 10 minutes
+    maxAge: 24 * 60 * 60, // 24 hours
     path: '/',
   })
 

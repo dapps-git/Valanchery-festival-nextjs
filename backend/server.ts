@@ -116,7 +116,18 @@ app.listen(PORT, () => {
   console.log(`🚀 Valanchery Festival Backend running on http://localhost:${PORT}`)
 })
 
-// ── Then connect to MongoDB asynchronously ──
+// ── MongoDB connection event listeners for 1-year resilience ──
+mongoose.connection.on('disconnected', () => {
+  console.warn('⚠️ MongoDB disconnected. Mongoose will attempt automatic reconnection...')
+})
+mongoose.connection.on('reconnected', () => {
+  console.log('✅ MongoDB reconnected successfully.')
+})
+mongoose.connection.on('error', (err) => {
+  console.error('❌ MongoDB runtime error:', err)
+})
+
+// ── Then connect to MongoDB asynchronously with auto-retry ──
 async function connectDB() {
   try {
     console.log('Connecting to MongoDB Atlas...')
@@ -143,6 +154,8 @@ async function connectDB() {
     console.log('✅ High-concurrency database indexes verified.')
   } catch (error) {
     console.error('❌ MongoDB Connection Error:', error)
+    console.log('Retrying MongoDB connection in 5 seconds...')
+    setTimeout(connectDB, 5000)
   }
 }
 

@@ -66,10 +66,14 @@ export function LuckyDrawPage() {
     }
   }, [selectedPrizeId, data.prizes, getPrize])
 
-  // Active pool of all registered active entrants
+  // Active pool of all registered active entrants (excluding previous winners)
   const pool = useMemo(() => {
-    return (data.participants || []).filter((p) => p.status === 'Active')
-  }, [data.participants])
+    const winnerIds = new Set((data.winners || []).map((w) => w.participantId))
+    const eligible = (data.participants || []).filter(
+      (p) => p.status === 'Active' && p.eligibility !== 'Ineligible' && !winnerIds.has(p.id)
+    )
+    return eligible.length > 0 ? eligible : (data.participants || []).filter((p) => p.status === 'Active')
+  }, [data.participants, data.winners])
 
   const [phase, setPhase] = useState<Phase>('ready')
   const [display, setDisplay] = useState<Participant | null>(pool[0] ?? null)
