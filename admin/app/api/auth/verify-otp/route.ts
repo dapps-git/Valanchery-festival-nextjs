@@ -4,11 +4,10 @@ import crypto from 'crypto'
 
 export const dynamic = 'force-dynamic'
 
-const ADMIN_EMAIL = 'admin@valancheryfestival.com'
-
-function verifyOtpToken(token: string, email: string, otp: string): boolean {
+function verifyOtpToken(token: string, otp: string): boolean {
   try {
-    const secret = process.env.JWT_SECRET || process.env.NEXTAUTH_SECRET || 'vf2026-secret'
+    const secret = process.env.JWT_SECRET || 'vf2026-secret'
+    const otpEmail = (process.env.SMTP_USER || '').toLowerCase().trim()
     const decoded = Buffer.from(token, 'base64url').toString('utf8')
     const parts = decoded.split('|')
     if (parts.length !== 4) return false
@@ -17,12 +16,8 @@ function verifyOtpToken(token: string, email: string, otp: string): boolean {
     const expectedSig = crypto.createHmac('sha256', secret).update(payload).digest('hex')
     if (tokSig !== expectedSig) return false
     if (Number(tokExpires) < Date.now()) return false
+    if (tokEmail.toLowerCase().trim() !== otpEmail) return false
     if (tokOtp !== otp.trim()) return false
-
-    const cleanIn = (email || '').toLowerCase().trim()
-    if (cleanIn !== ADMIN_EMAIL || tokEmail.toLowerCase().trim() !== ADMIN_EMAIL) {
-      return false
-    }
     return true
   } catch {
     return false
@@ -31,24 +26,24 @@ function verifyOtpToken(token: string, email: string, otp: string): boolean {
 
 export async function POST(request: Request) {
   try {
+    const otpEmail = (process.env.SMTP_USER || '').toLowerCase().trim()
     const body = await request.json().catch(() => ({}))
     const cleanOtp = (body.otp || '').trim()
     const cleanEmail = (body.email || '').trim().toLowerCase()
     const token = (body.token || '').trim()
 
-    if (cleanEmail !== ADMIN_EMAIL) {
+    if (!otpEmail || cleanEmail !== otpEmail) {
       return NextResponse.json({ ok: false, error: 'Invalid email' }, { status: 400 })
     }
 
-    // Fast path: verify via signed token (no DB needed)
     if (token) {
-      if (verifyOtpToken(token, cleanEmail, cleanOtp)) {
+      if (verifyOtpToken(token, cleanOtp)) {
         return NextResponse.json({ ok: true, message: 'OTP verified successfully' })
       }
       return NextResponse.json({ ok: false, error: 'Invalid or expired OTP code.' }, { status: 400 })
     }
 
-    // Fallback: DB-based verification (legacy)
+    // Fallback: DB-based verification
     const db = await connectDB()
     const adminDoc = await db.collection('admin_settings').findOne({ id: 'admin_credential' })
 

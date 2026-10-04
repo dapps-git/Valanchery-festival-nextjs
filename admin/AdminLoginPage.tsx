@@ -114,11 +114,7 @@ export function AdminLoginPage() {
       return
     }
 
-    // Client-side validation: must be exactly admin@valancheryfestival.com
-    if (targetEmail !== ADMIN_EMAIL.toLowerCase()) {
-      setForgotError('Invalid email')
-      return
-    }
+    // Server will validate whether this email is allowed
 
     setForgotLoading(true)
     try {
