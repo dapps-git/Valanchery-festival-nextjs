@@ -132,10 +132,10 @@ export async function POST(request: Request) {
       }
     }
 
-    // Mark coupon as used in MongoDB and update batch registered person count
+    // Mark coupon as used in MongoDB atomically with double-spend guard
     if (cleanCouponId) {
       const updatedCoupon = await couponsCol.findOneAndUpdate(
-        { id: cleanCouponId },
+        { id: cleanCouponId, status: { $ne: 'Used' } },
         {
           $set: {
             status: 'Used',
@@ -148,8 +148,17 @@ export async function POST(request: Request) {
         { returnDocument: 'after' }
       )
 
+      if (!updatedCoupon) {
+        // Rollback inserted participant to prevent double-spending
+        await participantsCol.deleteOne({ id: participantId })
+        return NextResponse.json(
+          { ok: false, error: 'This coupon was already redeemed or is no longer available.' },
+          { status: 400 }
+        )
+      }
+
       const batchesCol = db.collection('couponbatches')
-      if (updatedCoupon && updatedCoupon.batchId) {
+      if (updatedCoupon.batchId) {
         await batchesCol.updateOne(
           { id: updatedCoupon.batchId },
           { $inc: { usedCount: 1, unusedCount: -1 } }

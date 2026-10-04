@@ -9,6 +9,8 @@ export function AdminWinnersPage() {
   const [prize, setPrize] = useState('')
   const [date, setDate] = useState('')
 
+  const [competition, setCompetition] = useState('')
+
   const rows = useMemo(() => {
     return [...data.winners]
       .sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime() || b.id.localeCompare(a.id))
@@ -16,17 +18,19 @@ export function AdminWinnersPage() {
         const p = getParticipant(w.participantId) || { phone: '', name: 'Participant', location: 'Valanchery' }
         const pr = getPrize(w.prizeId) || { id: w.prizeId, name: 'Festival Prize' }
         const d = getDraw(w.drawId)
-        const hit = `${d ? '#' + d.number : w.drawId} ${p.name || ''} ${p.phone || ''} ${pr.name} ${w.status}`.toLowerCase().includes(q.toLowerCase())
-        return hit && (!prize || pr.id === prize) && (!date || w.date === date)
+        const comp = w.competitionType || (pr as any).competitionType || (d as any)?.competitionType || 'Normal'
+        const hit = `${d ? '#' + d.number : w.drawId} ${p.name || ''} ${p.phone || ''} ${pr.name} ${w.status} ${comp}`.toLowerCase().includes(q.toLowerCase())
+        return hit && (!prize || pr.id === prize) && (!date || w.date === date) && (!competition || comp === competition)
       })
-  }, [data.winners, q, prize, date, getParticipant, getPrize, getDraw])
+  }, [data.winners, q, prize, date, competition, getParticipant, getPrize, getDraw])
 
-  const hasActiveFilters = Boolean(q || prize || date)
+  const hasActiveFilters = Boolean(q || prize || date || competition)
 
   const handleResetFilters = () => {
     setQ('')
     setPrize('')
     setDate('')
+    setCompetition('')
   }
 
   // Statistics
@@ -97,6 +101,16 @@ export function AdminWinnersPage() {
         </div>
 
         <select
+          value={competition}
+          onChange={(e) => setCompetition(e.target.value)}
+          className="border border-[#E8E3D8] bg-white px-3 py-1.5 text-xs font-light text-stone-700 outline-none focus:border-[#9A7B4F] rounded-[4px] cursor-pointer font-medium"
+        >
+          <option value="">All Competitions</option>
+          <option value="Mega">Mega Competition</option>
+          <option value="Normal">Normal Competition</option>
+        </select>
+
+        <select
           value={prize}
           onChange={(e) => setPrize(e.target.value)}
           className="border border-[#E8E3D8] bg-white px-3 py-1.5 text-xs font-light text-stone-700 outline-none focus:border-[#9A7B4F] rounded-[4px] cursor-pointer"
@@ -129,10 +143,11 @@ export function AdminWinnersPage() {
       {/* Winners Table */}
       <div className="border border-[#E8E3D8] bg-white rounded-[6px] shadow-2xs overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[650px] text-left text-xs">
+          <table className="w-full min-w-[750px] text-left text-xs">
             <thead className="border-b border-[#E8E3D8] bg-[#FAF8F5] text-[11px] font-normal text-stone-500">
               <tr>
                 <th className="w-12 px-4 py-3 text-center">#</th>
+                <th className="px-4 py-3">Competition</th>
                 <th className="px-4 py-3">Draw</th>
                 <th className="px-4 py-3">Winner Name</th>
                 <th className="px-4 py-3">Phone</th>
@@ -146,6 +161,8 @@ export function AdminWinnersPage() {
                 const p = getParticipant(w.participantId)
                 const pr = getPrize(w.prizeId)
                 const d = getDraw(w.drawId)
+                const comp = w.competitionType || (pr as any)?.competitionType || (d as any)?.competitionType || 'Normal'
+                const isMega = comp === 'Mega'
                 const drawTag = d
                   ? `#${String(d.number).padStart(2, '0')}`
                   : w.drawId.startsWith('draw-')
@@ -160,11 +177,21 @@ export function AdminWinnersPage() {
                       {idx + 1}
                     </td>
 
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase ${
+                        isMega
+                          ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                          : 'bg-cyan-100 text-cyan-800 border border-cyan-300'
+                      }`}>
+                        {isMega ? '⭐ MEGA' : '🎯 NORMAL'}
+                      </span>
+                    </td>
+
                     <td className="px-4 py-3 font-mono text-xs text-stone-800">
                       {drawTag}
                     </td>
 
-                    <td className="px-4 py-3 font-normal text-stone-900">
+                    <td className="px-4 py-3 font-normal text-stone-900 font-medium">
                       {nameDisplay}
                     </td>
 
@@ -174,7 +201,7 @@ export function AdminWinnersPage() {
 
                     <td className="px-4 py-3">
                       <span className="inline-flex items-center gap-1 border border-[#E8E3D8] bg-[#FAF8F5] px-2 py-0.5 rounded-[4px] text-stone-800 text-xs">
-                        <Award size={11} className="text-[#9A7B4F]" /> {prizeName}
+                        <Award size={11} className={isMega ? 'text-amber-600' : 'text-cyan-600'} /> {prizeName}
                       </span>
                     </td>
 
@@ -192,7 +219,7 @@ export function AdminWinnersPage() {
               })}
               {rows.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-4 py-10 text-center text-xs text-stone-400 font-light">
+                  <td colSpan={8} className="px-4 py-10 text-center text-xs text-stone-400 font-light">
                     No winners recorded yet.
                   </td>
                 </tr>

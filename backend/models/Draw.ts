@@ -7,6 +7,7 @@ export interface IDraw extends Document {
   prizeId: string
   winnerCount: number
   status: 'Upcoming' | 'Completed'
+  competitionType: 'Mega' | 'Normal'
 }
 
 const DrawSchema = new Schema<IDraw>(
@@ -17,6 +18,7 @@ const DrawSchema = new Schema<IDraw>(
     prizeId: { type: String, required: true },
     winnerCount: { type: Number, default: 1 },
     status: { type: String, enum: ['Upcoming', 'Completed'], default: 'Upcoming' },
+    competitionType: { type: String, enum: ['Mega', 'Normal'], required: true },
   },
   {
     timestamps: true,

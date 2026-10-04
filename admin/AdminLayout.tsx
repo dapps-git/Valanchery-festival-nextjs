@@ -21,11 +21,12 @@ import { useApp } from '@/context/AppContext'
 
 const links = [
   { to: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/admin/lucky-draw', label: 'Lucky Draw (Live Stage)', icon: Sparkles },
+  { to: '/admin/mega-competition', label: 'Mega Competition', icon: Trophy },
+  { to: '/admin/normal-competition', label: 'Normal Competition', icon: Gift },
   { to: '/admin/coupons', label: 'Generate Coupons', icon: QrCode },
   { to: '/admin/coupons-directory', label: 'Coupons Directory', icon: Ticket },
-  { to: '/admin/lucky-draw', label: 'Live Draw Stage', icon: Sparkles },
   { to: '/admin/participants', label: 'Participants', icon: Users },
-  { to: '/admin/prizes', label: 'Gifts', icon: Gift },
   { to: '/admin/winners', label: 'Winner History', icon: Trophy },
 ]
 

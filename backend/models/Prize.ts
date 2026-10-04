@@ -7,7 +7,8 @@ export interface IPrize extends Document {
   value: string
   image: string
   assignedDrawId?: string
-  status: 'Unassigned' | 'Assigned' | 'Awarded'
+  status: 'Unassigned' | 'Assigned' | 'Awarded',
+  competitionType: 'Mega' | 'Normal'
 }
 
 const PrizeSchema = new Schema<IPrize>(
@@ -19,6 +20,7 @@ const PrizeSchema = new Schema<IPrize>(
     image: { type: String, required: true },
     assignedDrawId: { type: String },
     status: { type: String, enum: ['Unassigned', 'Assigned', 'Awarded'], default: 'Unassigned' },
+    competitionType: { type: String, enum: ['Mega', 'Normal'], default: 'Normal', required: true },
   },
   {
     timestamps: true,

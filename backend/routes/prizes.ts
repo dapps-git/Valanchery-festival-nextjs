@@ -1,20 +1,26 @@
 import { Router } from 'express'
 import { Prize } from '../models/Prize.js'
+import { requireAdminAuth } from '../middleware/auth.js'
 
 const router = Router()
 
-// Get all prizes
-router.get('/', async (_req, res) => {
+// Get all prizes (optionally filtered by competitionType: Mega or Normal)
+router.get('/', async (req, res) => {
   try {
-    const prizes = await Prize.find().lean()
+    const { competitionType } = req.query
+    const query: any = {}
+    if (competitionType && ['Mega', 'Normal'].includes(competitionType as string)) {
+      query.competitionType = competitionType
+    }
+    const prizes = await Prize.find(query).lean()
     res.json({ ok: true, prizes })
   } catch (error: any) {
     res.status(500).json({ ok: false, error: error.message })
   }
 })
 
-// Create prize
-router.post('/', async (req, res) => {
+// Create prize (admin only)
+router.post('/', requireAdminAuth, async (req, res) => {
   try {
     const id = `prize-${Date.now()}`
     const prize = await Prize.create({ ...req.body, id })
@@ -24,8 +30,8 @@ router.post('/', async (req, res) => {
   }
 })
 
-// Update prize
-router.put('/:id', async (req, res) => {
+// Update prize (admin only)
+router.put('/:id', requireAdminAuth, async (req, res) => {
   try {
     const updated = await Prize.findOneAndUpdate({ id: req.params.id }, req.body, { new: true }).lean()
     res.json({ ok: true, prize: updated })
@@ -34,8 +40,8 @@ router.put('/:id', async (req, res) => {
   }
 })
 
-// Delete prize
-router.delete('/:id', async (req, res) => {
+// Delete prize (admin only)
+router.delete('/:id', requireAdminAuth, async (req, res) => {
   try {
     await Prize.deleteOne({ id: req.params.id })
     res.json({ ok: true, message: 'Prize deleted' })

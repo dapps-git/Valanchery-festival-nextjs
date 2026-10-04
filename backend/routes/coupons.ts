@@ -3,6 +3,7 @@ import QRCode from 'qrcode'
 import { Coupon } from '../models/Coupon.js'
 import { CouponBatch } from '../models/CouponBatch.js'
 import { Participant } from '../models/Participant.js'
+import { requireAdminAuth } from '../middleware/auth.js'
 
 const router = Router()
 
@@ -81,19 +82,18 @@ router.get(['/validate', '/validate/:id'], async (req, res) => {
     }
 
     // 1. Check if already redeemed — search by 13-character code (indexed lean lookup)
-    const registeredUser = await Participant.findOne({ couponId: cleanId }).select('registeredAt name').lean()
+    const registeredUser = await Participant.findOne({ couponId: cleanId }).select('registeredAt').lean()
     if (registeredUser) {
       return res.json({
         valid: false,
         status: 'Used',
         usedAt: registeredUser.registeredAt,
-        usedByName: registeredUser.name,
         message: 'This coupon has already been used and is no longer valid.',
       })
     }
 
     // 2. Search coupon by 13-character code (id) ONLY — indexed lean lookup
-    const existingCoupon = await Coupon.findOne({ id: cleanId }).lean()
+    const existingCoupon = await Coupon.findOne({ id: cleanId }).select('id status usedAt').lean()
 
     if (existingCoupon) {
       if (existingCoupon.status === 'Used') {
@@ -101,14 +101,13 @@ router.get(['/validate', '/validate/:id'], async (req, res) => {
           valid: false,
           status: 'Used',
           usedAt: existingCoupon.usedAt,
-          usedByName: existingCoupon.usedByParticipantName,
           message: 'This coupon has already been used and is no longer valid.',
         })
       }
       return res.json({
         valid: true,
         status: 'Unused',
-        coupon: existingCoupon,
+        coupon: { id: existingCoupon.id, status: 'Unused' },
         message: 'Valid Festival Coupon! Ready for registration.',
       })
     }
@@ -126,7 +125,7 @@ router.get(['/validate', '/validate/:id'], async (req, res) => {
 
 
 // 2. Generate a new batch of unique coupons
-router.post('/generate', async (req, res) => {
+router.post('/generate', requireAdminAuth, async (req, res) => {
   try {
     const count = Math.min(Math.max(1, Number(req.body.count) || 10), 500000)
     const name = req.body.name || `Batch ${new Date().toLocaleDateString('en-GB')} (${count} coupons)`
@@ -178,7 +177,7 @@ router.post('/generate', async (req, res) => {
 })
 
 // 2.5 Bulk Insert Coupons (from frontend generator)
-router.post('/bulk-insert', async (req, res) => {
+router.post('/bulk-insert', requireAdminAuth, async (req, res) => {
   try {
     const { batch, coupons } = req.body || {}
     
@@ -274,7 +273,7 @@ router.get('/batches', async (_req, res) => {
 })
 
 // 5. Delete coupon batches (via query params: ?batchId=... or ?all=true)
-router.delete('/', async (req, res) => {
+router.delete('/', requireAdminAuth, async (req, res) => {
   try {
     const batchId = req.query.batchId as string
     const isAll = req.query.all === 'true'
@@ -323,7 +322,7 @@ router.delete('/', async (req, res) => {
 })
 
 // 6. Delete a coupon batch by ID in URL path (/batches/:id)
-router.delete('/batches/:id', async (req, res) => {
+router.delete('/batches/:id', requireAdminAuth, async (req, res) => {
   try {
     const batchId = req.params.id
 

@@ -66,6 +66,7 @@ export function PrizesPage() {
         description: edit.description?.trim() ?? '',
         value: edit.value?.trim() || '₹0',
         image: edit.image || GIFT_PRESETS[0].image,
+        competitionType: edit.competitionType || 'Normal',
       })
     } else {
       addPrize({
@@ -75,6 +76,7 @@ export function PrizesPage() {
         image: edit.image || GIFT_PRESETS[0].image,
         assignedDrawId: null,
         status: 'Available',
+        competitionType: edit.competitionType || 'Normal',
       })
     }
     setEdit(null)

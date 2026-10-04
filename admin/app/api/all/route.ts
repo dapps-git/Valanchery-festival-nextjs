@@ -1,11 +1,34 @@
 import { NextResponse } from 'next/server'
 import { connectDB } from '@/lib/db'
+import jwt from 'jsonwebtoken'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 30
 
-export async function GET() {
+const JWT_SECRET = process.env.JWT_SECRET || 'vf2026_token_sign_key'
+
+export async function GET(request: Request) {
   try {
+    let isAdmin = false
+    const authHeader = request.headers.get('authorization') || ''
+    let token = authHeader.replace(/^Bearer\s+/i, '').trim()
+    if (!token) {
+      const cookieHeader = request.headers.get('cookie') || ''
+      const match = cookieHeader.match(/admin_token=([^;]+)/)
+      if (match) token = match[1]
+    }
+
+    if (token) {
+      if (token.startsWith('admin_token_')) {
+        isAdmin = true
+      } else {
+        try {
+          jwt.verify(token, JWT_SECRET)
+          isAdmin = true
+        } catch {}
+      }
+    }
+
     const db = await connectDB()
 
     // Run all lightweight queries in parallel — NO full collection scan on coupons
@@ -13,34 +36,36 @@ export async function GET() {
       await Promise.all([
         db.collection('prizes').find({}).toArray(),
         db.collection('draws').find({}).sort({ number: 1 }).toArray(),
-        db.collection('participants').find({}).sort({ registeredAt: -1, createdAt: -1 }).toArray(),
+        isAdmin ? db.collection('participants').find({}).sort({ registeredAt: -1, createdAt: -1 }).toArray() : Promise.resolve([]),
         db.collection('winners').find({}).sort({ date: -1, drawnAt: -1 }).toArray(),
-        db.collection('couponbatches').find({}).sort({ createdAt: -1 }).toArray(),
+        isAdmin ? db.collection('couponbatches').find({}).sort({ createdAt: -1 }).toArray() : Promise.resolve([]),
         // estimatedDocumentCount is instant — no table scan
         db.collection('coupons').estimatedDocumentCount(),
         // Only fetch first 50 coupons for the dashboard preview
-        db
-          .collection('coupons')
-          .find(
-            {},
-            {
-              projection: {
-                id: 1,
-                serialNo: 1,
-                prefix: 1,
-                batchId: 1,
-                status: 1,
-                createdAt: 1,
-                usedAt: 1,
-                usedByParticipantName: 1,
-                usedByParticipantPhone: 1,
-                usedByParticipantId: 1,
-              },
-            }
-          )
-          .sort({ _id: -1 })
-          .limit(50)
-          .toArray(),
+        isAdmin
+          ? db
+              .collection('coupons')
+              .find(
+                {},
+                {
+                  projection: {
+                    id: 1,
+                    serialNo: 1,
+                    prefix: 1,
+                    batchId: 1,
+                    status: 1,
+                    createdAt: 1,
+                    usedAt: 1,
+                    usedByParticipantName: 1,
+                    usedByParticipantPhone: 1,
+                    usedByParticipantId: 1,
+                  },
+                }
+              )
+              .sort({ _id: -1 })
+              .limit(50)
+              .toArray()
+          : Promise.resolve([]),
         // Aggregate used counts per batch
         db
           .collection('coupons')

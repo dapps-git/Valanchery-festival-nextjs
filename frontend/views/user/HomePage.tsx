@@ -1,83 +1,154 @@
 import { useState } from 'react'
 import {
   ArrowRight,
-  Gift,
   Play,
   X,
+  Sparkles,
+  Award,
+  Store,
+  Users,
 } from 'lucide-react'
 import couponBannerImg from '../../assets/festival-coupon-banner.png'
-import heroBannerFull from '../../assets/hero-banner-full.png'
 import { PublicNavbar } from '../../components/PublicNavbar'
-import { HomeRegisterSection } from '../../components/HomeRegisterSection'
 
 export function HomePage() {
   const [videoModalOpen, setVideoModalOpen] = useState(false)
 
   return (
-    <div className="w-full bg-[#F8F9FA] text-[#1E2937] font-sans select-none scroll-smooth min-h-screen overflow-x-hidden">
-      {/* 1. White Festival Navbar */}
+    <div className="w-full bg-[#f8fafc] text-[#0f172a] font-sans select-none scroll-smooth min-h-screen overflow-x-hidden">
+      {/* 1. White & Cyan Festival Navbar */}
       <PublicNavbar active="home" />
 
       {/* Main Page Content Container */}
       <main className="pt-14 sm:pt-16 pb-16 w-full overflow-x-hidden">
         {/* ─────────────────────────────────────────────────────────────
-            FOLD 1: 100% FULL-WIDTH VIBRANT HERO BANNER (Edge-to-Edge)
+            FOLD 1: 100% FULL-PAGE FULL-SIZE HERO BANNER (Edge-to-Edge)
         ─────────────────────────────────────────────────────────────── */}
-        <section className="relative w-full overflow-hidden shadow-xl bg-[#DC2626]">
-          {/* Background Full Hero Banner Image across 100% viewport width */}
-          <div
-            className="w-full min-h-[460px] sm:min-h-[520px] lg:min-h-[580px] xl:min-h-[640px] bg-cover bg-center sm:bg-right-bottom relative flex flex-col justify-center"
-            style={{
-              backgroundImage: `url(${typeof heroBannerFull === 'string' ? heroBannerFull : (heroBannerFull as any)?.src || '/hero-banner-full.png'})`,
-              backgroundPosition: 'right center',
-              backgroundSize: 'cover',
-            }}
-          >
-            {/* Soft Gradient Veil for left text legibility without obscuring the right bags */}
-            <div className="absolute inset-0 bg-gradient-to-r from-[#DC2626]/90 via-[#DC2626]/55 to-transparent sm:via-[#DC2626]/30 lg:to-transparent pointer-events-none" />
+        {/* ─────────────────────────────────────────────────────────────
+            FOLD 1: HERO BANNER (Desktop: hero.png | Mobile: image.png)
+        ─────────────────────────────────────────────────────────────── */}
+        <section className="relative w-full bg-white border-b border-slate-200/80 overflow-hidden">
+          {/* Edge-to-Edge Banner Frame */}
+          <div className="relative w-full">
+            {/* Desktop / Tablet Banner (hero.png unzoomed landscape ratio) */}
+            <div className="hidden sm:block relative w-full">
+              <picture>
+                <source srcSet="/hero.webp" type="image/webp" />
+                <img
+                  src="/hero.png"
+                  alt="Valanchery Shopping Festival - Shop Local, Support Local, Win Together"
+                  className="w-full h-auto block select-none"
+                  loading="eager"
+                  fetchPriority="high"
+                />
+              </picture>
 
-            {/* Inner Content Alignment matching the Navbar max-width */}
-            <div className="max-w-7xl mx-auto w-full px-4 sm:px-8 lg:px-12 relative z-10 py-10 sm:py-14">
-              {/* Top Right Handwriting Sticker */}
-              <div className="hidden md:block absolute top-2 right-4 lg:right-8 text-right z-20 pointer-events-none">
-                <p className="font-script text-white/95 text-xl lg:text-2xl font-bold tracking-wide -rotate-3 drop-shadow-md leading-tight">
-                  Local Business<br />Stronger Together ♡
-                </p>
+              {/* Desktop / Tablet Content Overlay */}
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full max-w-7xl mx-auto px-6 md:px-10 lg:px-14">
+                  <div className="max-w-[50%] lg:max-w-[48%] space-y-1.5 md:space-y-2 lg:space-y-2.5">
+                    {/* Festival Season 2 Logo */}
+                    <div>
+                      <img
+                        src="/valanchery-shopping-festival-logo.png"
+                        alt="Valanchery Shopping Festival - Season 2"
+                        className="h-10 sm:h-12 md:h-16 lg:h-18 w-auto object-contain drop-shadow-sm"
+                      />
+                    </div>
+
+                    {/* Subtitle */}
+                    <p className="font-script text-[#0284c7] text-base md:text-xl lg:text-2xl font-bold tracking-wide">
+                      Shop Local • Support Local • Win Together ♡
+                    </p>
+
+                    {/* Festival Main Headline - Reduced font weight, Montserrat font */}
+                    <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-semibold md:font-bold text-[#0369a1] tracking-tight leading-[1.12] font-['Montserrat',sans-serif]">
+                      Valanchery Shopping<br />
+                      Festival
+                    </h1>
+
+                    {/* Description - Montserrat font */}
+                    <p className="text-slate-600 text-[10px] md:text-xs lg:text-sm font-normal leading-relaxed line-clamp-2 md:line-clamp-3 lg:line-clamp-none font-['Montserrat',sans-serif]">
+                      Organized by Kerala Vyapari Vyavasayi Ekopana Samithi (KVVES) Valanchery Unit. Collect your official coupons from member shops and stand a chance to win mega bumper prizes!
+                    </p>
+
+                    {/* Action Buttons -> Navigates to inner page /register, reduced size and border radius */}
+                    <div className="pt-1 flex flex-wrap items-center gap-2">
+                      <a
+                        href="/register"
+                        className="inline-flex items-center gap-1.5 bg-[#0284c7] hover:bg-[#0369a1] text-white px-3.5 md:px-4 py-1.5 md:py-2 text-[11px] md:text-xs font-semibold tracking-wider uppercase transition shadow-xs active:scale-95 cursor-pointer rounded-md font-['Montserrat',sans-serif]"
+                      >
+                        <span>Register Coupon</span>
+                        <ArrowRight size={13} />
+                      </a>
+
+                      <a
+                        href="#why-festival"
+                        className="inline-flex items-center gap-1 bg-[#e0f2fe]/95 hover:bg-[#bae6fd] text-[#0369a1] border border-[#7dd3fc] px-3 md:px-3.5 py-1.5 md:py-2 text-[11px] md:text-xs font-medium tracking-wide transition rounded-md font-['Montserrat',sans-serif]"
+                      >
+                        <span>Learn More</span>
+                      </a>
+                    </div>
+                  </div>
+                </div>
               </div>
+            </div>
 
-              {/* Text on the Center Bag */}
-              <div className="hidden lg:block absolute bottom-[8%] right-[22%] xl:right-[24%] z-20 pointer-events-none transform -rotate-6">
-                <p className="font-script text-white text-3xl xl:text-4xl font-extrabold tracking-wide drop-shadow-lg text-center leading-tight">
-                  Shop<br />Local ♡
-                </p>
-              </div>
+            {/* Mobile View Banner: Uses image.png with text & buttons directly ON the banner */}
+            <div className="sm:hidden relative w-full overflow-hidden">
+              <img
+                src="/image.png"
+                alt="Valanchery Shopping Festival"
+                className="w-full h-auto block select-none"
+                loading="eager"
+                fetchPriority="high"
+              />
 
-              {/* Hero Content (Left-Aligned) */}
-              <div className="max-w-xl lg:max-w-2xl space-y-3 sm:space-y-4 text-white">
-                {/* Script Subtitle */}
-                <p className="font-script text-white text-2xl sm:text-3xl lg:text-4xl font-bold italic tracking-wide drop-shadow-md">
-                  Shop Local Support Local Win Together ♡
-                </p>
+              {/* Text & Buttons Overlay directly ON the Mobile Hero Banner */}
+              <div className="absolute inset-0 flex flex-col justify-start px-5 pt-32 xs:pt-36 pb-4 pointer-events-none">
+                <div className="space-y-2 max-w-[92%] pointer-events-auto">
+                  {/* KVVES Valanchery Unit Official Emblem Banner (Transparent - Aligned & Enlarged) */}
+                  <div className="mb-2 flex justify-start">
+                    <img
+                      src="/kvves-valanchery-banner-transparent.png"
+                      alt="Kerala Vyapari Vyavasayi Ekopana Samithi Valanchery Unit"
+                      className="h-10 xs:h-12 max-w-[290px] xs:max-w-[320px] w-auto object-contain object-left block"
+                    />
+                  </div>
 
-                {/* Clean Semi-Bold Montserrat Headline */}
-                <h1 className="text-3xl xs:text-4xl sm:text-5xl lg:text-6xl font-semibold text-white tracking-tight leading-[1.05] drop-shadow-md">
-                  Valanchery<br />Festival 2026
-                </h1>
+                  {/* Subtitle */}
+                  <p className="font-script text-[#0284c7] text-base font-bold tracking-wide">
+                    Shop Local • Support Local • Win Together ♡
+                  </p>
 
-                {/* Tagline */}
-                <p className="text-white/95 text-xs sm:text-sm lg:text-base font-normal tracking-wide drop-shadow-xs">
-                  Shop Local &nbsp;•&nbsp; Support Local &nbsp;•&nbsp; Win Together
-                </p>
+                  {/* Main Headline - Montserrat font, reduced font weight */}
+                  <h1 className="text-xl font-bold text-[#0369a1] tracking-tight leading-tight font-['Montserrat',sans-serif]">
+                    Valanchery Shopping<br />
+                    Festival
+                  </h1>
 
-                {/* Action Buttons */}
-                <div className="pt-2 sm:pt-4 flex items-center">
-                  <a
-                    href="#register"
-                    className="inline-flex items-center gap-2 bg-white hover:bg-slate-50 text-[#DC2626] px-7 sm:px-9 py-3 text-xs sm:text-sm font-semibold tracking-wider uppercase shadow-lg transition active:scale-95 cursor-pointer rounded-lg"
-                  >
-                    <span>Register Now</span>
-                    <ArrowRight size={15} />
-                  </a>
+                  {/* Description - Montserrat font */}
+                  <p className="text-slate-600 text-[11px] font-normal leading-relaxed line-clamp-3 font-['Montserrat',sans-serif]">
+                    Organized by Kerala Vyapari Vyavasayi Ekopana Samithi (KVVES) Valanchery Unit. Collect your official coupons from member shops and stand a chance to win mega bumper prizes!
+                  </p>
+
+                  {/* Reduced Size Buttons with Reduced Border Radius (rounded-md / 6px) */}
+                  <div className="pt-1.5 flex items-center gap-2">
+                    <a
+                      href="/register"
+                      className="inline-flex items-center gap-1.5 bg-[#0284c7] hover:bg-[#0369a1] text-white px-3.5 py-1.5 text-[11px] font-semibold tracking-wider uppercase transition shadow-xs active:scale-95 cursor-pointer rounded-md font-['Montserrat',sans-serif]"
+                    >
+                      <span>Register Coupon</span>
+                      <ArrowRight size={12} />
+                    </a>
+
+                    <a
+                      href="#why-festival"
+                      className="inline-flex items-center gap-1 bg-white/95 hover:bg-white text-[#0369a1] border border-[#bae6fd] px-3 py-1.5 text-[11px] font-medium tracking-wide transition shadow-2xs rounded-md font-['Montserrat',sans-serif]"
+                    >
+                      <span>Learn More</span>
+                    </a>
+                  </div>
                 </div>
               </div>
             </div>
@@ -85,30 +156,28 @@ export function HomePage() {
         </section>
 
         {/* Full-Width Inner Content Container */}
-        <div className="w-full pt-4 sm:pt-6 space-y-4 sm:space-y-6">
+        <div className="w-full pt-8 sm:pt-10 space-y-6 sm:space-y-8">
           {/* ─────────────────────────────────────────────────────────────
               FOLD 2: FESTIVAL SPECIAL COUPON BANNER (Prominent & High Impact)
           ─────────────────────────────────────────────────────────────── */}
-          <section className="relative w-full bg-gradient-to-r from-white via-[#FEF2F2] to-white border-y sm:border border-red-200/90 py-8 sm:py-10 px-4 sm:px-6 lg:px-8 shadow-xs overflow-hidden">
-            {/* Sparkles in background */}
-            <div className="absolute top-2 left-1/4 text-red-300/40 text-sm select-none">✦</div>
-            <div className="absolute bottom-2 left-1/3 text-amber-300/50 text-xs select-none">★</div>
-            <div className="absolute top-4 right-1/4 text-red-300/40 text-sm select-none">✦</div>
-
-            <div className="max-w-6xl mx-auto flex flex-col items-center gap-6 relative z-10">
+          <section className="relative w-full bg-white border-y border-cyan-100 py-10 sm:py-14 px-4 sm:px-6 lg:px-8 shadow-xs overflow-hidden">
+            <div className="max-w-6xl mx-auto flex flex-col items-center gap-8 relative z-10">
               {/* Top Banner Row: Title + Motto */}
-              <div className="w-full flex flex-col md:flex-row items-center justify-between gap-4 border-b border-red-100 pb-4">
+              <div className="w-full flex flex-col md:flex-row items-center justify-between gap-4 border-b border-slate-100 pb-5">
                 <div className="space-y-1 text-center md:text-left">
-                  <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-[#1E2937]">
-                    Exclusive <span className="text-[#DC2626]">Festival Coupons</span>
+                  <span className="text-[11px] font-bold text-[#0891b2] uppercase tracking-wider bg-cyan-50 px-2.5 py-1 rounded-md border border-cyan-100">
+                    Official Ticket
+                  </span>
+                  <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0f172a] pt-1">
+                    Exclusive <span className="text-[#0891b2]">Festival Coupons</span>
                   </h2>
                   <p className="text-xs sm:text-sm text-slate-500 font-normal">
-                    Save more • Shop more • Support local
+                    Collect serial-numbered tickets with every purchase at Valanchery stores
                   </p>
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <p className="font-script text-[#DC2626] text-xl sm:text-2xl font-bold leading-tight text-center md:text-right">
+                  <p className="font-script text-[#0891b2] text-xl sm:text-2xl font-bold leading-tight text-center md:text-right">
                     Shop Local • Save More • Win Big ♡
                   </p>
                   <img
@@ -121,99 +190,97 @@ export function HomePage() {
 
               {/* Large, Prominent Official Lucky Draw Coupon Ticket */}
               <div className="w-full flex items-center justify-center">
-                <div className="relative group w-full max-w-4xl">
+                <div className="relative group w-full max-w-5xl lg:max-w-6xl">
                   {/* Large Official Coupon Card Container */}
-                  <div className="relative overflow-hidden bg-white border-2 sm:border-[3px] border-[#DC2626] shadow-2xl p-2.5 sm:p-4 transition transform group-hover:scale-[1.01] duration-300 rounded-xl">
-                    {/* Top Header Tag Row */}
-                    <div className="bg-gradient-to-r from-[#DC2626] via-[#B91C1C] to-[#DC2626] text-white px-4 py-1.5 sm:py-2 flex items-center justify-between text-xs sm:text-sm font-extrabold uppercase tracking-wider mb-2 rounded-t-lg shadow-xs">
-                      <div className="flex items-center gap-2">
-                        <Gift size={16} className="text-[#FFD600]" />
-                        <span>VALANCHERY LUCKY DRAW 2026 OFFICIAL COUPON</span>
-                      </div>
-                      <span className="bg-[#FFD600] text-[#1E2937] px-2.5 py-0.5 font-black text-[10px] sm:text-xs rounded-xs shadow-xs">OFFICIAL</span>
-                    </div>
-
-                    {/* High-Resolution Official Coupon Graphic - Large & Crisp */}
-                    <div className="border border-red-100 overflow-hidden bg-white rounded-lg p-1 sm:p-2">
-                      <img
-                        src={typeof couponBannerImg === 'string' ? couponBannerImg : (couponBannerImg as any)?.src || '/festival-coupon-banner.png'}
-                        alt="Valanchery Lucky Draw Official Coupon"
-                        className="w-full h-auto max-h-[300px] sm:max-h-[420px] object-contain block mx-auto drop-shadow-sm"
-                      />
-                    </div>
+                  <div className="relative overflow-hidden bg-white border border-cyan-200/80 shadow-2xl shadow-cyan-950/10 p-2 sm:p-4 transition transform group-hover:scale-[1.005] duration-300 rounded-xl sm:rounded-2xl">
+                    <img
+                      src={typeof couponBannerImg === 'string' ? couponBannerImg : (couponBannerImg as any)?.src || '/festival-coupon-banner.png'}
+                      alt="Valanchery Lucky Draw Official Coupon"
+                      className="w-full h-auto object-contain block mx-auto rounded-lg sm:rounded-xl"
+                    />
                   </div>
-
-                  {/* Floating Sparkle Accents */}
-                  <div className="absolute -top-3 -right-3 text-[#FFD600] text-lg animate-pulse">✨</div>
-                  <div className="absolute -bottom-3 -left-3 text-[#DC2626] text-base">✦</div>
                 </div>
               </div>
             </div>
           </section>
 
           {/* ─────────────────────────────────────────────────────────────
-              FOLD 4: "WHY SHOP LOCAL?" (Balanced, Centered, Premium Layout)
+              FOLD 4: "WHY SHOP LOCAL?" (Standardized, White & Cyan Card)
           ─────────────────────────────────────────────────────────────── */}
-          <section id="why-festival" className="scroll-mt-20 relative w-full bg-gradient-to-r from-white via-[#FEF2F2] to-white border-y border-red-100 py-8 sm:py-12 shadow-xs overflow-hidden rounded-none">
-            {/* Soft red organic background swoosh on right */}
-            <div className="absolute right-0 top-0 bottom-0 w-full lg:w-1/2 bg-gradient-to-l from-[#FEE2E2]/40 to-transparent pointer-events-none" />
-
+          <section id="why-festival" className="scroll-mt-20 relative w-full bg-[#f8fafc] py-12 sm:py-16">
             <div className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
               {/* Left Content Column */}
-              <div className="lg:col-span-6 space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-1.5 h-9 bg-[#DC2626] shrink-0" />
-                  <div>
-                    <h2 className="text-2xl sm:text-4xl font-normal tracking-tight text-[#1E2937]">
-                      Why Shop Local?
-                    </h2>
-                    <div className="h-1 w-14 bg-[#DC2626] mt-1.5" />
-                  </div>
+              <div className="lg:col-span-6 space-y-4">
+                <div className="space-y-1">
+                  <span className="text-[11px] font-bold text-[#0891b2] uppercase tracking-wider bg-cyan-50 px-2.5 py-1 rounded-md border border-cyan-100">
+                    Community Initiative
+                  </span>
+                  <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 pt-1">
+                    Why Shop Local in Valanchery?
+                  </h2>
                 </div>
 
-                <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-normal pt-1">
-                  Your support helps local businesses grow, creates more opportunities, and builds a stronger, happier Valanchery.
+                <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-normal">
+                  Your purchase directly empowers neighborhood merchants, strengthens local families, and creates vibrant commerce right here in Valanchery.
                 </p>
+
+                <div className="space-y-3 pt-2">
+                  <div className="flex items-start gap-3 bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-xs">
+                    <div className="h-7 w-7 rounded-lg bg-cyan-50 text-[#0891b2] flex items-center justify-center shrink-0 mt-0.5">
+                      ✓
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-slate-900">Genuine Community Support</p>
+                      <p className="text-xs text-slate-500">Every rupee spent circulates within Valanchery businesses.</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3 bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-xs">
+                    <div className="h-7 w-7 rounded-lg bg-cyan-50 text-[#0891b2] flex items-center justify-center shrink-0 mt-0.5">
+                      ✓
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-slate-900">Exciting Bumper Lucky Draws</p>
+                      <p className="text-xs text-slate-500">Enter multiple coupons to boost your chances for Mega and Normal prizes.</p>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* Right Column: Direct High-Quality Collage Image Asset */}
-              <div className="lg:col-span-6 flex justify-center items-center py-2">
-                <img
-                  src="/why-shop-local-collage.png"
-                  alt="Valanchery Festival Local Markets"
-                  className="w-full max-w-[420px] sm:max-w-[480px] h-auto object-contain block drop-shadow-sm"
-                />
+              <div className="lg:col-span-6 flex justify-center items-center">
+                <div className="bg-white p-3 sm:p-4 rounded-2xl border border-cyan-100 shadow-xl shadow-cyan-950/5">
+                  <img
+                    src="/why-shop-local-collage.png"
+                    alt="Valanchery Festival Local Markets"
+                    className="w-full max-w-[420px] sm:max-w-[480px] h-auto object-contain block drop-shadow-sm rounded-xl"
+                  />
+                </div>
               </div>
             </div>
           </section>
 
-          {/* ─────────────────────────────────────────────────────────────
-              FOLD 5: 📝 LIVE REGISTRATION FORM (DIRECTLY ON HOME PAGE)
-          ─────────────────────────────────────────────────────────────── */}
-          <div id="register" className="scroll-mt-20">
-            <HomeRegisterSection />
-          </div>
 
           {/* ─────────────────────────────────────────────────────────────
-              FOLD 6: 🏘️ "OUR TOWN" HERITAGE
+              FOLD 6: 🏘️ "OUR TOWN" HERITAGE (White & Cyan Aesthetic)
           ─────────────────────────────────────────────────────────────── */}
-          <section id="our-valanchery" className="scroll-mt-20 bg-gradient-to-r from-[#1E2937] via-[#2A1B1F] to-[#1E2937] text-white p-8 sm:p-14 text-center relative overflow-hidden shadow-lg rounded-none">
+          <section id="our-valanchery" className="scroll-mt-20 bg-gradient-to-r from-slate-900 via-cyan-950 to-slate-900 text-white p-8 sm:p-14 text-center relative overflow-hidden shadow-lg">
             <div className="max-w-2xl mx-auto space-y-4 relative z-10">
-              <h2 className="text-2xl sm:text-4xl font-light tracking-tight leading-tight text-white">
-                More Than Shopping. <span className="font-semibold text-red-300">It's Our Valanchery.</span>
+              <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight leading-tight text-white">
+                More Than Shopping. <span className="text-[#06b6d4]">It's Our Valanchery.</span>
               </h2>
-              <p className="font-script text-red-300 text-2xl sm:text-3xl font-bold">
+              <p className="font-script text-cyan-200 text-2xl sm:text-3xl font-bold">
                 “Local shops. Local people. Local happiness.”
               </p>
-              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-light max-w-xl mx-auto">
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-normal max-w-xl mx-auto">
                 Shop with pride across Valanchery's registered stores, collect your official serial-numbered coupon tickets, and celebrate with the whole town!
               </p>
               <div className="pt-3">
                 <a
                   href="#register"
-                  className="inline-flex items-center gap-2 bg-[#DC2626] hover:bg-[#B91C1C] text-white px-7 py-3 text-xs sm:text-sm font-semibold rounded-lg shadow-md transition active:scale-95 cursor-pointer"
+                  className="inline-flex items-center gap-2 bg-gradient-to-r from-[#06b6d4] to-[#0891b2] hover:from-[#0891b2] hover:to-[#0e7490] text-white px-7 py-3 text-xs sm:text-sm font-bold rounded-xl shadow-md transition active:scale-95 cursor-pointer"
                 >
-                  <span>Register Coupon</span>
+                  <span>Register Coupon Now</span>
                   <ArrowRight size={14} />
                 </a>
               </div>
@@ -227,15 +294,15 @@ export function HomePage() {
       ─────────────────────────────────────────────────────────────── */}
       {videoModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-          <div className="relative w-full max-w-2xl bg-black overflow-hidden border border-white/20 shadow-2xl rounded-none">
+          <div className="relative w-full max-w-2xl bg-black overflow-hidden border border-white/20 shadow-2xl rounded-2xl">
             <button
               onClick={() => setVideoModalOpen(false)}
-              className="absolute top-3 right-3 z-10 w-8 h-8 bg-white/20 hover:bg-white text-white hover:text-black flex items-center justify-center transition rounded-none"
+              className="absolute top-3 right-3 z-10 w-8 h-8 bg-white/20 hover:bg-white text-white hover:text-black flex items-center justify-center transition rounded-full"
             >
               <X size={18} />
             </button>
             <div className="p-8 sm:p-12 text-center text-white space-y-4">
-              <div className="w-16 h-16 bg-[#DC2626] text-white mx-auto flex items-center justify-center shadow-lg rounded-none">
+              <div className="w-16 h-16 bg-[#0891b2] text-white mx-auto flex items-center justify-center shadow-lg rounded-2xl">
                 <Play size={24} className="fill-current ml-1" />
               </div>
               <h3 className="text-xl sm:text-2xl font-black">Valanchery Festival 2026 Promo</h3>
@@ -245,7 +312,7 @@ export function HomePage() {
               <div className="pt-2">
                 <button
                   onClick={() => setVideoModalOpen(false)}
-                  className="bg-white/10 hover:bg-white/20 text-white px-6 py-2 text-xs font-bold border border-white/20 transition rounded-none"
+                  className="bg-white/10 hover:bg-white/20 text-white px-6 py-2 text-xs font-bold border border-white/20 transition rounded-xl"
                 >
                   Close Video
                 </button>
@@ -256,24 +323,18 @@ export function HomePage() {
       )}
 
       {/* ─────────────────────────────────────────────────────────────
-          MINIMALIST COMMUNITY FOOTER
+          MINIMALIST OFFICIAL KVVES FOOTER
       ─────────────────────────────────────────────────────────────── */}
-      <footer className="bg-white text-[#1E2937] border-t border-slate-200 py-10 px-4 sm:px-8 font-sans">
-        <div className="mx-auto max-w-4xl text-center space-y-4">
-          <p className="text-[#DC2626] font-script text-2xl sm:text-3xl font-bold">
-            Shop Local • Support Local ♡
+      <footer className="bg-white text-[#1E2937] border-t border-slate-200 py-8 px-4 font-sans">
+        <div className="mx-auto max-w-4xl flex flex-col items-center justify-center text-center space-y-4">
+          <img
+            src="/kvves-valanchery-banner-transparent.png"
+            alt="KVVES Valanchery Unit"
+            className="h-10 sm:h-12 w-auto object-contain mx-auto"
+          />
+          <p className="text-[11px] text-slate-400">
+            © 2026-2027 Kerala Vyapari Vyavasayi Ekopana Samithi (KVVES) Valanchery Unit · Reg. No: 262/81
           </p>
-
-          <p className="text-slate-600 text-xs sm:text-sm leading-relaxed font-normal max-w-3xl mx-auto">
-            Celebrate local shopping, discover exciting offers, and be part of something bigger with our Valanchery festival experience. Explore exclusive deals from local businesses, enter your coupon for a chance to win exciting rewards, and support the brands that make our community special. Every purchase helps local businesses grow while giving you more opportunities to save, shop, and celebrate. Join us in creating a stronger, happier Valanchery by shopping local and celebrating together.
-          </p>
-
-          <div className="pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-400 gap-2">
-            <p>© 2026 Valanchery Festival Merchants Committee. All rights reserved.</p>
-            <div className="flex items-center gap-3">
-              <span className="text-slate-500 font-medium">Official Lucky Draw Portal · Valanchery</span>
-            </div>
-          </div>
         </div>
       </footer>
     </div>

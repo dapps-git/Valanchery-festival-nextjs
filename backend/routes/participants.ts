@@ -3,6 +3,7 @@ import { Participant } from '../models/Participant.js'
 import { Coupon } from '../models/Coupon.js'
 import { CouponBatch } from '../models/CouponBatch.js'
 import { Counter } from '../models/Counter.js'
+import { requireAdminAuth } from '../middleware/auth.js'
 
 const router = Router()
 
@@ -121,10 +122,10 @@ router.post('/register', async (req, res) => {
 
     const id = newParticipant.id
 
-    // Update coupon state in DB atomically
+    // Update coupon state in DB atomically with double-spend guard
     if (cleanCoupon) {
       const updatedCoupon = await Coupon.findOneAndUpdate(
-        { id: cleanCoupon },
+        { id: cleanCoupon, status: { $ne: 'Used' } },
         {
           $set: {
             status: 'Used',
@@ -144,17 +145,12 @@ router.post('/register', async (req, res) => {
           { $inc: { unusedCount: -1, usedCount: 1 } }
         ).catch(() => {})
       } else {
-        // Record coupon in database
-        await Coupon.create({
-          id: cleanCoupon,
-          batchId: 'BATCH-EXTERNAL',
-          status: 'Used',
-          createdAt: now,
-          usedAt: now,
-          usedByParticipantId: id,
-          usedByParticipantName: participantName,
-          usedByParticipantPhone: phone,
-        }).catch(() => {})
+        // Rollback participant to prevent double-spend or invalid coupon registration
+        await Participant.deleteOne({ id })
+        return res.status(400).json({
+          ok: false,
+          error: 'This coupon was already redeemed or is no longer available.',
+        })
       }
     }
 
@@ -164,8 +160,8 @@ router.post('/register', async (req, res) => {
   }
 })
 
-// 2. Bulk Register / CSV import
-router.post('/bulk', async (req, res) => {
+// 2. Bulk Register / CSV import (admin only)
+router.post('/bulk', requireAdminAuth, async (req, res) => {
   try {
     const inputs: Array<{ name: string; phone: string; address?: string; location?: string; couponId?: string }> =
       req.body.participants || []
@@ -217,6 +213,58 @@ router.get('/', async (_req, res) => {
   }
 })
 
+// 3b. Get dynamic eligible participants pool for Mega or Normal competition
+// ELIGIBILITY MATRIX:
+// - Never won: Mega ✅, Normal ✅
+// - Won Normal: Mega ✅, Normal ❌
+// - Won Mega: Mega ❌, Normal ❌
+router.get('/eligible', async (req, res) => {
+  try {
+    const competitionType = (req.query.competitionType as string) || 'Normal'
+    if (!['Mega', 'Normal'].includes(competitionType)) {
+      return res.status(400).json({ ok: false, error: 'Invalid competitionType. Must be Mega or Normal.' })
+    }
+
+    const { Winner } = await import('../models/Winner.js')
+    const allWinners = await Winner.find({ status: 'Confirmed' }).lean()
+
+    const megaWinnerIds = new Set<string>()
+    const normalWinnerIds = new Set<string>()
+
+    for (const w of allWinners) {
+      if (w.competitionType === 'Mega') {
+        megaWinnerIds.add(w.participantId)
+      } else {
+        // Default or Normal
+        normalWinnerIds.add(w.participantId)
+      }
+    }
+
+    let excludeIds: Set<string>
+    if (competitionType === 'Mega') {
+      // Mega: Exclude only participants who already won Mega
+      // (Participants who won Normal are STILL ELIGIBLE for Mega)
+      excludeIds = megaWinnerIds
+    } else {
+      // Normal: Exclude anyone who won Mega OR who won Normal
+      excludeIds = new Set<string>([...megaWinnerIds, ...normalWinnerIds])
+    }
+
+    const query: any = {
+      status: 'Active',
+      eligibility: { $ne: 'Ineligible' },
+    }
+    if (excludeIds.size > 0) {
+      query.id = { $nin: Array.from(excludeIds) }
+    }
+
+    const eligible = await Participant.find(query).sort({ registeredAt: -1, createdAt: -1 }).lean()
+    res.json({ ok: true, competitionType, count: eligible.length, participants: eligible })
+  } catch (error: any) {
+    res.status(500).json({ ok: false, error: error.message })
+  }
+})
+
 // 4. Ticket Pass Lookup by phone or ID
 router.get('/lookup/:query', async (req, res) => {
   try {
@@ -241,8 +289,8 @@ router.get('/lookup/:query', async (req, res) => {
   }
 })
 
-// 5. Update participant
-router.put('/:id', async (req, res) => {
+// 5. Update participant (admin only)
+router.put('/:id', requireAdminAuth, async (req, res) => {
   try {
     const updated = await Participant.findOneAndUpdate({ id: req.params.id }, req.body, { new: true }).lean()
     if (!updated) return res.status(404).json({ ok: false, error: 'Participant not found' })
@@ -252,8 +300,8 @@ router.put('/:id', async (req, res) => {
   }
 })
 
-// 6. Delete participant (and restore their coupon to Unused)
-router.delete('/:id', async (req, res) => {
+// 6. Delete participant (admin only, and restore their coupon to Unused)
+router.delete('/:id', requireAdminAuth, async (req, res) => {
   try {
     const participant = await Participant.findOne({ id: req.params.id })
     if (participant && participant.couponId) {

@@ -35,18 +35,40 @@ app.use(
 app.options('*', cors())
 app.use(express.json({ limit: '10mb' }))
 
+import jwt from 'jsonwebtoken'
+
 // Aggregated Data Route for ultra-fast single request app hydration
-app.get(['/api/all', '/all'], async (_req, res) => {
+app.get(['/api/all', '/all'], async (req, res) => {
   try {
+    const authHeader = req.headers.authorization || ''
+    let token = authHeader.replace(/^Bearer\s+/i, '').trim()
+    if (!token && req.headers.cookie) {
+      const match = req.headers.cookie.match(/admin_token=([^;]+)/)
+      if (match) token = match[1]
+    }
+
+    let isAdmin = false
+    if (token) {
+      if (token.startsWith('admin_token_')) {
+        isAdmin = true
+      } else {
+        try {
+          jwt.verify(token, process.env.JWT_SECRET || 'vf2026_token_sign_key')
+          isAdmin = true
+        } catch {}
+      }
+    }
+
     const [prizes, draws, participants, winners, batches, totalCouponsCount, usedCouponsCount] = await Promise.all([
       Prize.find().lean(),
       Draw.find().sort({ number: 1 }).lean(),
-      Participant.find().sort({ registeredAt: -1, createdAt: -1 }).lean(),
+      isAdmin ? Participant.find().sort({ registeredAt: -1, createdAt: -1 }).lean() : Promise.resolve([]),
       Winner.find().sort({ date: -1, drawnAt: -1 }).lean(),
-      CouponBatch.find().sort({ createdAt: -1 }).lean(),
+      isAdmin ? CouponBatch.find().sort({ createdAt: -1 }).lean() : Promise.resolve([]),
       Coupon.countDocuments({}),
       Coupon.countDocuments({ status: 'Used' }),
     ])
+
     res.json({
       ok: true,
       prizes: prizes || [],

@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { Draw } from '../models/Draw.js'
 import { Winner } from '../models/Winner.js'
 import { Prize } from '../models/Prize.js'
+import { requireAdminAuth } from '../middleware/auth.js'
 
 const router = Router()
 
@@ -15,19 +16,23 @@ router.get('/', async (_req, res) => {
   }
 })
 
-// Create draw
-router.post('/', async (req, res) => {
+// Create draw (admin only)
+router.post('/', requireAdminAuth, async (req, res) => {
   try {
+    const { competitionType, ...rest } = req.body
+    if (!competitionType || !['Mega', 'Normal'].includes(competitionType)) {
+      return res.status(400).json({ ok: false, error: 'Invalid or missing competitionType' })
+    }
     const id = `draw-${Date.now()}`
-    const draw = await Draw.create({ ...req.body, id })
+    const draw = await Draw.create({ ...rest, competitionType, id })
     res.status(201).json({ ok: true, draw })
   } catch (error: any) {
     res.status(500).json({ ok: false, error: error.message })
   }
 })
 
-// Update draw
-router.put('/:id', async (req, res) => {
+// Update draw (admin only)
+router.put('/:id', requireAdminAuth, async (req, res) => {
   try {
     const updated = await Draw.findOneAndUpdate({ id: req.params.id }, req.body, { new: true }).lean()
     res.json({ ok: true, draw: updated })
@@ -36,8 +41,8 @@ router.put('/:id', async (req, res) => {
   }
 })
 
-// Delete draw (and revert assigned prize)
-router.delete('/:id', async (req, res) => {
+// Delete draw (admin only, and revert assigned prize)
+router.delete('/:id', requireAdminAuth, async (req, res) => {
   try {
     const draw = await Draw.findOne({ id: req.params.id })
     if (draw) {
@@ -56,12 +61,52 @@ router.delete('/:id', async (req, res) => {
   }
 })
 
-// Confirm lucky draw winner (atomic winner recording & status updates)
-router.post('/confirm-winner', async (req, res) => {
+// Confirm lucky draw winner (admin only - atomic winner recording & status updates)
+router.post('/confirm-winner', requireAdminAuth, async (req, res) => {
   try {
-    const { participantId, drawId, prizeId } = req.body
+    const { participantId, drawId, prizeId, competitionType } = req.body
 
-    const awardedPrizeId = prizeId || 'default-gift'
+    if (!participantId || !prizeId || !competitionType) {
+      return res.status(400).json({ ok: false, error: 'Missing participantId, prizeId, or competitionType' })
+    }
+
+    if (!['Mega', 'Normal'].includes(competitionType)) {
+      return res.status(400).json({ ok: false, error: 'Invalid competitionType. Must be Mega or Normal.' })
+    }
+
+    // 1. Verify prize exists, matches competitionType, and is not already awarded
+    const prize = await Prize.findOne({ id: prizeId })
+    if (!prize) {
+      return res.status(404).json({ ok: false, error: 'Selected prize not found' })
+    }
+    if (prize.competitionType && prize.competitionType !== competitionType) {
+      return res.status(400).json({ ok: false, error: `This gift is designated for ${prize.competitionType} Competition, not ${competitionType}.` })
+    }
+
+    // 2. BACKEND ELIGIBILITY VALIDATION - Exact Matrix Rule from Database
+    // Fetch all existing win records for this participant
+    const existingWins = await Winner.find({ participantId }).lean()
+    const hasWonMega = existingWins.some((w: any) => w.competitionType === 'Mega')
+    const hasWonNormal = existingWins.some((w: any) => w.competitionType === 'Normal')
+
+    if (competitionType === 'Mega') {
+      // MEGA WINNER cannot win Mega again
+      if (hasWonMega) {
+        return res.status(400).json({ ok: false, error: 'Participant has already won Mega Competition and is ineligible.' })
+      }
+      // Participant who has won Normal IS ELIGIBLE for Mega (hasWonNormal is OK)
+    } else if (competitionType === 'Normal') {
+      // MEGA WINNER cannot participate in Normal
+      if (hasWonMega) {
+        return res.status(400).json({ ok: false, error: 'Participant has already won Mega Competition and cannot participate in Normal Competition.' })
+      }
+      // NORMAL WINNER cannot win Normal again
+      if (hasWonNormal) {
+        return res.status(400).json({ ok: false, error: 'Participant has already won Normal Competition and cannot win again in Normal.' })
+      }
+    }
+
+    const awardedPrizeId = prizeId
     const winnerId = `win-${Date.now()}`
     const now = new Date().toISOString().slice(0, 10)
 
@@ -73,6 +118,7 @@ router.post('/confirm-winner', async (req, res) => {
         number: count + 1,
         date: now,
         prizeId: awardedPrizeId,
+        competitionType,
         winnerCount: 1,
         status: 'Completed',
       })
@@ -83,6 +129,7 @@ router.post('/confirm-winner', async (req, res) => {
       drawId: draw.id,
       participantId,
       prizeId: awardedPrizeId,
+      competitionType,
       date: now,
       status: 'Confirmed',
     })
@@ -90,10 +137,11 @@ router.post('/confirm-winner', async (req, res) => {
     // Update draw status
     draw.status = 'Completed'
     draw.prizeId = awardedPrizeId
+    draw.competitionType = competitionType
     await draw.save()
 
     // Update prize status
-    await Prize.updateOne({ id: awardedPrizeId }, { status: 'Awarded', assignedDrawId: drawId })
+    await Prize.updateOne({ id: awardedPrizeId }, { status: 'Awarded', assignedDrawId: draw.id })
 
     res.json({ ok: true, winnerId, winner })
   } catch (error: any) {

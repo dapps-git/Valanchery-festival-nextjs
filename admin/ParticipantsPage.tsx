@@ -3,7 +3,7 @@ import { useApp } from '@/context/AppContext'
 import { formatShortDate } from '@/lib/format'
 import { formatParticipantsForExcelCsv, downloadCsvFile } from '@/lib/exportCsv'
 import { DeleteConfirmModal } from '@/components/DeleteConfirmModal'
-import type { Participant } from '@/types'
+import type { Participant, CompetitionType } from '@/types'
 import {
   Search,
   Eye,
@@ -16,6 +16,9 @@ import {
   CheckCircle2,
   Ticket,
   RotateCcw,
+  Crown,
+  Sparkles,
+  Award,
 } from 'lucide-react'
 
 const PAGE = 10
@@ -37,16 +40,30 @@ export function ParticipantsPage() {
   })
   const [addError, setAddError] = useState('')
 
-  // Map of participantId -> winner details
+  // Map of participantId -> winner details with competition type
   const winnerMap = useMemo(() => {
-    const map = new Map<string, { drawNumber: number; prizeName: string; date: string }>()
+    const map = new Map<
+      string,
+      {
+        drawNumber: number
+        prizeName: string
+        date: string
+        competitionType: CompetitionType
+      }
+    >()
     data.winners.forEach((w) => {
       const draw = getDraw(w.drawId)
       const prize = getPrize(w.prizeId)
+      const compType: CompetitionType =
+        w.competitionType ||
+        (draw as any)?.competitionType ||
+        prize?.competitionType ||
+        'Normal'
       map.set(w.participantId, {
         drawNumber: draw?.number ?? 0,
         prizeName: prize?.name ?? 'Prize',
         date: w.date,
+        competitionType: compType,
       })
     })
     return map
@@ -66,12 +83,15 @@ export function ParticipantsPage() {
         return b.id.localeCompare(a.id, undefined, { numeric: true })
       })
       .filter((p) => {
-        const isWinner = winnerMap.has(p.id)
+        const winInfo = winnerMap.get(p.id)
+        const isWinner = Boolean(winInfo)
         const hit = `${p.name} ${p.phone} ${p.couponId || ''}`.toLowerCase().includes(q.toLowerCase())
         const statusMatch = !status || p.status === status
         const winnerMatch =
           !winnerFilter ||
           (winnerFilter === 'winner' && isWinner) ||
+          (winnerFilter === 'mega' && winInfo?.competitionType === 'Mega') ||
+          (winnerFilter === 'normal' && winInfo?.competitionType === 'Normal') ||
           (winnerFilter === 'eligible' && !isWinner && p.status === 'Active')
 
         return hit && statusMatch && winnerMatch
@@ -223,6 +243,7 @@ export function ParticipantsPage() {
         >
           <option value="">All Eligibility</option>
           <option value="eligible">In Live Pool (Eligible)</option>
+          <option value="mega">⭐ Mega Winners</option>
           <option value="winner">Past Winners</option>
         </select>
 
@@ -268,14 +289,40 @@ export function ParticipantsPage() {
               {rows.map((p, idx) => {
                 const slNo = (page - 1) * PAGE + idx + 1
                 const winInfo = winnerMap.get(p.id)
+                const isMegaWinner = winInfo?.competitionType === 'Mega'
+                const isNormalWinner = winInfo && !isMegaWinner
                 return (
-                  <tr key={p.id} className="hover:bg-[#FAF8F5] transition-colors" style={{ color: '#1c1917' }}>
-                    <td className="w-12 px-4 py-3 text-center font-mono text-[11px]" style={{ color: '#78716c', fontWeight: 600 }}>
-                      {slNo}
+                  <tr
+                    key={p.id}
+                    className={`transition-colors ${
+                      isMegaWinner
+                        ? 'bg-gradient-to-r from-amber-500/15 via-amber-100/50 to-yellow-50/20 hover:from-amber-500/20 hover:via-amber-100/70 hover:to-yellow-50/30 border-l-4 border-l-amber-500'
+                        : 'hover:bg-[#FAF8F5]'
+                    }`}
+                    style={{ color: '#1c1917' }}
+                  >
+                    <td className="w-12 px-4 py-3 text-center font-mono text-[11px]" style={{ color: isMegaWinner ? '#b45309' : '#78716c', fontWeight: 700 }}>
+                      {isMegaWinner ? (
+                        <span className="inline-flex items-center justify-center gap-0.5">
+                          <span>{slNo}</span>
+                          <Crown size={12} className="text-amber-500 fill-amber-400 inline" />
+                        </span>
+                      ) : (
+                        slNo
+                      )}
                     </td>
 
                     <td className="px-4 py-3" style={{ fontWeight: 600, color: '#1c1917' }}>
-                      {p.name || 'Participant'}
+                      <div className="flex items-center gap-2">
+                        <span className={isMegaWinner ? 'font-bold text-stone-950 text-sm' : ''}>
+                          {p.name || 'Participant'}
+                        </span>
+                        {isMegaWinner && (
+                          <span className="inline-flex items-center gap-1 bg-gradient-to-r from-amber-500 to-yellow-500 text-stone-950 text-[10px] font-black uppercase px-2 py-0.5 rounded-[4px] shadow-xs tracking-wider">
+                            <Crown size={10} className="fill-stone-950" /> MEGA
+                          </span>
+                        )}
+                      </div>
                     </td>
 
                     <td className="px-4 py-3 font-mono text-xs" style={{ fontWeight: 600, color: '#292524' }}>
@@ -297,7 +344,20 @@ export function ParticipantsPage() {
                     </td>
 
                     <td className="px-4 py-3">
-                      {winInfo ? (
+                      {isMegaWinner ? (
+                        <div className="space-y-1">
+                          <span className="inline-flex items-center gap-1.5 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-stone-950 font-black px-3 py-1 rounded-[6px] text-[11px] shadow-sm shadow-amber-500/25 border border-amber-300 ring-2 ring-amber-400/40 tracking-wider uppercase">
+                            <Sparkles size={12} className="text-stone-950 shrink-0" />
+                            <span>⭐ MEGA BUMPER WINNER</span>
+                          </span>
+                          {winInfo.prizeName && (
+                            <div className="flex items-center gap-1 text-[11px] font-bold text-amber-900 pl-0.5">
+                              <Award size={12} className="text-amber-600 shrink-0" />
+                              <span className="truncate max-w-[170px]">{winInfo.prizeName}</span>
+                            </div>
+                          )}
+                        </div>
+                      ) : winInfo ? (
                         <span className="inline-flex items-center gap-1 border border-[#D8C7A3] bg-[#FBF8F1] px-2.5 py-1 rounded-[4px] text-[11px] font-medium text-[#8C6D38] shadow-2xs">
                           <Trophy size={11} className="text-[#8C6D38]" /> Won Prize
                         </span>
@@ -462,16 +522,48 @@ export function ParticipantsPage() {
               </div>
             </div>
 
-            {winnerMap.has(view.id) && (
-              <div className="border border-[#E8E3D8] bg-[#FAF8F5] p-3.5 rounded-[6px]">
-                <p className="flex items-center gap-1.5 font-normal text-stone-900">
-                  <Trophy size={13} className="text-[#C2A676]" /> Won Lucky Draw #{winnerMap.get(view.id)?.drawNumber}
-                </p>
-                <p className="mt-1 text-xs text-stone-600">
-                  Prize: <strong className="font-normal text-stone-900">{winnerMap.get(view.id)?.prizeName}</strong>
-                </p>
-              </div>
-            )}
+            {winnerMap.has(view.id) && (() => {
+              const win = winnerMap.get(view.id)!
+              const isMega = win.competitionType === 'Mega'
+              if (isMega) {
+                return (
+                  <div className="p-4 rounded-[8px] border border-amber-300 bg-gradient-to-r from-amber-500/20 via-yellow-100/70 to-amber-500/10 shadow-sm shadow-amber-500/20 ring-1 ring-amber-400/50">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="flex items-center gap-1.5 font-bold text-amber-950 text-sm">
+                        <Crown size={16} className="text-amber-600 fill-amber-400" />
+                        ⭐ OFFICIAL MEGA BUMPER WINNER
+                      </p>
+                      <span className="px-2.5 py-0.5 rounded-[4px] text-[10px] font-black uppercase tracking-wider bg-gradient-to-r from-amber-500 to-yellow-500 text-stone-950 shadow-xs">
+                        MEGA
+                      </span>
+                    </div>
+                    <div className="mt-2.5 pt-2 border-t border-amber-200/60 flex items-center justify-between">
+                      <div>
+                        <p className="text-[10px] uppercase font-bold text-amber-800/80">Prize Awarded</p>
+                        <p className="text-sm font-extrabold text-stone-900 flex items-center gap-1 mt-0.5">
+                          <Award size={14} className="text-amber-600" />
+                          {win.prizeName}
+                        </p>
+                      </div>
+                      <div className="text-right text-[11px] text-stone-600">
+                        <p>Lucky Draw #{win.drawNumber}</p>
+                        <p className="text-stone-400 font-mono text-[10px]">{win.date}</p>
+                      </div>
+                    </div>
+                  </div>
+                )
+              }
+              return (
+                <div className="border border-[#E8E3D8] bg-[#FAF8F5] p-3.5 rounded-[6px]">
+                  <p className="flex items-center gap-1.5 font-normal text-stone-900">
+                    <Trophy size={13} className="text-[#C2A676]" /> Won Lucky Draw #{win.drawNumber}
+                  </p>
+                  <p className="mt-1 text-xs text-stone-600">
+                    Prize: <strong className="font-normal text-stone-900">{win.prizeName}</strong>
+                  </p>
+                </div>
+              )
+            })()}
 
             <div className="pt-1 flex justify-end">
               <button

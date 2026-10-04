@@ -10,6 +10,7 @@ import { DashboardPage } from './DashboardPage'
 import { CouponsPage } from './CouponsPage'
 import { CouponsDirectoryPage } from './CouponsDirectoryPage'
 import { LuckyDrawPage } from './LuckyDrawPage'
+import { CompetitionGiftsPage } from './CompetitionGiftsPage'
 import { ParticipantsPage } from './ParticipantsPage'
 import { PrizesPage } from './PrizesPage'
 
@@ -45,9 +46,11 @@ export function AdminApp() {
           <Route path="coupons" element={<CouponsPage />} />
           <Route path="coupons-directory" element={<CouponsDirectoryPage />} />
           <Route path="lucky-draw" element={<LuckyDrawPage />} />
+          <Route path="mega-competition" element={<CompetitionGiftsPage type="Mega" />} />
+          <Route path="normal-competition" element={<CompetitionGiftsPage type="Normal" />} />
           <Route path="participants" element={<ParticipantsPage />} />
-          <Route path="prizes" element={<PrizesPage />} />
-          <Route path="gifts" element={<PrizesPage />} />
+          <Route path="prizes" element={<Navigate to="/admin/normal-competition" replace />} />
+          <Route path="gifts" element={<Navigate to="/admin/normal-competition" replace />} />
           <Route path="winners" element={<AdminWinnersPage />} />
         </Route>
         <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />

@@ -5,6 +5,7 @@ export interface IWinner extends Document {
   drawId: string
   participantId: string
   prizeId: string
+  competitionType: 'Mega' | 'Normal'
   date: string
   status: 'Confirmed'
 }
@@ -15,6 +16,7 @@ const WinnerSchema = new Schema<IWinner>(
     drawId: { type: String, required: true, index: true },
     participantId: { type: String, required: true, index: true },
     prizeId: { type: String, required: true },
+    competitionType: { type: String, enum: ['Mega', 'Normal'], default: 'Normal', required: true },
     date: { type: String, required: true },
     status: { type: String, enum: ['Confirmed'], default: 'Confirmed' },
   },

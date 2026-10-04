@@ -6,11 +6,18 @@ export const dynamic = 'force-dynamic'
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { participantId, drawId, prizeId } = body || {}
+    const { participantId, drawId, prizeId, competitionType } = body || {}
 
-    if (!participantId || !drawId) {
+    if (!participantId || !drawId || !prizeId || !competitionType) {
       return NextResponse.json(
-        { ok: false, error: 'Missing participantId or drawId' },
+        { ok: false, error: 'Missing participantId, drawId, prizeId, or competitionType' },
+        { status: 400 }
+      )
+    }
+
+    if (!['Mega', 'Normal'].includes(competitionType)) {
+      return NextResponse.json(
+        { ok: false, error: 'Invalid competitionType. Must be Mega or Normal.' },
         { status: 400 }
       )
     }
@@ -20,20 +27,63 @@ export async function POST(request: Request) {
     const drawsCol = db.collection('draws')
     const prizesCol = db.collection('prizes')
 
-    const awardedPrizeId = prizeId || 'default-gift'
+    // 1. Verify Prize matches competitionType
+    const prize = await prizesCol.findOne({ id: prizeId })
+    if (!prize) {
+      return NextResponse.json({ ok: false, error: 'Selected prize not found' }, { status: 404 })
+    }
+    if (prize.competitionType && prize.competitionType !== competitionType) {
+      return NextResponse.json(
+        { ok: false, error: `This gift is for ${prize.competitionType} Competition, not ${competitionType}.` },
+        { status: 400 }
+      )
+    }
+
+    // 2. Exact Eligibility Validation from Database (DO NOT TRUST FRONTEND)
+    // - If participant won Mega: Mega = ❌, Normal = ❌
+    // - If participant won Normal: Normal = ❌, Mega = ✅
+    // - If participant never won: Mega = ✅, Normal = ✅
+    const existingWins = await winnersCol.find({ participantId, status: 'Confirmed' }).toArray()
+    const hasWonMega = existingWins.some((w: any) => w.competitionType === 'Mega')
+    const hasWonNormal = existingWins.some((w: any) => w.competitionType === 'Normal')
+
+    if (competitionType === 'Mega') {
+      if (hasWonMega) {
+        return NextResponse.json(
+          { ok: false, error: 'Participant has already won Mega Competition and cannot win again in Mega.' },
+          { status: 400 }
+        )
+      }
+      // Normal winners are permitted in Mega
+    } else if (competitionType === 'Normal') {
+      if (hasWonMega) {
+        return NextResponse.json(
+          { ok: false, error: 'Participant has already won Mega Competition and cannot participate in Normal Competition.' },
+          { status: 400 }
+        )
+      }
+      if (hasWonNormal) {
+        return NextResponse.json(
+          { ok: false, error: 'Participant has already won Normal Competition and cannot participate again in Normal.' },
+          { status: 400 }
+        )
+      }
+    }
+
+    const awardedPrizeId = prizeId
     const winnerId = `win-${Date.now()}`
     const now = new Date().toISOString()
     const dateStr = now.slice(0, 10)
 
     let draw = await drawsCol.findOne({ id: drawId })
     if (!draw) {
-      // Auto-create draw record so live draw winners are NEVER lost
       const totalDraws = await drawsCol.countDocuments()
       const newDraw = {
         id: drawId || `draw-${Date.now()}`,
         number: totalDraws + 1,
         date: dateStr,
         prizeId: awardedPrizeId,
+        competitionType,
         winnerCount: 1,
         status: 'Completed',
         createdAt: now,
@@ -47,6 +97,7 @@ export async function POST(request: Request) {
       drawId,
       participantId,
       prizeId: awardedPrizeId,
+      competitionType,
       date: dateStr,
       drawnAt: now,
       status: 'Confirmed',
@@ -62,16 +113,14 @@ export async function POST(request: Request) {
     // Update draw status
     await drawsCol.updateOne(
       { id: drawId },
-      { $set: { status: 'Completed', prizeId: awardedPrizeId } }
+      { $set: { status: 'Completed', prizeId: awardedPrizeId, competitionType } }
     )
 
-    // Update prize status if prizeId provided
-    if (awardedPrizeId) {
-      await prizesCol.updateOne(
-        { id: awardedPrizeId },
-        { $set: { status: 'Awarded', assignedDrawId: drawId } }
-      )
-    }
+    // Update prize status
+    await prizesCol.updateOne(
+      { id: awardedPrizeId },
+      { $set: { status: 'Awarded', assignedDrawId: drawId } }
+    )
 
     return NextResponse.json({ ok: true, winnerId, winner })
   } catch (err: any) {

@@ -391,15 +391,26 @@ export const api = {
     return res.json()
   },
 
+  async getEligibleParticipants(competitionType: 'Mega' | 'Normal'): Promise<{ ok: boolean; count: number; participants: Participant[] }> {
+    try {
+      const res = await fetchWithTimeout(`${API_BASE}/participants?eligible=true&competitionType=${competitionType}`, {}, 15000)
+      if (res.ok) {
+        return await res.json()
+      }
+    } catch {}
+    return { ok: false, count: 0, participants: [] }
+  },
+
   async confirmWinner(
     participantId: string,
     drawId: string,
-    prizeId?: string
+    prizeId: string,
+    competitionType: 'Mega' | 'Normal'
   ): Promise<{ ok: boolean; winnerId?: string; winner?: Winner; error?: string }> {
     const res = await fetchWithTimeout(`${API_BASE}/draws/confirm-winner`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ participantId, drawId, prizeId }),
+      body: JSON.stringify({ participantId, drawId, prizeId, competitionType }),
     })
     return res.json()
   },

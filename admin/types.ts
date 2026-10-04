@@ -3,6 +3,7 @@ export type ParticipantStatus = 'Active' | 'Inactive'
 export type DrawStatus = 'Upcoming' | 'Live' | 'Completed'
 export type PrizeStatus = 'Available' | 'Assigned' | 'Awarded'
 export type CouponStatus = 'Unused' | 'Used'
+export type CompetitionType = 'Mega' | 'Normal'
 
 export interface Participant {
   id: string
@@ -49,6 +50,7 @@ export interface Prize {
   image: string
   assignedDrawId: string | null
   status: PrizeStatus
+  competitionType?: CompetitionType
 }
 
 export interface Draw {
@@ -58,6 +60,7 @@ export interface Draw {
   prizeId: string
   winnerCount: number
   status: DrawStatus
+  competitionType?: CompetitionType
 }
 
 export interface Winner {
@@ -65,6 +68,7 @@ export interface Winner {
   drawId: string
   participantId: string
   prizeId: string
+  competitionType?: CompetitionType
   date: string
   status: 'Confirmed'
 }

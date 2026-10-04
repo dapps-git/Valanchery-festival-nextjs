@@ -268,19 +268,25 @@ export function HomeRegisterSection() {
       />
 
       {/* Card Wrapper - Clean Focused Registration Card */}
-      <div className="relative z-10 w-full max-w-lg mx-auto shadow-2xl border border-pink-200 bg-white overflow-hidden rounded-xl p-6 sm:p-8">
+      <div className="relative z-10 w-full max-w-lg mx-auto shadow-2xl shadow-cyan-950/5 border border-cyan-100 bg-white overflow-hidden rounded-2xl p-6 sm:p-8">
         <div className="flex flex-col justify-center">
-          {/* Centered Heading with Montserrat Light Weight */}
-          <div className="mb-6 text-center">
-            <h2 className="text-2xl sm:text-3xl font-light text-[#1E2937] tracking-normal font-sans">
+          {/* Centered Heading with standard alignment & subtitle */}
+          <div className="mb-6 text-center space-y-1">
+            <span className="inline-block px-3 py-1 bg-cyan-50 text-[#0891b2] text-[11px] font-bold uppercase tracking-widest rounded-full border border-cyan-100">
+              Official Entry
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight font-sans">
               Register Your Coupon
             </h2>
+            <p className="text-xs text-slate-500 font-normal">
+              Enter your coupon code and phone to participate in the lucky draw
+            </p>
           </div>
 
           {successId ? (
             /* Success State */
             <div className="text-center space-y-4 py-2">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 shadow-xs">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-cyan-50 text-[#0891b2] border border-cyan-200 shadow-xs">
                 <CheckCircle2 size={32} />
               </div>
 
@@ -293,7 +299,7 @@ export function HomeRegisterSection() {
                 </p>
               </div>
 
-              <div className="border border-pink-100 bg-[#FFF9FA] rounded-lg p-4 text-left space-y-2 text-xs">
+              <div className="border border-cyan-100 bg-cyan-50/40 rounded-xl p-4 text-left space-y-2 text-xs">
                 {registeredName && (
                   <div className="flex items-center justify-between">
                     <span className="text-slate-500 font-medium">Participant Name:</span>
@@ -303,7 +309,7 @@ export function HomeRegisterSection() {
                 {registeredCoupon && (
                   <div className="flex items-center justify-between">
                     <span className="text-slate-500 font-medium">Coupon Code:</span>
-                    <span className="font-mono font-bold text-[#DC2626]">🎫 {registeredCoupon}</span>
+                    <span className="font-mono font-bold text-[#0891b2]">🎫 {registeredCoupon}</span>
                   </div>
                 )}
                 <div className="flex items-center justify-between">
@@ -318,7 +324,7 @@ export function HomeRegisterSection() {
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="inline-flex items-center gap-2 bg-[#DC2626] hover:bg-[#B91C1C] text-white px-6 py-2.5 rounded-lg text-xs font-extrabold shadow-md transition cursor-pointer"
+                  className="inline-flex items-center gap-2 bg-gradient-to-r from-[#06b6d4] to-[#0891b2] hover:from-[#0891b2] hover:to-[#0e7490] text-white px-6 py-2.5 rounded-xl text-xs font-extrabold shadow-md transition cursor-pointer"
                 >
                   <RotateCcw size={13} /> Register Another Coupon
                 </button>
@@ -419,8 +425,8 @@ export function HomeRegisterSection() {
                         type="text"
                         value={form.couponId}
                         onChange={(e) => handleCouponChange(e.target.value)}
-                        placeholder=""
-                        className="w-full rounded-lg border border-red-200 bg-white px-3.5 py-2.5 font-mono text-sm font-bold text-slate-900 outline-none focus:border-[#DC2626]"
+                        placeholder="e.g. VSF-1234-5678"
+                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 font-mono text-sm font-bold text-slate-900 outline-none focus:border-[#0891b2] focus:ring-2 focus:ring-cyan-500/20 transition"
                       />
                     )}
                   </div>
@@ -430,16 +436,16 @@ export function HomeRegisterSection() {
                       type="text"
                       value={form.couponId}
                       onChange={(e) => handleCouponChange(e.target.value)}
-                      placeholder=""
-                      className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 font-mono text-sm font-semibold text-slate-900 outline-none focus:border-[#DC2626] pr-24"
+                      placeholder="Enter 13-digit coupon code"
+                      className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 font-mono text-sm font-semibold text-slate-900 outline-none focus:border-[#0891b2] focus:ring-2 focus:ring-cyan-500/20 pr-28 transition"
                     />
                     {isValidatingToken ? (
-                      <Loader2 size={16} className="animate-spin text-slate-400 absolute right-3" />
+                      <Loader2 size={16} className="animate-spin text-cyan-600 absolute right-3" />
                     ) : (
                       <button
                         type="button"
                         onClick={() => setIsScannerOpen(true)}
-                        className="absolute right-1.5 flex items-center gap-1.5 rounded-md bg-[#FEE2E2] hover:bg-red-200 text-[#DC2626] px-3 py-1.5 text-xs font-bold transition cursor-pointer border border-red-200"
+                        className="absolute right-1.5 flex items-center gap-1.5 rounded-lg bg-cyan-50 hover:bg-cyan-100 text-[#0891b2] px-3 py-2 text-xs font-bold transition cursor-pointer border border-cyan-200"
                       >
                         <Camera size={13} /> Scan QR
                       </button>
@@ -458,8 +464,8 @@ export function HomeRegisterSection() {
                   Full Name *
                 </label>
                 <div
-                  className={`flex rounded-lg border overflow-hidden transition ${
-                    errors.name ? 'border-red-400 bg-red-50/50' : 'border-slate-200 focus-within:border-[#DC2626]'
+                  className={`flex rounded-xl border overflow-hidden transition ${
+                    errors.name ? 'border-red-400 bg-red-50/50' : 'border-slate-200 focus-within:border-[#0891b2] focus-within:ring-2 focus-within:ring-cyan-500/20'
                   }`}
                 >
                   <span className="bg-slate-50 px-3.5 py-2.5 text-slate-400 border-r border-slate-200 flex items-center justify-center">
@@ -470,7 +476,7 @@ export function HomeRegisterSection() {
                     value={form.name}
                     onChange={(e) => set('name', e.target.value)}
                     placeholder="Enter your full name"
-                    className="w-full px-3.5 py-2.5 text-sm font-medium text-slate-900 outline-none bg-white placeholder:text-slate-400"
+                    className="w-full px-4 py-3 text-sm font-medium text-slate-900 outline-none bg-white placeholder:text-slate-400"
                   />
                 </div>
                 {errors.name && <p className="text-[11px] text-red-600 font-medium">{errors.name}</p>}
@@ -482,8 +488,8 @@ export function HomeRegisterSection() {
                   Mobile Number *
                 </label>
                 <div
-                  className={`flex rounded-lg border overflow-hidden transition ${
-                    errors.phone ? 'border-red-400 bg-red-50/50' : 'border-slate-200 focus-within:border-[#DC2626]'
+                  className={`flex rounded-xl border overflow-hidden transition ${
+                    errors.phone ? 'border-red-400 bg-red-50/50' : 'border-slate-200 focus-within:border-[#0891b2] focus-within:ring-2 focus-within:ring-cyan-500/20'
                   }`}
                 >
                   <span className="bg-slate-50 px-3.5 py-2.5 text-xs font-semibold text-slate-700 border-r border-slate-200 flex items-center gap-1">
@@ -496,7 +502,7 @@ export function HomeRegisterSection() {
                     value={form.phone}
                     onChange={(e) => set('phone', e.target.value.replace(/\D/g, '').slice(0, 10))}
                     placeholder="10-digit mobile number"
-                    className="w-full px-3.5 py-2.5 text-sm font-medium text-slate-900 outline-none bg-white placeholder:text-slate-400"
+                    className="w-full px-4 py-3 text-sm font-medium text-slate-900 outline-none bg-white placeholder:text-slate-400"
                   />
                 </div>
                 {errors.phone && <p className="text-[11px] text-red-600 font-medium">{errors.phone}</p>}
@@ -510,7 +516,7 @@ export function HomeRegisterSection() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full flex items-center justify-center gap-2 bg-[#DC2626] hover:bg-[#B91C1C] text-white py-3.5 rounded-lg text-xs sm:text-sm font-semibold uppercase tracking-wider shadow-lg shadow-red-600/25 transition active:scale-98 disabled:opacity-50 cursor-pointer"
+                  className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#06b6d4] to-[#0891b2] hover:from-[#0891b2] hover:to-[#0e7490] text-white py-3.5 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-wider shadow-lg shadow-cyan-500/25 transition active:scale-98 disabled:opacity-50 cursor-pointer"
                 >
                   {isSubmitting ? (
                     <>
@@ -527,8 +533,8 @@ export function HomeRegisterSection() {
               </div>
 
               <div className="flex items-center justify-center gap-1.5 text-xs text-slate-500 font-medium pt-1">
-                <ShieldCheck size={14} className="text-emerald-600" />
-                <span>Safe and Secured</span>
+                <ShieldCheck size={14} className="text-cyan-600" />
+                <span>Safe and Secured · Official KVVES Portal</span>
               </div>
             </form>
           )}

@@ -52,7 +52,12 @@ interface AppContextValue {
   addDraw: (draw: Omit<Draw, 'id'>) => void
   updateDraw: (id: string, patch: Partial<Draw>) => void
   deleteDraw: (id: string) => void
-  confirmWinner: (participantId: string, drawId: string, customPrizeId?: string) => Promise<{ ok: true; winnerId: string } | { ok: false; error: string }>
+  confirmWinner: (
+    participantId: string,
+    drawId: string,
+    customPrizeId?: string,
+    competitionType?: 'Mega' | 'Normal'
+  ) => Promise<{ ok: true; winnerId: string } | { ok: false; error: string }>
   getPrize: (id: string) => Prize | undefined
   getParticipant: (id: string) => Participant | undefined
   getDraw: (id: string) => Draw | undefined
@@ -584,7 +589,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           draws: prev.draws.filter((d) => d.id !== id),
         }))
       },
-      confirmWinner: async (participantId, drawId, customPrizeId) => {
+      confirmWinner: async (participantId, drawId, customPrizeId, competitionType = 'Normal') => {
         let activeDrawId = drawId
         let draw = data.draws.find((d) => d.id === activeDrawId)
         if (!draw) {
@@ -598,6 +603,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
               number: data.winners.length + 1,
               date: new Date().toISOString().slice(0, 10),
               prizeId: customPrizeId || (data.prizes[0]?.id ?? 'prize-1'),
+              competitionType,
               winnerCount: 1,
               status: 'Completed' as const,
             }
@@ -608,37 +614,39 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const winnerId = `win-${Date.now()}`
         const now = new Date().toISOString().slice(0, 10)
 
-        const winner: Winner = {
+        // Verify with backend FIRST (strict validation)
+        try {
+          const res = await api.confirmWinner(participantId, activeDrawId, awardedPrizeId, competitionType)
+          if (res.ok && res.winner) {
+            const confirmedWinner = res.winner as Winner
+            setData((prev) => ({
+              ...prev,
+              winners: [confirmedWinner, ...prev.winners.filter((w) => w.id !== confirmedWinner.id)],
+              prizes: prev.prizes.map((p) => (p.id === awardedPrizeId ? { ...p, status: 'Awarded' as const } : p)),
+            }))
+            refreshData().catch(() => {})
+            return { ok: true, winnerId: confirmedWinner.id || winnerId }
+          } else if (!res.ok) {
+            return { ok: false, error: res.error || 'Participant is ineligible or draw failed backend validation' }
+          }
+        } catch (err: any) {
+          return { ok: false, error: err.message || 'Network error while confirming winner' }
+        }
+
+        const fallbackWinner: Winner = {
           id: winnerId,
           drawId: activeDrawId,
           participantId,
           prizeId: awardedPrizeId,
+          competitionType,
           date: now,
           status: 'Confirmed',
         }
-
-        // Optimistically update state immediately without locking the prize
         setData((prev) => ({
           ...prev,
-          winners: [winner, ...prev.winners],
+          winners: [fallbackWinner, ...prev.winners],
         }))
-
-        // Sync with server and refresh
-        try {
-          const res = await api.confirmWinner(participantId, activeDrawId, awardedPrizeId)
-          if (res.ok && res.winner) {
-            setData((prev) => ({
-              ...prev,
-              winners: [res.winner as Winner, ...prev.winners.filter((w) => w.id !== winnerId && w.id !== res.winner?.id)],
-            }))
-            refreshData().catch(() => {})
-            return { ok: true, winnerId: res.winner.id || winnerId }
-          }
-          return { ok: true, winnerId }
-        } catch (err: any) {
-          console.warn('Backend sync error:', err)
-          return { ok: true, winnerId }
-        }
+        return { ok: true, winnerId }
       },
       getPrize,
       getParticipant,

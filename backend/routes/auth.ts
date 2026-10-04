@@ -1,9 +1,11 @@
 import { Router } from 'express'
 import mongoose from 'mongoose'
 import bcrypt from 'bcryptjs'
+import jwt from 'jsonwebtoken'
 import nodemailer from 'nodemailer'
 
 const router = Router()
+const JWT_SECRET = process.env.JWT_SECRET || 'vf2026_token_sign_key'
 
 // Anti-caching for all authentication routes
 router.use((_req, res, next) => {
@@ -20,7 +22,7 @@ const KNOWN_ADMIN_EMAILS = [
   'valancheryfestival@gmail.com',
 ].filter(Boolean)
 
-// Login route with bcrypt verification
+// Login route with bcrypt verification & cryptographic 24h JWT
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body || {}
@@ -72,7 +74,14 @@ router.post('/login', async (req, res) => {
       }
 
       if (isMatch) {
-        const token = `admin_token_${Date.now()}_${Buffer.from(cleanEmail).toString('hex')}`
+        const token = jwt.sign(
+          {
+            email: cleanEmail,
+            role: 'admin',
+          },
+          JWT_SECRET,
+          { expiresIn: '24h' }
+        )
         return res.json({ ok: true, role: 'admin', token, email: cleanEmail, expiresIn: 24 * 60 * 60 })
       }
       return res.status(401).json({ ok: false, error: 'Invalid admin credentials' })
@@ -89,14 +98,35 @@ router.get(['/me', '/verify'], async (req, res) => {
   try {
     const authHeader = req.headers.authorization || ''
     const token = authHeader.replace(/^Bearer\s+/i, '').trim()
-    if (!token || !token.startsWith('admin_token_')) {
+    if (!token) {
       return res.status(401).json({ ok: false, error: 'No active session or invalid token' })
     }
-    const parts = token.split('_')
-    const timestamp = parseInt(parts[2], 10)
-    // 24 hours in milliseconds = 86,400,000
-    if (isNaN(timestamp) || Date.now() - timestamp > 24 * 60 * 60 * 1000) {
-      return res.status(401).json({ ok: false, error: 'Session expired (24 hours). Please log in again.' })
+
+    let tokenIssuedAt = 0
+    let tokenEmail = ''
+
+    if (token.startsWith('admin_token_')) {
+      // Legacy token format fallback: admin_token_<timestamp>_<hexEmail>
+      const parts = token.split('_')
+      const timestamp = parseInt(parts[2], 10)
+      if (isNaN(timestamp) || Date.now() - timestamp > 24 * 60 * 60 * 1000) {
+        return res.status(401).json({ ok: false, error: 'Session expired (24 hours). Please log in again.' })
+      }
+      tokenIssuedAt = timestamp
+      if (parts[3]) {
+        try {
+          tokenEmail = Buffer.from(parts[3], 'hex').toString('utf8')
+        } catch {}
+      }
+    } else {
+      // Cryptographic JWT Verification
+      try {
+        const decoded = jwt.verify(token, JWT_SECRET) as any
+        tokenEmail = decoded.email || ''
+        tokenIssuedAt = decoded.iat ? decoded.iat * 1000 : 0
+      } catch (jwtErr: any) {
+        return res.status(401).json({ ok: false, error: 'Session expired or invalid signature. Please log in again.' })
+      }
     }
 
     // Check if password was changed after this token was created
@@ -105,7 +135,7 @@ router.get(['/me', '/verify'], async (req, res) => {
       const adminDoc = await db.collection('admin_settings').findOne({ id: 'admin_credential' })
       if (adminDoc?.passwordChangedAt) {
         const pwdChangedTime = new Date(adminDoc.passwordChangedAt).getTime()
-        if (timestamp < pwdChangedTime - 1000) {
+        if (tokenIssuedAt && tokenIssuedAt < pwdChangedTime - 1000) {
           return res.status(401).json({
             ok: false,
             error: 'Admin password was changed. Please log in again with the new password.',
@@ -114,7 +144,7 @@ router.get(['/me', '/verify'], async (req, res) => {
       }
     }
 
-    return res.json({ ok: true, role: 'admin' })
+    return res.json({ ok: true, role: 'admin', email: tokenEmail })
   } catch {
     return res.status(401).json({ ok: false, error: 'Invalid session' })
   }
