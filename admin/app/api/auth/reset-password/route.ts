@@ -5,14 +5,10 @@ import crypto from 'crypto'
 
 export const dynamic = 'force-dynamic'
 
-const ALLOWED_ADMIN_EMAILS = [
-  'valancheryfestival@gmail.com',
-  'admin@valancheryfestival.com',
-]
-
-function verifyOtpToken(token: string, email: string, otp: string): boolean {
+function verifyOtpToken(token: string, otp: string): boolean {
   try {
-    const secret = process.env.JWT_SECRET || process.env.NEXTAUTH_SECRET || 'vf2026-secret'
+    const secret = process.env.JWT_SECRET || 'vf2026-secret'
+    const otpEmail = (process.env.SMTP_USER || '').toLowerCase().trim()
     const decoded = Buffer.from(token, 'base64url').toString('utf8')
     const parts = decoded.split('|')
     if (parts.length !== 4) return false
@@ -21,13 +17,8 @@ function verifyOtpToken(token: string, email: string, otp: string): boolean {
     const expectedSig = crypto.createHmac('sha256', secret).update(payload).digest('hex')
     if (tokSig !== expectedSig) return false
     if (Number(tokExpires) < Date.now()) return false
+    if (tokEmail.toLowerCase().trim() !== otpEmail) return false
     if (tokOtp !== otp.trim()) return false
-
-    const cleanTok = (tokEmail || '').toLowerCase().trim()
-    const cleanIn = (email || '').toLowerCase().trim()
-    if (cleanTok !== cleanIn && !(ALLOWED_ADMIN_EMAILS.includes(cleanTok) && ALLOWED_ADMIN_EMAILS.includes(cleanIn))) {
-      return false
-    }
     return true
   } catch {
     return false
@@ -36,22 +27,28 @@ function verifyOtpToken(token: string, email: string, otp: string): boolean {
 
 export async function POST(request: Request) {
   try {
+    const otpEmail = (process.env.SMTP_USER || '').toLowerCase().trim()
+    const adminEmail = (process.env.ADMIN_EMAIL || '').toLowerCase().trim()
+
     const body = await request.json().catch(() => ({}))
     const cleanEmail = (body.email || '').trim().toLowerCase()
     const cleanOtp = (body.otp || '').trim()
     const cleanPass = (body.newPassword || '').trim()
     const token = (body.token || '').trim()
 
+    if (!otpEmail || cleanEmail !== otpEmail) {
+      return NextResponse.json({ ok: false, error: 'Invalid email' }, { status: 400 })
+    }
+
     if (!cleanPass || cleanPass.length < 6) {
       return NextResponse.json({ ok: false, error: 'Password must be at least 6 characters' }, { status: 400 })
     }
 
-    // Verify OTP — use token if available, else fall back to DB
     let otpValid = false
     const db = await connectDB()
 
     if (token) {
-      otpValid = verifyOtpToken(token, cleanEmail, cleanOtp)
+      otpValid = verifyOtpToken(token, cleanOtp)
     } else {
       const adminDoc = await db.collection('admin_settings').findOne({ id: 'admin_credential' })
       otpValid = adminDoc ? String(adminDoc.otp).trim() === cleanOtp : false
@@ -67,8 +64,7 @@ export async function POST(request: Request) {
       {
         $set: {
           id: 'admin_credential',
-          email: 'admin@valancheryfestival.com',
-          recoveryEmail: 'valancheryfestival@gmail.com',
+          email: adminEmail,
           password: hashedPassword,
           isCustomPassword: true,
           otp: null,
@@ -94,4 +90,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: err.message }, { status: 500 })
   }
 }
-
