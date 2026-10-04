@@ -12,34 +12,90 @@ export async function GET(request: Request) {
     const db = await connectDB()
 
     if (eligibleOnly) {
-      const winners = await db.collection('winners').find({ status: 'Confirmed' }).toArray()
-      const megaWinnerIds = new Set<string>()
-      const normalWinnerIds = new Set<string>()
+      const [winners, prizes, draws] = await Promise.all([
+        db.collection('winners').find({ status: 'Confirmed' }).toArray(),
+        db.collection('prizes').find({}).toArray(),
+        db.collection('draws').find({}).toArray(),
+      ])
+
+      const prizeMap = new Map(prizes.map((p: any) => [p.id, p]))
+      const drawMap = new Map(draws.map((d: any) => [d.id, d]))
+
+      const megaWinnerParticipantIds = new Set<string>()
+      const megaWinnerCouponIds = new Set<string>()
+
+      const normalWinnerParticipantIds = new Set<string>()
+      const normalWinnerCouponIds = new Set<string>()
 
       for (const w of winners) {
-        if (w.competitionType === 'Mega') {
-          megaWinnerIds.add(w.participantId)
+        const prize = prizeMap.get(w.prizeId)
+        const draw = drawMap.get(w.drawId)
+        const compType: string =
+          w.competitionType ||
+          draw?.competitionType ||
+          prize?.competitionType ||
+          'Normal'
+
+        if (compType === 'Mega') {
+          if (w.participantId) megaWinnerParticipantIds.add(w.participantId)
+          if (w.couponId) megaWinnerCouponIds.add(w.couponId)
         } else {
-          normalWinnerIds.add(w.participantId)
+          if (w.participantId) normalWinnerParticipantIds.add(w.participantId)
+          if (w.couponId) normalWinnerCouponIds.add(w.couponId)
         }
       }
 
-      let excludeIds: Set<string>
+      // Map participant IDs to coupon codes
+      const allWinnerParticipantIds = Array.from(
+        new Set([...megaWinnerParticipantIds, ...normalWinnerParticipantIds])
+      )
+      if (allWinnerParticipantIds.length > 0) {
+        const winnerDocs = await db
+          .collection('participants')
+          .find({ id: { $in: allWinnerParticipantIds } })
+          .toArray()
+
+        for (const wp of winnerDocs) {
+          if (wp.couponId) {
+            if (megaWinnerParticipantIds.has(wp.id)) megaWinnerCouponIds.add(wp.couponId)
+            if (normalWinnerParticipantIds.has(wp.id)) normalWinnerCouponIds.add(wp.couponId)
+          }
+        }
+      }
+
+      // RULES:
+      // 1. Mega Draw:
+      //    - Mega winners CANNOT participate again in Mega (cannot win twice in Mega)
+      //    - Normal winners CAN participate in Mega
+      // 2. Normal Draw:
+      //    - Mega winners CANNOT participate in Normal
+      //    - Normal winners CANNOT participate again in Normal (cannot win twice in Normal)
+      // Validate STRICTLY by couponId / participantId, NEVER by phone number.
+      let excludePartIds: Set<string>
+      let excludeCoupons: Set<string>
+
       if (competitionType === 'Mega') {
-        // Mega: Exclude only participants who already won Mega
-        // (Normal winners remain eligible for Mega)
-        excludeIds = megaWinnerIds
+        excludePartIds = megaWinnerParticipantIds
+        excludeCoupons = megaWinnerCouponIds
       } else {
-        // Normal: Exclude anyone who won Mega OR who won Normal
-        excludeIds = new Set<string>([...megaWinnerIds, ...normalWinnerIds])
+        excludePartIds = new Set([...megaWinnerParticipantIds, ...normalWinnerParticipantIds])
+        excludeCoupons = new Set([...megaWinnerCouponIds, ...normalWinnerCouponIds])
       }
 
       const query: any = {
         status: 'Active',
         eligibility: { $ne: 'Ineligible' },
       }
-      if (excludeIds.size > 0) {
-        query.id = { $nin: Array.from(excludeIds) }
+
+      const andClauses: any[] = []
+      if (excludePartIds.size > 0) {
+        andClauses.push({ id: { $nin: Array.from(excludePartIds) } })
+      }
+      if (excludeCoupons.size > 0) {
+        andClauses.push({ couponId: { $nin: Array.from(excludeCoupons) } })
+      }
+      if (andClauses.length > 0) {
+        query.$and = andClauses
       }
 
       const eligible = await db
@@ -48,7 +104,12 @@ export async function GET(request: Request) {
         .sort({ registeredAt: -1, createdAt: -1 })
         .toArray()
 
-      return NextResponse.json({ ok: true, competitionType, count: eligible.length, participants: eligible || [] })
+      return NextResponse.json({
+        ok: true,
+        competitionType,
+        count: eligible.length,
+        participants: eligible || [],
+      })
     }
 
     const participants = await db

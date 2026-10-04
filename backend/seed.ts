@@ -93,17 +93,7 @@ export const seedWinners: any[] = []
 
 export async function seedDatabase() {
   try {
-    const prizeCount = await Prize.countDocuments()
-    if (prizeCount === 0) {
-      await Prize.insertMany(seedPrizes)
-      console.log('✅ Seeded default festival prizes')
-    }
-
-    const drawCount = await Draw.countDocuments()
-    if (drawCount === 0) {
-      await Draw.insertMany(seedDraws)
-      console.log('✅ Seeded 10 festival draws')
-    }
+    // Mock prizes and mock draws auto-seeding disabled per user request
 
     // Seed admin credentials into MongoDB if not present
     const db = mongoose.connection.db

@@ -118,35 +118,69 @@ export function LuckyDrawPage() {
     }
   }
 
-  // Exact Matrix Rules:
+  // Exact Competition Eligibility Matrix:
   // - Never won: Mega ✅, Normal ✅
-  // - Won Normal: Mega ✅, Normal ❌
-  // - Won Mega: Mega ❌, Normal ❌
+  // - Won Normal: Mega ✅ (Normal winners can enter Mega), Normal ❌ (Cannot win Normal twice)
+  // - Won Mega: Mega ❌ (Cannot win Mega twice), Normal ❌ (Mega winners cannot enter Normal)
+  // Validated strictly by couponId / entrant ID, NEVER by phone number.
   const computeFallbackPool = (comp: CompetitionType) => {
     const winners = data.winners || []
-    const megaWinnerIds = new Set<string>()
-    const normalWinnerIds = new Set<string>()
+    const prizes = data.prizes || []
+    const draws = data.draws || []
+
+    const prizeMap = new Map(prizes.map((p) => [p.id, p]))
+    const drawMap = new Map(draws.map((d) => [d.id, d]))
+
+    const megaWinnerKeys = new Set<string>()
+    const normalWinnerKeys = new Set<string>()
 
     winners.forEach((w) => {
-      if (w.competitionType === 'Mega') {
-        megaWinnerIds.add(w.participantId)
+      const prize = prizeMap.get(w.prizeId)
+      const draw = drawMap.get(w.drawId)
+      const compType: CompetitionType =
+        w.competitionType ||
+        (draw as any)?.competitionType ||
+        prize?.competitionType ||
+        'Normal'
+
+      if (compType === 'Mega') {
+        if (w.participantId) megaWinnerKeys.add(w.participantId)
+        if ((w as any).couponId) megaWinnerKeys.add((w as any).couponId)
       } else {
-        normalWinnerIds.add(w.participantId)
+        if (w.participantId) normalWinnerKeys.add(w.participantId)
+        if ((w as any).couponId) normalWinnerKeys.add((w as any).couponId)
       }
     })
 
-    const participants = (data.participants || []).filter(
-      (p) => p.status === 'Active' && p.eligibility !== 'Ineligible'
+    // Map participant coupon codes to winner keys
+    const allParticipants: Participant[] = data.participants || []
+    allParticipants.forEach((p: Participant) => {
+      if (megaWinnerKeys.has(p.id) && p.couponId) megaWinnerKeys.add(p.couponId)
+      if (normalWinnerKeys.has(p.id) && p.couponId) normalWinnerKeys.add(p.couponId)
+    })
+
+    const participants = allParticipants.filter(
+      (p: Participant) => p.status === 'Active' && p.eligibility !== 'Ineligible'
     )
 
     let filtered: Participant[] = []
     if (comp === 'Mega') {
-      // Mega winner cannot participate again in Mega
-      // Normal winner CAN participate in Mega
-      filtered = participants.filter((p) => !megaWinnerIds.has(p.id))
+      // Mega Draw: Exclude coupons that have already won Mega
+      // Normal winners CAN participate in Mega
+      filtered = participants.filter((p) => {
+        const hasWonMega =
+          megaWinnerKeys.has(p.id) || (p.couponId && megaWinnerKeys.has(p.couponId))
+        return !hasWonMega
+      })
     } else {
-      // Normal: Neither Mega winner nor Normal winner can participate
-      filtered = participants.filter((p) => !megaWinnerIds.has(p.id) && !normalWinnerIds.has(p.id))
+      // Normal Draw: Coupons that won Mega or Normal cannot participate
+      filtered = participants.filter((p) => {
+        const hasWonMega =
+          megaWinnerKeys.has(p.id) || (p.couponId && megaWinnerKeys.has(p.couponId))
+        const hasWonNormal =
+          normalWinnerKeys.has(p.id) || (p.couponId && normalWinnerKeys.has(p.couponId))
+        return !hasWonMega && !hasWonNormal
+      })
     }
 
     setEligiblePool(filtered)

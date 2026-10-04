@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useApp } from '@/context/AppContext'
-import { GIFT_PRESETS } from '@/data/mockData'
 import type { Prize } from '@/types'
 import { Plus, X, Edit3, Trash2, Upload, Sparkles, Loader2, CheckCircle2 } from 'lucide-react'
 import { DeleteConfirmModal } from '@/components/DeleteConfirmModal'
@@ -65,7 +64,7 @@ export function PrizesPage() {
         name: edit.name.trim(),
         description: edit.description?.trim() ?? '',
         value: edit.value?.trim() || '₹0',
-        image: edit.image || GIFT_PRESETS[0].image,
+        image: edit.image || '',
         competitionType: edit.competitionType || 'Normal',
       })
     } else {
@@ -73,7 +72,7 @@ export function PrizesPage() {
         name: edit.name.trim(),
         description: edit.description?.trim() ?? '',
         value: edit.value?.trim() || '₹0',
-        image: edit.image || GIFT_PRESETS[0].image,
+        image: edit.image || '',
         assignedDrawId: null,
         status: 'Available',
         competitionType: edit.competitionType || 'Normal',
@@ -101,7 +100,7 @@ export function PrizesPage() {
               name: '',
               description: '',
               value: '',
-              image: GIFT_PRESETS[0].image,
+              image: '',
               status: 'Available',
             })
           }
@@ -188,7 +187,7 @@ export function PrizesPage() {
                 name: '',
                 description: '',
                 value: '',
-                image: GIFT_PRESETS[0].image,
+                image: '',
                 status: 'Available',
               })
             }
@@ -320,38 +319,6 @@ export function PrizesPage() {
                 {uploadError && (
                   <p className="mt-1 text-xs text-red-600">{uploadError}</p>
                 )}
-
-                {/* Preset Gallery Option */}
-                <div className="mt-3">
-                  <p className="text-[10px] text-stone-400 uppercase tracking-wider mb-1">
-                    Or select from presets
-                  </p>
-                  <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 max-h-24 overflow-y-auto border border-[#E8E3D8] p-2 bg-white rounded-[4px]">
-                    {GIFT_PRESETS.map((preset, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => {
-                          setEdit({
-                            ...edit,
-                            image: preset.image,
-                            name: edit.name || preset.name,
-                            value: edit.value || preset.value,
-                            description: edit.description || preset.description,
-                          })
-                        }}
-                        className={`relative border p-1 text-left transition rounded-[4px] cursor-pointer ${
-                          edit.image === preset.image
-                            ? 'border-[#1E1B18] bg-[#FAF8F5]'
-                            : 'border-[#E8E3D8] bg-white hover:border-stone-400'
-                        }`}
-                      >
-                        <img src={preset.image} alt={preset.name} className="h-7 w-full object-cover rounded-[2px]" />
-                        <p className="mt-1 text-[9px] truncate font-normal text-stone-800">{preset.name}</p>
-                      </button>
-                    ))}
-                  </div>
-                </div>
               </div>
             </div>
 

@@ -39,32 +39,69 @@ export async function POST(request: Request) {
       )
     }
 
-    // 2. Exact Eligibility Validation from Database (DO NOT TRUST FRONTEND)
-    // - If participant won Mega: Mega = ❌, Normal = ❌
-    // - If participant won Normal: Normal = ❌, Mega = ✅
-    // - If participant never won: Mega = ✅, Normal = ✅
-    const existingWins = await winnersCol.find({ participantId, status: 'Confirmed' }).toArray()
-    const hasWonMega = existingWins.some((w: any) => w.competitionType === 'Mega')
-    const hasWonNormal = existingWins.some((w: any) => w.competitionType === 'Normal')
+    const participantsCol = db.collection('participants')
+    const participantDoc = await participantsCol.findOne({
+      $or: [{ id: participantId }, { couponId: participantId }],
+    })
+    const actualParticipantId = participantDoc?.id || participantId
+    const actualCouponId = participantDoc?.couponId || ''
+
+    // 2. Strict Coupon-ID Based Eligibility Validation
+    // - Mega winners CANNOT participate in Normal
+    // - Normal winners CAN participate in Mega
+    // - No coupon can win twice in Mega (cannot win Mega again)
+    // - No coupon can win twice in Normal (cannot win Normal again)
+    // Validated strictly by couponId / participantId, NEVER by phone number.
+    const checkConditions: any[] = [{ participantId: actualParticipantId }]
+    if (actualCouponId) {
+      checkConditions.push({ couponId: actualCouponId })
+      checkConditions.push({ participantId: actualCouponId })
+    }
+
+    const existingWins = await winnersCol.find({
+      $or: checkConditions,
+      status: 'Confirmed',
+    }).toArray()
+
+    const [allPrizes, allDraws] = await Promise.all([
+      prizesCol.find({}).toArray(),
+      drawsCol.find({}).toArray(),
+    ])
+    const prizeMap = new Map(allPrizes.map((p: any) => [p.id, p]))
+    const drawMap = new Map(allDraws.map((d: any) => [d.id, d]))
+
+    const hasWonMega = existingWins.some((w: any) => {
+      const p = prizeMap.get(w.prizeId)
+      const d = drawMap.get(w.drawId)
+      const cType = w.competitionType || d?.competitionType || p?.competitionType
+      return cType === 'Mega'
+    })
+
+    const hasWonNormal = existingWins.some((w: any) => {
+      const p = prizeMap.get(w.prizeId)
+      const d = drawMap.get(w.drawId)
+      const cType = w.competitionType || d?.competitionType || p?.competitionType || 'Normal'
+      return cType === 'Normal'
+    })
 
     if (competitionType === 'Mega') {
       if (hasWonMega) {
         return NextResponse.json(
-          { ok: false, error: 'Participant has already won Mega Competition and cannot win again in Mega.' },
+          { ok: false, error: 'This coupon has already won Mega Competition and cannot win again in Mega.' },
           { status: 400 }
         )
       }
-      // Normal winners are permitted in Mega
+      // Normal winners are allowed in Mega
     } else if (competitionType === 'Normal') {
       if (hasWonMega) {
         return NextResponse.json(
-          { ok: false, error: 'Participant has already won Mega Competition and cannot participate in Normal Competition.' },
+          { ok: false, error: 'Coupons that won Mega Competition cannot participate in Normal Competition.' },
           { status: 400 }
         )
       }
       if (hasWonNormal) {
         return NextResponse.json(
-          { ok: false, error: 'Participant has already won Normal Competition and cannot participate again in Normal.' },
+          { ok: false, error: 'This coupon has already won Normal Competition and cannot win again in Normal.' },
           { status: 400 }
         )
       }
@@ -95,7 +132,8 @@ export async function POST(request: Request) {
     const winner = {
       id: winnerId,
       drawId,
-      participantId,
+      participantId: actualParticipantId,
+      couponId: actualCouponId,
       prizeId: awardedPrizeId,
       competitionType,
       date: dateStr,
@@ -105,7 +143,7 @@ export async function POST(request: Request) {
 
     // Insert or upsert winner
     await winnersCol.updateOne(
-      { drawId, participantId },
+      { drawId, participantId: actualParticipantId },
       { $set: winner },
       { upsert: true }
     )
