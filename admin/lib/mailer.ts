@@ -23,9 +23,9 @@ export async function sendOtpEmail(toEmail: string, otp: string): Promise<{ ok: 
         user: smtpUser,
         pass: smtpPass,
       },
-      connectionTimeout: 7000,
-      greetingTimeout: 7000,
-      socketTimeout: 7000,
+      connectionTimeout: 3000,
+      greetingTimeout: 3000,
+      socketTimeout: 3000,
       tls: {
         rejectUnauthorized: false,
       },
