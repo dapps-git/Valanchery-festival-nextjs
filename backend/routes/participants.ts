@@ -252,11 +252,33 @@ router.put('/:id', async (req, res) => {
   }
 })
 
-// 6. Delete participant
+// 6. Delete participant (and restore their coupon to Unused)
 router.delete('/:id', async (req, res) => {
   try {
+    const participant = await Participant.findOne({ id: req.params.id })
+    if (participant && participant.couponId) {
+      const coupon = await Coupon.findOneAndUpdate(
+        { id: participant.couponId },
+        {
+          $set: { status: 'Unused' },
+          $unset: {
+            usedAt: 1,
+            usedByParticipantId: 1,
+            usedByParticipantName: 1,
+            usedByParticipantPhone: 1,
+          },
+        },
+        { new: true }
+      )
+      if (coupon && coupon.batchId) {
+        await CouponBatch.updateOne(
+          { id: coupon.batchId },
+          { $inc: { usedCount: -1, unusedCount: 1 } }
+        ).catch(() => {})
+      }
+    }
     await Participant.deleteOne({ id: req.params.id })
-    res.json({ ok: true, message: 'Participant deleted' })
+    res.json({ ok: true, message: 'Participant deleted and coupon restored' })
   } catch (error: any) {
     res.status(500).json({ ok: false, error: error.message })
   }

@@ -119,29 +119,48 @@ export async function DELETE(request: Request) {
       })
     }
 
+    const participantsCol = db.collection('participants')
+
     if (batchId) {
+      const batchCoupons = await couponsCol.find({ batchId }, { projection: { id: 1, serialNo: 1 } }).toArray()
+      const couponIdentifiers = new Set<string>()
+      batchCoupons.forEach((c: any) => {
+        if (c.id) couponIdentifiers.add(String(c.id).toUpperCase())
+        if (c.serialNo) couponIdentifiers.add(String(c.serialNo).toUpperCase())
+      })
+      const couponIdsArray = Array.from(couponIdentifiers)
+
+      let deletedParticipantsCount = 0
+      if (couponIdsArray.length > 0) {
+        const partRes = await participantsCol.deleteMany({ couponId: { $in: couponIdsArray } })
+        deletedParticipantsCount = partRes.deletedCount || 0
+      }
+
       const [batchRes, couponsRes] = await Promise.all([
         batchesCol.deleteOne({ id: batchId }),
         couponsCol.deleteMany({ batchId }),
       ])
       return NextResponse.json({
         ok: true,
-        message: `Deleted batch ${batchId} and ${couponsRes.deletedCount} coupons`,
+        message: `Deleted batch ${batchId}, ${couponsRes.deletedCount} coupons, and ${deletedParticipantsCount} associated participants`,
         deletedBatches: batchRes.deletedCount,
         deletedCoupons: couponsRes.deletedCount,
+        deletedParticipants: deletedParticipantsCount,
       })
     }
 
     if (all) {
-      const [batchRes, couponsRes] = await Promise.all([
+      const [batchRes, couponsRes, partRes] = await Promise.all([
         batchesCol.deleteMany({}),
         couponsCol.deleteMany({}),
+        participantsCol.deleteMany({}),
       ])
       return NextResponse.json({
         ok: true,
-        message: 'Deleted all batches and coupons successfully',
+        message: 'Deleted all batches, coupons, and participants successfully',
         deletedBatches: batchRes.deletedCount,
         deletedCoupons: couponsRes.deletedCount,
+        deletedParticipants: partRes.deletedCount,
       })
     }
 

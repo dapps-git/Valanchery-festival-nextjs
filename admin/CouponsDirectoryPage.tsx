@@ -108,9 +108,9 @@ export function CouponsDirectoryPage() {
           status: c.status,
           createdAt: c.createdAt,
           usedAt: c.usedAt || p?.registeredAt,
-          participantName: p?.name || c.participantName,
-          participantPhone: p?.phone || c.participantPhone,
-          participantLocation: p?.location || c.participantLocation,
+          participantName: p?.name || c.usedByParticipantName || c.participantName,
+          participantPhone: p?.phone || c.usedByParticipantPhone || c.participantPhone,
+          participantLocation: p?.location || c.usedByParticipantLocation || c.participantLocation,
         }
       })
       if (dateFilter) {

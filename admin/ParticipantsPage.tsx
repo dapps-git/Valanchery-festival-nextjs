@@ -31,6 +31,7 @@ export function ParticipantsPage() {
     name: '',
     phone: '',
     address: '',
+    couponId: '',
   })
   const [addError, setAddError] = useState('')
 
@@ -107,17 +108,24 @@ export function ParticipantsPage() {
       return
     }
 
+    const cleanCoupon = newParticipant.couponId.replace(/[^A-Za-z0-9]/g, '').trim().toUpperCase()
+    if (!cleanCoupon || cleanCoupon.length !== 13) {
+      setAddError('Please enter a valid 13-character coupon code')
+      return
+    }
+
     const res = await registerParticipant({
       name: newParticipant.name.trim(),
       phone: cleanPhone,
-      address: 'Valanchery',
+      address: newParticipant.address.trim() || 'Valanchery',
+      couponId: cleanCoupon,
     })
     if (!res.ok) {
       setAddError(res.error)
       return
     }
     setShowAddModal(false)
-    setNewParticipant({ name: '', phone: '', address: '' })
+    setNewParticipant({ name: '', phone: '', address: '', couponId: '' })
   }
 
   const hasActiveFilters = Boolean(q || status || winnerFilter)
@@ -391,6 +399,17 @@ export function ParticipantsPage() {
                 placeholder="10-digit mobile number"
                 value={newParticipant.phone}
                 onChange={(e) => setNewParticipant({ ...newParticipant, phone: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-normal text-stone-600">Festival Coupon Code (13-Char) *</label>
+              <input
+                required
+                maxLength={16}
+                className="mt-1 w-full border border-[#E8E3D8] bg-white px-3 py-1.5 font-mono text-xs uppercase text-stone-900 outline-none focus:border-[#9A7B4F] rounded-[4px]"
+                placeholder="e.g. A9B2C3D4E5F6G"
+                value={newParticipant.couponId}
+                onChange={(e) => setNewParticipant({ ...newParticipant, couponId: e.target.value.toUpperCase() })}
               />
             </div>
             <div className="pt-2">

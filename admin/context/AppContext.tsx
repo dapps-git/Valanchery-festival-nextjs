@@ -475,70 +475,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 ...prev,
                 participants: [apiRes.participant!, ...prev.participants],
                 coupons: updatedCoupons,
+                usedCouponsCount: (prev.usedCouponsCount || 0) + (cleanCouponId ? 1 : 0),
               }
             })
+            refreshData().catch(() => {})
             return { ok: true, id: apiRes.id }
-          } else if (!apiRes.ok && apiRes.error) {
-            return { ok: false, error: apiRes.error }
           }
-        } catch (e) {
-          console.warn('API register error, saving locally:', e)
+          return { ok: false, error: apiRes.error || 'Registration failed' }
+        } catch (e: any) {
+          return { ok: false, error: e.message || 'Server connection error during registration' }
         }
-
-        // Fallback local save
-        const id = nextParticipantId(data.participants.map((p) => p.id))
-        const now = new Date().toISOString().slice(0, 10)
-        const participant: Participant = {
-          ...input,
-          address: input.address || 'Valanchery',
-          phone,
-          id,
-          couponId: cleanCouponId || undefined,
-          registeredAt: now,
-          eligibility: 'Eligible',
-          status: 'Active',
-        }
-
-        let updatedCoupons = coupons
-        if (cleanCouponId) {
-          const existing = coupons.find((c) => c.id === cleanCouponId)
-          if (existing) {
-            updatedCoupons = coupons.map((c) =>
-              c.id === cleanCouponId
-                ? {
-                    ...c,
-                    status: 'Used' as const,
-                    usedAt: now,
-                    usedByParticipantId: id,
-                    usedByParticipantName: input.name.trim(),
-                    usedByParticipantPhone: phone,
-                  }
-                : c
-            )
-          } else {
-            updatedCoupons = [
-              ...coupons,
-              {
-                id: cleanCouponId,
-                batchId: 'BATCH-EXTERNAL',
-                status: 'Used' as const,
-                createdAt: now,
-                usedAt: now,
-                usedByParticipantId: id,
-                usedByParticipantName: input.name.trim(),
-                usedByParticipantPhone: phone,
-              },
-            ]
-          }
-        }
-
-        setData((prev) => ({
-          ...prev,
-          participants: [participant, ...prev.participants],
-          coupons: updatedCoupons,
-        }))
-
-        return { ok: true, id }
       },
       bulkRegisterParticipants: async (inputs) => {
         try {
@@ -547,43 +493,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
             await refreshData()
             return res
           }
-        } catch {
-          // fallback
+          throw new Error('Bulk registration failed')
+        } catch (err: any) {
+          throw err
         }
-
-        const existingIds = [...data.participants.map((p) => p.id)]
-        const newParticipants: Participant[] = []
-        let invalid = 0
-
-        inputs.forEach((input) => {
-          const phone = input.phone.replace(/\D/g, '').slice(-10)
-          if (phone.length < 10) {
-            invalid++
-            return
-          }
-          const id = nextParticipantId(existingIds)
-          existingIds.push(id)
-          newParticipants.push({
-            name: input.name.trim(),
-            phone,
-            address: input.address?.trim() || 'Valanchery',
-            location: input.location?.trim() || 'Valanchery',
-            couponId: input.couponId ? input.couponId.replace(/\D/g, '').trim() : undefined,
-            id,
-            registeredAt: new Date().toISOString().slice(0, 10),
-            eligibility: 'Eligible',
-            status: 'Active',
-          })
-        })
-
-        if (newParticipants.length > 0) {
-          setData((prev) => ({
-            ...prev,
-            participants: [...newParticipants, ...prev.participants],
-          }))
-        }
-
-        return { added: newParticipants.length, duplicates: 0, invalid }
       },
       updateParticipant: (id, patch) => {
         api.updateParticipant(id, patch).catch(() => {})
@@ -592,13 +505,36 @@ export function AppProvider({ children }: { children: ReactNode }) {
           participants: prev.participants.map((p) => (p.id === id ? { ...p, ...patch } : p)),
         }))
       },
-      deleteParticipant: (id) => {
-        api.deleteParticipant(id).catch(() => {})
-        setData((prev) => ({
-          ...prev,
-          participants: prev.participants.filter((p) => p.id !== id),
-          winners: prev.winners.filter((w) => w.participantId !== id),
-        }))
+      deleteParticipant: async (id) => {
+        try {
+          await api.deleteParticipant(id)
+        } catch {}
+        setData((prev) => {
+          const target = prev.participants.find((p) => p.id === id)
+          const restoredCoupons = target?.couponId
+            ? (prev.coupons || []).map((c) =>
+                c.id === target.couponId
+                  ? {
+                      ...c,
+                      status: 'Unused' as const,
+                      usedAt: undefined,
+                      usedByParticipantId: undefined,
+                      usedByParticipantName: undefined,
+                      usedByParticipantPhone: undefined,
+                    }
+                  : c
+              )
+            : prev.coupons
+
+          return {
+            ...prev,
+            participants: prev.participants.filter((p) => p.id !== id),
+            winners: prev.winners.filter((w) => w.participantId !== id),
+            coupons: restoredCoupons,
+            usedCouponsCount: Math.max(0, (prev.usedCouponsCount || 0) - (target?.couponId ? 1 : 0)),
+          }
+        })
+        refreshData().catch(() => {})
       },
       addPrize: (prize) => {
         const id = `prize-${Date.now()}`

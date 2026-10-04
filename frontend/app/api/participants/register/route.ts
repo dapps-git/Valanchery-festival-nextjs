@@ -14,8 +14,9 @@ export async function POST(request: Request) {
     const cleanPhone = phone.replace(/\D/g, '').slice(-10)
     const cleanCouponId = couponId ? couponId.replace(/[^A-Za-z0-9]/g, '').toUpperCase() : ''
     const db = await connectDB()
-    const participantsCol = db.collection('participants')
-    const couponsCol = db.collection('coupons')
+    const participantsCol = db.collection<any>('participants')
+    const couponsCol = db.collection<any>('coupons')
+    const countersCol = db.collection<any>('counters')
 
     // 1. Check if the exact same participant (same phone + coupon) already registered
     const existingSameUser = await participantsCol.findOne({
@@ -61,49 +62,73 @@ export async function POST(request: Request) {
       }
     }
 
-    // Guaranteed unique incremental participant ID (calculates highest existing suffix)
-    const existingParticipants = await participantsCol
-      .find({}, { projection: { id: 1 } })
-      .toArray()
+    // Atomic sequential participant ID (eliminates collection scanning and avoids race conditions)
+    let counterDoc: any = await countersCol.findOneAndUpdate(
+      { _id: 'participant_id' },
+      { $inc: { seq: 1 } },
+      { upsert: true, returnDocument: 'after' }
+    )
 
-    let maxNum = 0
-    for (const p of existingParticipants) {
-      if (p.id) {
-        const match = p.id.match(/\d+$/)
+    // Calibration if counter was uninitialized or below 100
+    if (!counterDoc || counterDoc.seq <= 1) {
+      const highestDoc = await participantsCol
+        .find({}, { projection: { id: 1 } })
+        .sort({ id: -1 })
+        .limit(1)
+        .toArray()
+      let maxNum = 100
+      if (highestDoc.length > 0 && highestDoc[0].id) {
+        const match = highestDoc[0].id.match(/\d+$/)
         if (match) {
-          const num = parseInt(match[0], 10)
-          if (!isNaN(num) && num > maxNum) maxNum = num
+          const parsed = parseInt(match[0], 10)
+          if (!isNaN(parsed) && parsed > maxNum) maxNum = parsed
         }
       }
+      counterDoc = await countersCol.findOneAndUpdate(
+        { _id: 'participant_id' },
+        { $set: { seq: maxNum + 1 } },
+        { returnDocument: 'after' }
+      )
     }
 
+    const seq = counterDoc?.seq || 101
+    const participantId = `VF2026-${String(seq).padStart(5, '0')}`
     const now = new Date().toISOString()
-    let newParticipant: any = null
-    let participantId = ''
 
-    for (let attempt = 0; attempt < 10; attempt++) {
-      participantId = `VF2026-${String(maxNum + attempt + 1).padStart(5, '0')}`
-      newParticipant = {
-        id: participantId,
-        name: name || 'Festival Participant',
-        phone: cleanPhone,
-        address: address || '',
-        location: location || '',
-        couponId: cleanCouponId,
-        registeredAt: now,
-        createdAt: now,
-        eligibility: 'Eligible',
-        status: 'Active',
-      }
+    const newParticipant = {
+      id: participantId,
+      name: name || 'Festival Participant',
+      phone: cleanPhone,
+      address: address || '',
+      location: location || '',
+      couponId: cleanCouponId,
+      registeredAt: now,
+      createdAt: now,
+      eligibility: 'Eligible',
+      status: 'Active',
+    }
 
-      try {
-        await participantsCol.insertOne(newParticipant)
-        break
-      } catch (err: any) {
-        if (err?.code === 11000 && attempt < 9) {
-          continue // retry with next suffix
+    try {
+      await participantsCol.insertOne(newParticipant)
+    } catch (insertErr: any) {
+      if (insertErr?.code === 11000) {
+        if (insertErr.keyPattern?.couponId || insertErr.message?.includes('couponId')) {
+          return NextResponse.json(
+            { ok: false, error: 'This coupon has already been registered.' },
+            { status: 400 }
+          )
         }
-        throw err
+        // Fallback retry with next seq
+        const retryDoc: any = await countersCol.findOneAndUpdate(
+          { _id: 'participant_id' },
+          { $inc: { seq: 1 } },
+          { returnDocument: 'after' }
+        )
+        const retryId = `VF2026-${String(retryDoc?.seq || seq + 1).padStart(5, '0')}`
+        newParticipant.id = retryId
+        await participantsCol.insertOne(newParticipant)
+      } else {
+        throw insertErr
       }
     }
 
