@@ -12,6 +12,9 @@ export async function sendOtpEmail(toEmail: string, otp: string): Promise<{ ok: 
       return { ok: false, error: 'SMTP credentials missing: Please add SMTP_USER and SMTP_PASS to Vercel Environment Variables.' }
     }
 
+    const isGmail = smtpHost.toLowerCase().includes('gmail')
+    const isSecure = process.env.SMTP_SECURE === 'true' || smtpPort === 465
+
     const transporter = nodemailer.createTransport({
       host: isGmail ? 'smtp.gmail.com' : smtpHost,
       port: isGmail ? 465 : smtpPort,
