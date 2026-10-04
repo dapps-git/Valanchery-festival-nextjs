@@ -42,7 +42,7 @@ router.post('/login', async (req, res) => {
         const hashedDefault = await bcrypt.hash('Admin@2026', 12)
         await db.collection('admin_settings').insertOne({
           id: 'admin_credential',
-          email: 'admin@valancheryfestival.com',
+          email: ADMIN_LOGIN_EMAIL,
           password: hashedDefault,
           isCustomPassword: false,
           createdAt: new Date().toISOString(),
@@ -219,11 +219,11 @@ router.post('/forgot-password', async (req, res) => {
         from: `"Lucky Draw Admin" <${smtpUser}>`,
         to: otpDestination,
         subject: `Admin Reset OTP: ${otp}`,
-        text: `Your Lucky Draw Admin Password Reset OTP is: ${otp}\n\nThis OTP is for the admin account (admin@valancheryfestival.com) and expires in 10 minutes.`,
+        text: `Your Lucky Draw Admin Password Reset OTP is: ${otp}\n\nThis OTP expires in 10 minutes.`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
             <h2 style="color: #1a202c; text-align: center;">Lucky Draw Admin Reset OTP</h2>
-            <p style="color: #4a5568; font-size: 15px;">You requested a password reset for the admin dashboard (<strong>admin@valancheryfestival.com</strong>).</p>
+            <p style="color: #4a5568; font-size: 15px;">You requested a password reset for the admin dashboard.</p>
             <div style="background: #f7fafc; border-radius: 6px; padding: 16px; text-align: center; margin: 20px 0;">
               <span style="font-size: 32px; font-weight: bold; letter-spacing: 6px; color: #2b6cb0;">${otp}</span>
             </div>

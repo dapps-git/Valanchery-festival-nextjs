@@ -49,7 +49,7 @@ export async function requireAdminAuth(req: AuthenticatedRequest, res: Response,
           tokenEmail = Buffer.from(parts[3], 'hex').toString('utf8')
         } catch {}
       }
-      req.admin = { email: tokenEmail || 'admin@valancheryfestival.com', role: 'admin', iat: Math.floor(timestamp / 1000) }
+      req.admin = { email: tokenEmail || (process.env.ADMIN_EMAIL || '').toLowerCase().trim(), role: 'admin', iat: Math.floor(timestamp / 1000) }
     } else {
       // Standard Cryptographic JWT
       try {

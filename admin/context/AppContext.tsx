@@ -1,5 +1,4 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { ADMIN_EMAIL } from '../data/mockData'
 import { nextParticipantId } from '../lib/format'
 import { createCouponBatch } from '../lib/couponPdfGenerator'
 import { api } from '../lib/api'

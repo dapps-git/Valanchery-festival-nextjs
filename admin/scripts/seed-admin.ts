@@ -3,10 +3,7 @@
  * Run with: node --env-file=.env -r tsx/esm scripts/seed-admin.ts
  * OR: npx tsx scripts/seed-admin.ts
  *
- * Seeds the default admin credentials into MongoDB.
- * Once seeded, login works with:
- *   Email:    admin@valancheryfestival.com
- *   Password: Admin@2026
+ * Seeds the default admin credentials into MongoDB using ADMIN_EMAIL from .env.
  *
  * After the admin resets their password via OTP,
  * isCustomPassword = true → default password STOPS working.
