@@ -87,12 +87,12 @@ export const api = {
     }
   },
 
-  async forgotPassword(email: string): Promise<{ ok: boolean; message?: string; error?: string }> {
+  async forgotPassword(email: string): Promise<{ ok: boolean; message?: string; error?: string; otp?: string; token?: string }> {
     const res = await fetchWithTimeout(`${API_BASE}/auth/forgot-password`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email }),
-    }, 12000)
+    }, 30000) // 30s — Vercel cold start can be slow
     return res.json()
   },
 
