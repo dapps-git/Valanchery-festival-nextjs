@@ -35,8 +35,45 @@ app.use(
 )
 app.options('*', cors())
 app.use(express.json({ limit: '10mb' }))
+app.use(requireAuth)
 
 import jwt from 'jsonwebtoken'
+
+// ── JWT Auth Middleware ──────────────────────────────────────────────────────
+// Public GET routes (frontend-facing — no token needed)
+const PUBLIC_GET_PATHS = ['/api/prizes', '/api/draws', '/api/winners', '/health', '/api/health', '/api/all', '/all']
+// Always public (auth flow)
+const PUBLIC_ANY_PATHS = ['/api/auth', '/auth']
+
+function requireAuth(req: any, res: any, next: any) {
+  const p = req.path.toLowerCase()
+  const fullPath = req.baseUrl + req.path
+
+  // Always allow auth routes
+  if (PUBLIC_ANY_PATHS.some((pp) => fullPath.toLowerCase().startsWith(pp))) return next()
+
+  // Allow GET on public frontend routes
+  if (req.method === 'GET' && PUBLIC_GET_PATHS.some((pp) => fullPath.toLowerCase().startsWith(pp))) return next()
+
+  // Require JWT for everything else
+  const authHeader = req.headers.authorization || ''
+  let token = authHeader.replace(/^Bearer\s+/i, '').trim()
+  if (!token && req.headers.cookie) {
+    const match = req.headers.cookie.match(/admin_token=([^;]+)/)
+    if (match) token = match[1]
+  }
+
+  if (!token) {
+    return res.status(401).json({ ok: false, error: 'Unauthorized: No token provided' })
+  }
+
+  try {
+    jwt.verify(token, process.env.JWT_SECRET || '')
+    next()
+  } catch {
+    return res.status(401).json({ ok: false, error: 'Unauthorized: Invalid or expired token' })
+  }
+}
 
 // Aggregated Data Route for ultra-fast single request app hydration
 app.get(['/api/all', '/all'], async (req, res) => {
