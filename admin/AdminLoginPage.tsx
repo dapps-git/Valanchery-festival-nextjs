@@ -41,8 +41,15 @@ export function AdminLoginPage() {
       if (typeof localStorage !== 'undefined') {
         const savedEmail = localStorage.getItem('admin_saved_email')
         const savedPassword = localStorage.getItem('admin_saved_password')
-        if (savedEmail) setEmail(savedEmail)
-        if (savedPassword) setPassword(savedPassword)
+        // Only restore if it's the actual admin login email
+        if (savedEmail && savedEmail === ADMIN_EMAIL) {
+          setEmail(savedEmail)
+          if (savedPassword) setPassword(savedPassword)
+        } else {
+          // Wipe any stale/wrong email that got saved before
+          localStorage.removeItem('admin_saved_email')
+          localStorage.removeItem('admin_saved_password')
+        }
       }
     } catch {}
   }, [])
@@ -93,7 +100,7 @@ export function AdminLoginPage() {
   }
 
   const openForgotModal = () => {
-    setForgotEmail(email || '')
+    setForgotEmail('')  // always start blank — user types the OTP email
     setForgotOtp('')
     setForgotToken('')
     setNewPassword('')
@@ -179,13 +186,14 @@ export function AdminLoginPage() {
         setPassword(newPassword.trim())
         try {
           if (typeof localStorage !== 'undefined') {
+            // Always save admin login email (not OTP email) for next login
             localStorage.setItem('admin_saved_email', ADMIN_EMAIL)
             localStorage.setItem('admin_saved_password', newPassword.trim())
           }
         } catch {}
         setShowForgotModal(false)
         setError('')
-        alert('Password reset successfully! You can now log into the dashboard with admin@valancheryfestival.com and your new password.')
+        alert('Password reset successfully! You can now log into the dashboard with your new password.')
       } else {
         setForgotError(res.error || 'Failed to update password. Please try again.')
       }
@@ -360,7 +368,7 @@ export function AdminLoginPage() {
                     type="email"
                     value={forgotEmail}
                     onChange={(e) => setForgotEmail(e.target.value)}
-                    placeholder="admin@valancheryfestival.com"
+                    placeholder="Enter email address"
                     className="w-full rounded-[4px] border border-[#E8E3D8] px-3 py-1.5 text-xs text-stone-900 outline-none focus:border-[#9A7B4F] transition"
                     required
                   />

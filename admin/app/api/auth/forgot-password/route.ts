@@ -6,7 +6,7 @@ import crypto from 'crypto'
 export const dynamic = 'force-dynamic'
 
 function signOtpToken(email: string, otp: string, expiresAt: number): string {
-  const secret = process.env.JWT_SECRET || 'vf2026-secret'
+  const secret = process.env.JWT_SECRET || ''
   const payload = `${email}|${otp}|${expiresAt}`
   const sig = crypto.createHmac('sha256', secret).update(payload).digest('hex')
   return Buffer.from(`${payload}|${sig}`).toString('base64url')
