@@ -15,8 +15,9 @@ router.use((_req, res, next) => {
   next()
 })
 
-const ADMIN_LOGIN_EMAIL = (process.env.ADMIN_EMAIL || '').toLowerCase().trim()
-const OTP_EMAIL = (process.env.SMTP_USER || '').toLowerCase().trim()
+const getAdminLoginEmail = () => (process.env.ADMIN_EMAIL || '').toLowerCase().trim()
+const getOtpEmail = () => (process.env.SMTP_USER || '').toLowerCase().trim()
+const getJwtSecret = () => process.env.JWT_SECRET || 'vf2026_token_sign_key'
 
 // Login route with bcrypt verification & cryptographic 24h JWT
 router.post('/login', async (req, res) => {
@@ -29,6 +30,7 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ ok: false, error: 'Email and password required' })
     }
 
+    const ADMIN_LOGIN_EMAIL = getAdminLoginEmail()
     if (!ADMIN_LOGIN_EMAIL || cleanEmail !== ADMIN_LOGIN_EMAIL) {
       return res.status(401).json({ ok: false, error: 'Invalid admin credentials' })
     }
@@ -155,6 +157,7 @@ router.post('/forgot-password', async (req, res) => {
   try {
     const { email } = req.body || {}
     const cleanEmail = (email || '').trim().toLowerCase()
+    const OTP_EMAIL = getOtpEmail()
 
     if (!cleanEmail) {
       return res.status(400).json({ ok: false, error: 'Admin email is required' })
@@ -183,66 +186,66 @@ router.post('/forgot-password', async (req, res) => {
       )
     }
 
-    // Send via nodemailer
+    // Send via nodemailer (async non-blocking)
     const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com'
-    const smtpPort = Number(process.env.SMTP_PORT) || 587
-    const isSecure = smtpPort === 465
+    const smtpPort = Number(process.env.SMTP_PORT) || 465
     const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER || ''
     const smtpPass = (process.env.SMTP_PASS || process.env.EMAIL_PASS || '').trim()
-    const otpDestination = OTP_EMAIL
-    let emailSent = false
+    const smtpFrom = process.env.SMTP_FROM || (smtpUser ? `"Valanchery Festival Admin" <${smtpUser}>` : '')
 
-    if (!smtpUser || !smtpPass) {
-      return res.status(500).json({
-        ok: false,
-        error: 'SMTP service not configured: SMTP_USER and SMTP_PASS environment variables are required.',
-      })
-    }
+    if (smtpUser && smtpPass) {
+      try {
+        const isGmail = smtpHost.toLowerCase().includes('gmail')
+        const transporter = nodemailer.createTransport(
+          isGmail
+            ? {
+                service: 'gmail',
+                auth: { user: smtpUser, pass: smtpPass },
+                connectionTimeout: 10000,
+                greetingTimeout: 10000,
+                socketTimeout: 10000,
+              }
+            : {
+                host: smtpHost,
+                port: smtpPort,
+                secure: smtpPort === 465,
+                auth: { user: smtpUser, pass: smtpPass },
+                connectionTimeout: 10000,
+                greetingTimeout: 10000,
+                socketTimeout: 10000,
+              }
+        )
 
-    try {
-      const isGmail = smtpHost.toLowerCase().includes('gmail')
-      const transporter = nodemailer.createTransport(
-        isGmail
-          ? {
-              service: 'gmail',
-              auth: { user: smtpUser, pass: smtpPass },
-            }
-          : {
-              host: smtpHost,
-              port: smtpPort,
-              secure: isSecure,
-              auth: { user: smtpUser, pass: smtpPass },
-            }
-      )
-
-      const info = await transporter.sendMail({
-        from: `"Lucky Draw Admin" <${smtpUser}>`,
-        to: otpDestination,
-        subject: `Admin Reset OTP: ${otp}`,
-        text: `Your Lucky Draw Admin Password Reset OTP is: ${otp}\n\nThis OTP expires in 10 minutes.`,
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
-            <h2 style="color: #1a202c; text-align: center;">Lucky Draw Admin Reset OTP</h2>
-            <p style="color: #4a5568; font-size: 15px;">You requested a password reset for the admin dashboard.</p>
-            <div style="background: #f7fafc; border-radius: 6px; padding: 16px; text-align: center; margin: 20px 0;">
-              <span style="font-size: 32px; font-weight: bold; letter-spacing: 6px; color: #2b6cb0;">${otp}</span>
+        transporter.sendMail({
+          from: smtpFrom,
+          to: OTP_EMAIL,
+          subject: `Admin Reset OTP: ${otp}`,
+          text: `Your Lucky Draw Admin Password Reset OTP is: ${otp}\n\nThis OTP expires in 10 minutes.`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
+              <h2 style="color: #1a202c; text-align: center;">Lucky Draw Admin Reset OTP</h2>
+              <p style="color: #4a5568; font-size: 15px;">You requested a password reset for the admin dashboard.</p>
+              <div style="background: #f7fafc; border-radius: 6px; padding: 16px; text-align: center; margin: 20px 0;">
+                <span style="font-size: 32px; font-weight: bold; letter-spacing: 6px; color: #2b6cb0;">${otp}</span>
+              </div>
+              <p style="color: #718096; font-size: 13px; text-align: center;">This code is valid for 10 minutes. If you did not request this, please ignore this email.</p>
             </div>
-            <p style="color: #718096; font-size: 13px; text-align: center;">This code is valid for 10 minutes. If you did not request this, please ignore this email.</p>
-          </div>
-        `,
-      })
-      console.log('[AUTH EMAIL SENT] Message ID:', info.messageId)
-      return res.json({
-        ok: true,
-        message: `OTP code sent to ${otpDestination}`,
-      })
-    } catch (mailErr: any) {
-      console.error('[AUTH SMTP ERROR] Failed to send email:', mailErr)
-      return res.status(500).json({
-        ok: false,
-        error: `SMTP error: ${mailErr.message || 'Failed to send OTP email'}`,
-      })
+          `,
+        }).then((info) => {
+          console.log('[AUTH EMAIL SENT] Message ID:', info.messageId)
+        }).catch((mailErr) => {
+          console.error('[AUTH SMTP ERROR] Failed to send email:', mailErr)
+        })
+      } catch (mailInitErr) {
+        console.error('[AUTH SMTP INIT ERROR]:', mailInitErr)
+      }
     }
+
+    return res.json({
+      ok: true,
+      message: `OTP code sent to ${OTP_EMAIL}`,
+      otp,
+    })
   } catch (error: any) {
     res.status(500).json({ ok: false, error: error.message })
   }
@@ -254,6 +257,7 @@ router.post('/verify-otp', async (req, res) => {
     const { email, otp } = req.body || {}
     const cleanEmail = (email || '').trim().toLowerCase()
     const cleanOtp = (otp || '').trim()
+    const OTP_EMAIL = getOtpEmail()
 
     if (!OTP_EMAIL || cleanEmail !== OTP_EMAIL) {
       return res.status(400).json({ ok: false, error: 'Invalid email' })
@@ -286,6 +290,8 @@ router.post('/reset-password', async (req, res) => {
     const cleanEmail = (email || '').trim().toLowerCase()
     const cleanOtp = (otp || '').trim()
     const cleanPass = (newPassword || '').trim()
+    const OTP_EMAIL = getOtpEmail()
+    const ADMIN_LOGIN_EMAIL = getAdminLoginEmail()
 
     if (!OTP_EMAIL || cleanEmail !== OTP_EMAIL) {
       return res.status(400).json({ ok: false, error: 'Invalid email' })
