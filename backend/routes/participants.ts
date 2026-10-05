@@ -203,8 +203,8 @@ router.post('/bulk', requireAdminAuth, async (req, res) => {
   }
 })
 
-// 3. Get all participants
-router.get('/', async (_req, res) => {
+// 3. Get all participants (ADMIN ONLY)
+router.get('/', requireAdminAuth, async (_req, res) => {
   try {
     const participants = await Participant.find().sort({ createdAt: -1 }).lean()
     res.json({ ok: true, participants })
@@ -213,12 +213,12 @@ router.get('/', async (_req, res) => {
   }
 })
 
-// 3b. Get dynamic eligible participants pool for Mega or Normal competition
+// 3b. Get dynamic eligible participants pool for Mega or Normal competition (ADMIN ONLY)
 // ELIGIBILITY MATRIX:
 // - Never won: Mega ✅, Normal ✅
 // - Won Normal: Mega ✅, Normal ❌
 // - Won Mega: Mega ❌, Normal ❌
-router.get('/eligible', async (req, res) => {
+router.get('/eligible', requireAdminAuth, async (req, res) => {
   try {
     const competitionType = (req.query.competitionType as string) || 'Normal'
     if (!['Mega', 'Normal'].includes(competitionType)) {
@@ -268,13 +268,18 @@ router.get('/eligible', async (req, res) => {
 // 4. Ticket Pass Lookup by phone or ID
 router.get('/lookup/:query', async (req, res) => {
   try {
-    const clean = req.params.query.trim().toLowerCase()
+    const raw = (req.params.query || '').trim()
+    if (!raw || raw.length > 50) {
+      return res.status(400).json({ ok: false, error: 'Invalid search parameter.' })
+    }
+    const clean = raw.toLowerCase()
+    const escaped = clean.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
     const digitsOnly = clean.replace(/\D/g, '')
 
     const participant = await Participant.findOne({
       $or: [
-        { id: { $regex: new RegExp(`^${clean}$`, 'i') } },
-        { couponId: { $regex: new RegExp(`^${clean}$`, 'i') } },
+        { id: { $regex: new RegExp(`^${escaped}$`, 'i') } },
+        { couponId: { $regex: new RegExp(`^${escaped}$`, 'i') } },
         ...(digitsOnly.length >= 10 ? [{ phone: digitsOnly.slice(-10) }] : []),
       ],
     }).sort({ createdAt: -1 }).lean()
@@ -283,7 +288,18 @@ router.get('/lookup/:query', async (req, res) => {
       return res.status(404).json({ ok: false, error: 'No registration found for this phone number or ID.' })
     }
 
-    res.json({ ok: true, participant })
+    res.json({
+      ok: true,
+      participant: {
+        id: participant.id,
+        name: participant.name,
+        phone: participant.phone ? `******${participant.phone.slice(-4)}` : '',
+        location: participant.location,
+        couponId: participant.couponId,
+        registeredAt: participant.registeredAt,
+        status: participant.status,
+      },
+    })
   } catch (error: any) {
     res.status(500).json({ ok: false, error: error.message })
   }

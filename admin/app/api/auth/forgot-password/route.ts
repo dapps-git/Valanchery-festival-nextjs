@@ -6,7 +6,7 @@ import crypto from 'crypto'
 export const dynamic = 'force-dynamic'
 
 function signOtpToken(email: string, otp: string, expiresAt: number): string {
-  const secret = process.env.JWT_SECRET || ''
+  const secret = process.env.JWT_SECRET || 'valanchery_festival_admin_secret_jwt_key_2026_xyz987'
   const payload = `${email}|${otp}|${expiresAt}`
   const sig = crypto.createHmac('sha256', secret).update(payload).digest('hex')
   return Buffer.from(`${payload}|${sig}`).toString('base64url')
@@ -14,7 +14,7 @@ function signOtpToken(email: string, otp: string, expiresAt: number): string {
 
 export async function POST(request: Request) {
   try {
-    const otpEmail = (process.env.SMTP_USER || '').toLowerCase().trim()
+    const otpEmail = (process.env.RESEND_MAIL || process.env.SMTP_USER || '').toLowerCase().trim()
 
     const body = await request.json().catch(() => ({}))
     const cleanEmail = (body.email || '').trim().toLowerCase()
@@ -51,7 +51,6 @@ export async function POST(request: Request) {
     return NextResponse.json({
       ok: true,
       message: 'OTP sent. Check your inbox & spam folder.',
-      otp,
       token,
     })
   } catch (err: any) {

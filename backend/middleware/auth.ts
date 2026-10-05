@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express'
 import jwt from 'jsonwebtoken'
 import mongoose from 'mongoose'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'vf2026_token_sign_key'
+const JWT_SECRET = process.env.JWT_SECRET || 'valanchery_festival_admin_secret_jwt_key_2026_xyz987'
 
 export interface AuthenticatedRequest extends Request {
   admin?: {
