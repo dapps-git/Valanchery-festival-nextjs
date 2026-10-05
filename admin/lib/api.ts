@@ -3,7 +3,7 @@ import type { AppData, Coupon, CouponBatch, Draw, Participant, Prize, Winner } f
 const envUrl = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/$/, '')
 const API_BASE = envUrl ? (envUrl.endsWith('/api') ? envUrl : `${envUrl}/api`) : '/api'
 
-async function fetchWithTimeout(urlOrPath: string, options: RequestInit = {}, timeoutMs = 15000): Promise<Response> {
+async function fetchWithTimeout(urlOrPath: string, options: RequestInit = {}, timeoutMs = 45000): Promise<Response> {
   let targetUrl = urlOrPath
 
   if (!urlOrPath.startsWith('http://') && !urlOrPath.startsWith('https://')) {
@@ -54,8 +54,12 @@ async function fetchWithTimeout(urlOrPath: string, options: RequestInit = {}, ti
 export const api = {
   // Check Backend Health
   async health(): Promise<{ status: string; database: string }> {
-    const res = await fetchWithTimeout(`${API_BASE}/health`, {}, 8000)
-    return res.json()
+    try {
+      const res = await fetchWithTimeout(`${API_BASE}/health`, {}, 15000)
+      return res.json()
+    } catch {
+      return { status: 'waking_up', database: 'connecting' }
+    }
   },
 
   // Auth with JWT
@@ -64,7 +68,7 @@ export const api = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
-    }, 10000)
+    }, 25000)
     return res.json()
   },
 
@@ -80,10 +84,18 @@ export const api = {
 
   async verifySession(): Promise<{ ok: boolean; admin?: any; error?: string }> {
     try {
-      const res = await fetchWithTimeout(`${API_BASE}/auth/me`, {}, 5000)
-      return res.json()
-    } catch (err: any) {
-      return { ok: false, error: err.message || 'Session verification failed' }
+      const res = await fetchWithTimeout(`${API_BASE}/auth/me`, {}, 30000)
+      if (res.status === 401) {
+        const body = await res.json().catch(() => ({}))
+        return { ok: false, error: body.error || 'Session expired. Please log in again.' }
+      }
+      if (res.ok) {
+        return res.json()
+      }
+      return { ok: true }
+    } catch {
+      // Temporary network wake-up / cold start: do not alert or kick admin out
+      return { ok: true }
     }
   },
 

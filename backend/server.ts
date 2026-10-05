@@ -158,6 +158,20 @@ const server = app.listen(PORT, () => {
 server.keepAliveTimeout = 65000
 server.headersTimeout = 70000
 
+// ── Self-Keepalive Ping: Prevents Render free instance from spinning down into sleep ──
+const KEEP_ALIVE_URL = process.env.RENDER_EXTERNAL_URL || 'https://valanchery-festival-nextjs-rz49.onrender.com'
+setInterval(async () => {
+  try {
+    const healthUrl = `${KEEP_ALIVE_URL.replace(/\/$/, '')}/health`
+    const res = await fetch(healthUrl)
+    if (res.ok) {
+      console.log(`[KeepAlive] Pinged ${healthUrl} successfully at ${new Date().toISOString()}`)
+    }
+  } catch (err: any) {
+    console.warn(`[KeepAlive] Ping notice: ${err?.message || 'offline'}`)
+  }
+}, 10 * 60 * 1000) // Every 10 minutes (Render sleeps after 15 minutes of inactivity)
+
 // ── MongoDB connection event listeners for 1-year resilience ──
 mongoose.connection.on('disconnected', () => {
   console.warn('⚠️ MongoDB disconnected. Mongoose will attempt automatic reconnection...')
