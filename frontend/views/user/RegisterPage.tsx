@@ -51,22 +51,27 @@ export function RegisterPage() {
   const latestRequestIdRef = useRef<number>(0)
   const lastValidatedTokenRef = useRef<string>('')
 
-  // Live Token Validator function (Debounced + Async server check)
+  // Live Token Validator function (Async server check)
   const checkToken = (tokenInput: string, immediate = false) => {
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current)
     }
 
-    const clean = extractCouponId(tokenInput) || tokenInput.replace(/[^A-Za-z0-9]/g, '').trim().toUpperCase()
+    const clean = (extractCouponId(tokenInput) || tokenInput.replace(/[^A-Za-z0-9]/g, '')).slice(0, 13).toUpperCase()
     if (!clean) {
       setTokenStatus({ status: 'Idle', message: '' })
       return
     }
+
+    // If not yet 13 characters:
     if (clean.length !== 13) {
-      setTokenStatus({
-        status: 'Invalid',
-        message: 'Please enter a valid 13-character coupon code.',
-      })
+      // ONLY show the length error if explicitly triggered by blur, Enter, or submit
+      if (immediate) {
+        setTokenStatus({
+          status: 'Invalid',
+          message: 'Please enter a valid 13-character coupon code.',
+        })
+      }
       return
     }
 
@@ -83,6 +88,7 @@ export function RegisterPage() {
             status: 'Valid',
             message: 'Valid Festival Coupon! Ready for registration.',
           })
+          setErrors((prev) => ({ ...prev, couponId: '' }))
         } else if (result.status === 'Used') {
           setTokenStatus({
             status: 'Used',
@@ -91,7 +97,7 @@ export function RegisterPage() {
         } else {
           setTokenStatus({
             status: 'Invalid',
-            message: result.message || 'Invalid coupon code.',
+            message: result.message || 'Coupon not found. Please check the 13-character code.',
           })
         }
       } catch {
@@ -108,7 +114,7 @@ export function RegisterPage() {
     if (immediate) {
       runValidation()
     } else {
-      debounceTimerRef.current = setTimeout(runValidation, 350)
+      debounceTimerRef.current = setTimeout(runValidation, 300)
     }
   }
 
@@ -126,23 +132,65 @@ export function RegisterPage() {
 
     const extracted = extractCouponId(rawParam)
     if (extracted) {
-      setForm((f) => ({ ...f, couponId: extracted }))
-      checkToken(extracted, true)
+      const capped = extracted.slice(0, 13).toUpperCase()
+      setForm((f) => ({ ...f, couponId: capped }))
+      checkToken(capped, true)
     }
   }, [])
 
   const handleCouponChange = (val: string) => {
     const extracted = extractCouponId(val)
-    const cleaned = extracted || val.replace(/[^A-Za-z0-9]/g, '').slice(0, 16).toUpperCase()
+    const cleaned = (extracted || val.replace(/[^A-Za-z0-9]/g, '')).slice(0, 13).toUpperCase()
     setForm((f) => ({ ...f, couponId: cleaned }))
-    checkToken(cleaned, false)
+    // While user is actively typing, stay in Idle state (never show premature error)
+    setTokenStatus({ status: 'Idle', message: '' })
+    if (errors.couponId) {
+      setErrors((prev) => ({ ...prev, couponId: '' }))
+    }
+    // Only auto-validate in background when they complete the full 13 characters
+    if (cleaned.length === 13) {
+      checkToken(cleaned, false)
+    }
+  }
+
+  const handleCouponBlur = () => {
+    const clean = (extractCouponId(form.couponId) || form.couponId.replace(/[^A-Za-z0-9]/g, '')).slice(0, 13).toUpperCase()
+    if (!clean) {
+      setTokenStatus({ status: 'Idle', message: '' })
+      return
+    }
+    if (clean.length < 13) {
+      setTokenStatus({
+        status: 'Invalid',
+        message: 'Please enter a valid 13-character coupon code.',
+      })
+      return
+    }
+    checkToken(clean, true)
+  }
+
+  const handleCouponKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      const clean = (extractCouponId(form.couponId) || form.couponId.replace(/[^A-Za-z0-9]/g, '')).slice(0, 13).toUpperCase()
+      if (!clean) return
+      if (clean.length < 13) {
+        setTokenStatus({
+          status: 'Invalid',
+          message: 'Please enter a valid 13-character coupon code.',
+        })
+        return
+      }
+      checkToken(clean, true)
+    }
   }
 
   const handleScanSuccess = (scannedToken: string) => {
-    setForm((f) => ({ ...f, couponId: scannedToken }))
-    checkToken(scannedToken, true)
+    const clean = (extractCouponId(scannedToken) || scannedToken.replace(/[^A-Za-z0-9]/g, '')).slice(0, 13).toUpperCase()
+    setForm((f) => ({ ...f, couponId: clean }))
+    checkToken(clean, true)
     if (typeof window !== 'undefined') {
-      window.history.replaceState(null, '', `?coupon=${encodeURIComponent(scannedToken)}`)
+      window.history.replaceState(null, '', `?coupon=${encodeURIComponent(clean)}`)
     }
   }
 
@@ -193,9 +241,13 @@ export function RegisterPage() {
     if (!form.couponId.trim()) {
       next.couponId = 'Coupon code is required'
     } else {
-      const cleanToken = extractCouponId(form.couponId) || form.couponId.replace(/[^A-Za-z0-9]/g, '').trim().toUpperCase()
-      if (cleanToken.length < 8 || cleanToken.length > 16) {
+      const cleanToken = (extractCouponId(form.couponId) || form.couponId.replace(/[^A-Za-z0-9]/g, '')).slice(0, 13).toUpperCase()
+      if (cleanToken.length !== 13) {
         next.couponId = 'Please enter a valid 13-character coupon code.'
+        setTokenStatus({
+          status: 'Invalid',
+          message: 'Please enter a valid 13-character coupon code.',
+        })
       } else {
         if (tokenStatus.status === 'Valid' && lastValidatedTokenRef.current === cleanToken) {
           // already verified
@@ -232,7 +284,7 @@ export function RegisterPage() {
     }
 
     try {
-      const cleanToken = extractCouponId(form.couponId) || form.couponId.replace(/[^A-Za-z0-9]/g, '').trim().toUpperCase()
+      const cleanToken = (extractCouponId(form.couponId) || form.couponId.replace(/[^A-Za-z0-9]/g, '')).slice(0, 13).toUpperCase()
       const userName = form.name.trim()
       const result = await registerParticipant({
         name: userName,
@@ -372,9 +424,16 @@ export function RegisterPage() {
               <form onSubmit={submit} className="space-y-2.5 sm:space-y-3">
                 {/* 1. Coupon ID Field */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Coupon ID <span className="text-cyan-500">*</span>
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-bold text-slate-700">
+                      Coupon ID <span className="text-cyan-500">*</span>
+                    </label>
+                    {form.couponId && tokenStatus.status !== 'Valid' && tokenStatus.status !== 'Used' && (
+                      <span className="text-[10px] font-mono text-slate-400">
+                        {form.couponId.length}/13
+                      </span>
+                    )}
+                  </div>
 
                   {form.couponId && tokenStatus.status === 'Valid' ? (
                     <div className="flex items-center justify-between rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2">
@@ -419,52 +478,47 @@ export function RegisterPage() {
                         </button>
                       </div>
                     </div>
-                  ) : form.couponId && tokenStatus.status === 'Invalid' ? (
-                    <div className="flex items-center justify-between rounded-lg border border-red-300 bg-red-50 px-3 py-2">
-                      <div className="flex items-center gap-1.5">
-                        <ShieldAlert size={15} className="text-red-600 shrink-0" />
-                        <div>
-                          <p className="font-mono text-xs font-bold text-red-900">{form.couponId}</p>
-                          <p className="text-[10px] text-red-700">{tokenStatus.message || 'Invalid coupon token'}</p>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={clearCoupon}
-                        className="text-xs text-red-700 underline font-medium cursor-pointer"
-                      >
-                        Change
-                      </button>
-                    </div>
                   ) : (
-                    /* Default Input Container with Scan QR button */
-                    <div className="relative flex items-center border border-cyan-200/90 hover:border-cyan-300 focus-within:border-[#0097b2] focus-within:ring-2 focus-within:ring-cyan-100 rounded-lg bg-white p-1 transition">
-                      <Ticket size={16} className="text-slate-400 ml-2 shrink-0" />
-                      <input
-                        type="text"
-                        value={form.couponId}
-                        onChange={(e) => handleCouponChange(e.target.value)}
-                        placeholder="Enter 13-digit coupon code"
-                        className="w-full px-2 py-1 text-xs font-mono tracking-wider text-slate-800 placeholder:text-slate-400 outline-none uppercase bg-transparent"
-                      />
-                      {isValidatingToken && (
-                        <div className="mr-1.5">
-                          <Loader2 size={13} className="animate-spin text-[#0097b2]" />
-                        </div>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => setIsScannerOpen(true)}
-                        className="inline-flex items-center gap-1 bg-[#e0f7fc] hover:bg-[#cbf1f9] text-[#0097b2] px-2.5 py-1.5 rounded-md text-[11px] font-bold transition whitespace-nowrap shrink-0 cursor-pointer border border-cyan-100"
-                      >
-                        <Camera size={12} />
-                        <span>Scan QR</span>
-                      </button>
-                    </div>
-                  )}
+                    /* Default Interactive Input Container with Scan QR button */
+                    <div>
+                      <div className={`relative flex items-center border ${
+                        (tokenStatus.status === 'Invalid' && tokenStatus.message) || errors.couponId
+                          ? 'border-red-400 bg-red-50/20 focus-within:border-red-500 focus-within:ring-2 focus-within:ring-red-100'
+                          : 'border-cyan-200/90 hover:border-cyan-300 focus-within:border-[#0097b2] focus-within:ring-2 focus-within:ring-cyan-100 bg-white'
+                      } rounded-lg p-1 transition`}>
+                        <Ticket size={16} className={`${(tokenStatus.status === 'Invalid' && tokenStatus.message) || errors.couponId ? 'text-red-400' : 'text-slate-400'} ml-2 shrink-0`} />
+                        <input
+                          type="text"
+                          value={form.couponId}
+                          maxLength={13}
+                          onChange={(e) => handleCouponChange(e.target.value)}
+                          onBlur={handleCouponBlur}
+                          onKeyDown={handleCouponKeyDown}
+                          placeholder="Enter 13-digit coupon code"
+                          className="w-full px-2 py-1 text-xs font-mono tracking-wider text-slate-800 placeholder:text-slate-400 outline-none uppercase bg-transparent"
+                        />
+                        {isValidatingToken && (
+                          <div className="mr-1.5">
+                            <Loader2 size={13} className="animate-spin text-[#0097b2]" />
+                          </div>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setIsScannerOpen(true)}
+                          className="inline-flex items-center gap-1 bg-[#e0f7fc] hover:bg-[#cbf1f9] text-[#0097b2] px-2.5 py-1.5 rounded-md text-[11px] font-bold transition whitespace-nowrap shrink-0 cursor-pointer border border-cyan-100"
+                        >
+                          <Camera size={12} />
+                          <span>Scan QR</span>
+                        </button>
+                      </div>
 
-                  {errors.couponId && !form.couponId && (
-                    <p className="mt-1 text-[10px] font-medium text-red-600">{errors.couponId}</p>
+                      {((tokenStatus.status === 'Invalid' && tokenStatus.message) || errors.couponId) && (
+                        <p className="mt-1 text-[11px] font-medium text-red-600 flex items-center gap-1">
+                          <ShieldAlert size={12} className="shrink-0" />
+                          <span>{tokenStatus.message || errors.couponId}</span>
+                        </p>
+                      )}
+                    </div>
                   )}
                 </div>
 
