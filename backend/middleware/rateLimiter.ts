@@ -69,9 +69,9 @@ export const registerLimiter = createRateLimiter({
   message: 'Registration rate limit exceeded. Please wait a moment and try again.',
 })
 
-// 60 coupon validations per minute per IP
+// 500 coupon validations per minute per IP — accommodates shared festival / mall Wi-Fi networks
 export const couponValidateLimiter = createRateLimiter({
   windowMs: 60 * 1000,
-  max: 60,
+  max: 500,
   message: 'Coupon validation limit exceeded. Please wait a moment.',
 })
