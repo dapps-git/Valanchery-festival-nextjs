@@ -214,7 +214,7 @@ router.get('/', requireAdminAuth, async (req, res) => {
       const normalWinnerCoupons = new Set<string>()
 
       for (const w of allWinners) {
-        const cId = (w.couponId || (w as any).participantCouponId || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase()
+        const cId = ((w as any).couponId || (w as any).participantCouponId || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase()
         if (w.competitionType === 'Mega') {
           if (cId) megaWinnerCoupons.add(cId)
           if (w.participantId) megaWinnerCoupons.add(w.participantId)
