@@ -32,11 +32,11 @@ const getAdminLoginEmail = () => {
 }
 const getOtpEmail = () => {
   ensureEnvLoaded()
-  return (process.env.RESEND_MAIL || '').toLowerCase().trim()
+  return (process.env.RESEND_MAIL || process.env.SMTP_USER || '').toLowerCase().trim()
 }
 const getJwtSecret = () => {
   ensureEnvLoaded()
-  return process.env.JWT_SECRET || 'vf2026_token_sign_key'
+  return process.env.JWT_SECRET || 'valanchery_festival_admin_secret_jwt_key_2026_xyz987'
 }
 
 // Login route with bcrypt verification & cryptographic 24h JWT
@@ -99,6 +99,13 @@ router.post('/login', async (req, res) => {
           getJwtSecret(),
           { expiresIn: '24h' }
         )
+        res.cookie('admin_token', token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          maxAge: 24 * 60 * 60 * 1000,
+          path: '/',
+        })
         return res.json({ ok: true, role: 'admin', token, email: cleanEmail, expiresIn: 24 * 60 * 60 })
       }
       return res.status(401).json({ ok: false, error: 'Invalid admin credentials' })
@@ -169,6 +176,7 @@ router.get(['/me', '/verify'], async (req, res) => {
 
 // Logout route
 router.post('/logout', async (_req, res) => {
+  res.clearCookie('admin_token', { path: '/' })
   res.json({ ok: true, message: 'Logged out successfully' })
 })
 
@@ -244,7 +252,6 @@ router.post('/forgot-password', async (req, res) => {
     return res.json({
       ok: true,
       message: `OTP code sent to ${OTP_EMAIL}`,
-      otp,
     })
   } catch (error: any) {
     res.status(500).json({ ok: false, error: error.message })

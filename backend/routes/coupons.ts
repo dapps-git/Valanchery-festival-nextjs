@@ -211,8 +211,8 @@ router.post('/bulk-insert', requireAdminAuth, async (req, res) => {
 })
 
 
-// 3. Get coupons & batches (supports pagination, search, status filter for directory view)
-router.get('/', async (req, res) => {
+// 3. Get coupons & batches (supports pagination, search, status filter for directory view - ADMIN ONLY)
+router.get('/', requireAdminAuth, async (req, res) => {
   try {
     const batchId = req.query.batchId as string
 
@@ -262,8 +262,8 @@ router.get('/', async (req, res) => {
 })
 
 
-// 4. Get all batches
-router.get('/batches', async (_req, res) => {
+// 4. Get all batches (ADMIN ONLY)
+router.get('/batches', requireAdminAuth, async (_req, res) => {
   try {
     const batches = await CouponBatch.find().sort({ createdAt: -1 }).lean()
     res.json({ ok: true, batches })

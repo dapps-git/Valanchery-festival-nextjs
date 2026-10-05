@@ -6,8 +6,8 @@ export const dynamic = 'force-dynamic'
 
 function verifyOtpToken(token: string, otp: string): boolean {
   try {
-    const secret = process.env.JWT_SECRET || ''
-    const otpEmail = (process.env.SMTP_USER || '').toLowerCase().trim()
+    const secret = process.env.JWT_SECRET || 'valanchery_festival_admin_secret_jwt_key_2026_xyz987'
+    const otpEmail = (process.env.RESEND_MAIL || process.env.SMTP_USER || '').toLowerCase().trim()
     const decoded = Buffer.from(token, 'base64url').toString('utf8')
     const parts = decoded.split('|')
     if (parts.length !== 4) return false
@@ -26,7 +26,7 @@ function verifyOtpToken(token: string, otp: string): boolean {
 
 export async function POST(request: Request) {
   try {
-    const otpEmail = (process.env.SMTP_USER || '').toLowerCase().trim()
+    const otpEmail = (process.env.RESEND_MAIL || process.env.SMTP_USER || '').toLowerCase().trim()
     const body = await request.json().catch(() => ({}))
     const cleanOtp = (body.otp || '').trim()
     const cleanEmail = (body.email || '').trim().toLowerCase()

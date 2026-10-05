@@ -3,6 +3,7 @@ import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
 import mongoose from 'mongoose'
+import jwt from 'jsonwebtoken'
 import { seedDatabase } from './seed.js'
 
 import couponsRouter from './routes/coupons.js'
@@ -24,7 +25,7 @@ dotenv.config()
 const app = express()
 const PORT = process.env.PORT || 5000
 const MONGODB_URI = process.env.MONGODB_URI || ''
-
+const JWT_SECRET = process.env.JWT_SECRET || 'valanchery_festival_admin_secret_jwt_key_2026_xyz987'
 
 app.use(
   cors({
@@ -35,8 +36,6 @@ app.use(
 )
 app.options('*', cors())
 app.use(express.json({ limit: '10mb' }))
-
-import jwt from 'jsonwebtoken'
 
 // Aggregated Data Route for ultra-fast single request app hydration
 app.get(['/api/all', '/all'], async (req, res) => {
@@ -54,7 +53,7 @@ app.get(['/api/all', '/all'], async (req, res) => {
         isAdmin = true
       } else {
         try {
-          jwt.verify(token, process.env.JWT_SECRET || 'vf2026_token_sign_key')
+          jwt.verify(token, JWT_SECRET)
           isAdmin = true
         } catch {}
       }
