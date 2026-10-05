@@ -3,6 +3,7 @@ import QRCode from 'qrcode'
 import { Coupon } from '../models/Coupon.js'
 import { CouponBatch } from '../models/CouponBatch.js'
 import { Participant } from '../models/Participant.js'
+import { Winner } from '../models/Winner.js'
 import { requireAdminAuth } from '../middleware/auth.js'
 import { couponValidateLimiter } from '../middleware/rateLimiter.js'
 
@@ -296,9 +297,14 @@ router.delete('/', requireAdminAuth, async (req, res) => {
       const couponIdsArray = Array.from(couponIdentifiers)
 
       if (couponIdsArray.length > 0) {
+        // Find participants linked to this batch's coupons
         const participantsToDelete = await Participant.find({ couponId: { $in: couponIdsArray } }, { id: 1 }).lean()
         const participantIds = participantsToDelete.map((p: any) => p.id).filter(Boolean)
+
         if (participantIds.length > 0) {
+          // Delete winners linked to those participants FIRST
+          await Winner.deleteMany({ participantId: { $in: participantIds } })
+          // Then delete the participants
           await Participant.deleteMany({ id: { $in: participantIds } })
         }
       }
@@ -313,7 +319,7 @@ router.delete('/', requireAdminAuth, async (req, res) => {
       const activeIds = allBatches.map((b: any) => b.id)
       await Coupon.deleteMany({ batchId: { $nin: activeIds } })
 
-      return res.json({ ok: true, message: 'Batch and associated participants deleted' })
+      return res.json({ ok: true, message: 'Batch, participants, and winners deleted' })
     }
 
     res.status(400).json({ ok: false, error: 'batchId or all=true required' })
@@ -337,9 +343,14 @@ router.delete('/batches/:id', requireAdminAuth, async (req, res) => {
     const couponIdsArray = Array.from(couponIdentifiers)
 
     if (couponIdsArray.length > 0) {
+      // Find participants linked to this batch's coupons
       const participantsToDelete = await Participant.find({ couponId: { $in: couponIdsArray } }, { id: 1 }).lean()
       const participantIds = participantsToDelete.map((p: any) => p.id).filter(Boolean)
+
       if (participantIds.length > 0) {
+        // Delete winners linked to those participants FIRST
+        await Winner.deleteMany({ participantId: { $in: participantIds } })
+        // Then delete the participants
         await Participant.deleteMany({ id: { $in: participantIds } })
       }
     }
@@ -354,7 +365,7 @@ router.delete('/batches/:id', requireAdminAuth, async (req, res) => {
     const activeIds = allBatches.map((b: any) => b.id)
     await Coupon.deleteMany({ batchId: { $nin: activeIds } })
 
-    res.json({ ok: true, message: 'Batch and associated participants deleted' })
+    res.json({ ok: true, message: 'Batch, participants, and winners deleted' })
   } catch (error: any) {
     res.status(500).json({ ok: false, error: error.message })
   }
