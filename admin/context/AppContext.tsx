@@ -220,14 +220,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const coupons = data.coupons || []
     const batches = data.batches || []
 
-    const winnerParticipantIds = new Set(data.winners.map((w) => w.participantId))
-    const eligibleParticipants = data.participants.filter(
-      (p) => p.eligibility === 'Eligible' && p.status === 'Active',
+    const winnerParticipantIds = new Set((data.winners || []).filter(Boolean).map((w) => w.participantId))
+    const eligibleParticipants = (data.participants || []).filter(
+      (p) => p && p.eligibility === 'Eligible' && p.status === 'Active',
     )
 
-    const nextDraw = [...data.draws]
-      .filter((d) => d.status === 'Upcoming')
-      .sort((a, b) => a.date.localeCompare(b.date))[0]
+    const nextDraw = [...(data.draws || [])]
+      .filter((d) => d && d.status === 'Upcoming')
+      .sort((a, b) => (a.date || '').localeCompare(b.date || ''))[0]
 
     const validateCoupon = (couponId: string): CouponValidationResult => {
       const cleanId = extractCouponId(couponId) || (couponId ? couponId.replace(/[^A-Za-z0-9]/g, '').trim().toUpperCase() : '')

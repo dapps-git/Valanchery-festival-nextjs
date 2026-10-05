@@ -37,9 +37,11 @@ export function exportCouponsToXlsx(
   )
 
   if (hasExplicitPrefixes) {
-    for (const c of coupons) {
-      const p = (c.prefix || (c.serialNo ? c.serialNo[0] : 'A')).toUpperCase()
-      const item = { id: c.id, serialNo: c.serialNo || c.id }
+    for (const c of (coupons || [])) {
+      if (!c) continue
+      const prefixChar = c.prefix || (c.serialNo && c.serialNo.length > 0 ? c.serialNo[0] : 'A')
+      const p = (prefixChar || 'A').toUpperCase()
+      const item = { id: c.id || '', serialNo: c.serialNo || c.id || '' }
       if (p === 'A') groupA.push(item)
       else if (p === 'B') groupB.push(item)
       else if (p === 'C') groupC.push(item)
@@ -154,8 +156,10 @@ export function formatCouponsForExcelCsv(
   const groupC: any[] = []
   const groupD: any[] = []
 
-  for (const c of coupons) {
-    const p = (c.prefix || (c.serialNo ? c.serialNo[0] : 'A')).toUpperCase()
+  for (const c of (coupons || [])) {
+    if (!c) continue
+    const prefixChar = c.prefix || (c.serialNo && c.serialNo.length > 0 ? c.serialNo[0] : 'A')
+    const p = (prefixChar || 'A').toUpperCase()
     if (p === 'A') groupA.push(c)
     else if (p === 'B') groupB.push(c)
     else if (p === 'C') groupC.push(c)

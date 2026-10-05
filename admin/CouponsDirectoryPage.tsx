@@ -75,8 +75,8 @@ export function CouponsDirectoryPage() {
   // Map participant details
   const participantMap = useMemo(() => {
     const map = new Map<string, typeof data.participants[0]>()
-    data.participants.forEach((p) => {
-      if (p.couponId) {
+    ;(data.participants || []).forEach((p) => {
+      if (p?.couponId) {
         map.set(p.couponId.replace(/[^A-Za-z0-9]/g, '').toUpperCase(), p)
       }
     })
@@ -84,7 +84,7 @@ export function CouponsDirectoryPage() {
   }, [data.participants])
 
   // Aggregate stats — use serverTotal once the API has responded (>= 0)
-  const batchSum = (data.batches || []).reduce((acc, b) => acc + (b.count || 0), 0)
+  const batchSum = (data.batches || []).reduce((acc, b) => acc + (b?.count || 0), 0)
   const totalCount =
     serverTotal >= 0
       ? serverTotal
@@ -98,21 +98,24 @@ export function CouponsDirectoryPage() {
       : (statusFilter === 'Used' ? usedCount : statusFilter === 'Unused' ? activeCount : totalCount)
 
   const displayCoupons = useMemo(() => {
-    if (serverCoupons.length > 0) {
-      let list = serverCoupons.map((c) => {
-        const p = participantMap.get(c.id.replace(/[^A-Za-z0-9]/g, '').toUpperCase())
-        return {
-          id: c.id,
-          serialNo: c.serialNo,
-          batchId: c.batchId,
-          status: c.status,
-          createdAt: c.createdAt,
-          usedAt: c.usedAt || p?.registeredAt,
-          participantName: p?.name || c.usedByParticipantName || c.participantName,
-          participantPhone: p?.phone || c.usedByParticipantPhone || c.participantPhone,
-          participantLocation: p?.location || c.usedByParticipantLocation || c.participantLocation,
-        }
-      })
+    if (serverCoupons && serverCoupons.length > 0) {
+      let list = serverCoupons
+        .filter((c) => c && c.id)
+        .map((c) => {
+          const cleanId = (c.id || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase()
+          const p = participantMap.get(cleanId)
+          return {
+            id: c.id,
+            serialNo: c.serialNo,
+            batchId: c.batchId,
+            status: c.status,
+            createdAt: c.createdAt,
+            usedAt: c.usedAt || p?.registeredAt,
+            participantName: p?.name || c.usedByParticipantName || c.participantName,
+            participantPhone: p?.phone || c.usedByParticipantPhone || c.participantPhone,
+            participantLocation: p?.location || c.usedByParticipantLocation || c.participantLocation,
+          }
+        })
       if (dateFilter) {
         list = list.filter((c) => {
           const d = (c.usedAt || c.createdAt || '').slice(0, 10)
@@ -122,20 +125,23 @@ export function CouponsDirectoryPage() {
       return list
     }
 
-    let list = (coupons || []).map((c) => {
-      const p = participantMap.get(c.id.replace(/[^A-Za-z0-9]/g, '').toUpperCase())
-      return {
-        id: c.id,
-        serialNo: c.serialNo,
-        batchId: c.batchId,
-        status: (p ? 'Used' : c.status) as 'Unused' | 'Used',
-        createdAt: c.createdAt,
-        usedAt: p?.registeredAt,
-        participantName: p?.name,
-        participantPhone: p?.phone,
-        participantLocation: p?.location,
-      }
-    })
+    let list = (coupons || [])
+      .filter((c) => c && c.id)
+      .map((c) => {
+        const cleanId = (c.id || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase()
+        const p = participantMap.get(cleanId)
+        return {
+          id: c.id,
+          serialNo: c.serialNo,
+          batchId: c.batchId,
+          status: (p ? 'Used' : c.status) as 'Unused' | 'Used',
+          createdAt: c.createdAt,
+          usedAt: p?.registeredAt,
+          participantName: p?.name,
+          participantPhone: p?.phone,
+          participantLocation: p?.location,
+        }
+      })
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim()

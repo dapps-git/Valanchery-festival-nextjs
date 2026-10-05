@@ -4,6 +4,7 @@ import { Coupon } from '../models/Coupon.js'
 import { CouponBatch } from '../models/CouponBatch.js'
 import { Participant } from '../models/Participant.js'
 import { requireAdminAuth } from '../middleware/auth.js'
+import { couponValidateLimiter } from '../middleware/rateLimiter.js'
 
 const router = Router()
 
@@ -66,8 +67,8 @@ function generateRandom13Char(): string {
   return chars.join('')
 }
 
-// 1. Validate a single coupon token — accepts GET /validate/:id OR GET /validate?code=...
-router.get(['/validate', '/validate/:id'], async (req, res) => {
+// 1. Validate a single coupon token — rate limited: 60/min per IP to prevent code guessing
+router.get(['/validate', '/validate/:id'], couponValidateLimiter, async (req, res) => {
   try {
     const rawId = (req.params.id || req.query.code || '') as string
     const cleanId = rawId.replace(/[^A-Za-z0-9]/g, '').trim().toUpperCase()

@@ -125,7 +125,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const getDraw = (id: string) => data.draws.find((d) => d.id === id)
   const nextDraw = data.draws.find((d) => d.status === 'Upcoming' || d.status === 'Live')
 
-  const winnerParticipantIds = new Set(data.winners.map((w) => w.participantId))
+  const winnerParticipantIds = new Set((data.winners || []).filter(Boolean).map((w) => w.participantId))
   const eligibleParticipants: Participant[] = []
 
   return (

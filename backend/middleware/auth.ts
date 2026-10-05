@@ -33,34 +33,17 @@ export async function requireAdminAuth(req: AuthenticatedRequest, res: Response,
       return res.status(401).json({ ok: false, error: 'Authentication required. No session token provided.' })
     }
 
-    let tokenEmail = ''
-    let tokenIssuedAt = 0
-
-    if (token.startsWith('admin_token_')) {
-      // Legacy token format fallback: admin_token_<timestamp>_<hexEmail>
-      const parts = token.split('_')
-      const timestamp = parseInt(parts[2], 10)
-      if (isNaN(timestamp) || Date.now() - timestamp > 24 * 60 * 60 * 1000) {
-        return res.status(401).json({ ok: false, error: 'Session expired (24 hours). Please log in again.' })
-      }
-      tokenIssuedAt = timestamp
-      if (parts[3]) {
-        try {
-          tokenEmail = Buffer.from(parts[3], 'hex').toString('utf8')
-        } catch {}
-      }
-      req.admin = { email: tokenEmail || (process.env.ADMIN_EMAIL || '').toLowerCase().trim(), role: 'admin', iat: Math.floor(timestamp / 1000) }
-    } else {
-      // Standard Cryptographic JWT
-      try {
-        const decoded = jwt.verify(token, JWT_SECRET) as any
-        tokenEmail = decoded.email || ''
-        tokenIssuedAt = decoded.iat ? decoded.iat * 1000 : 0
-        req.admin = { email: tokenEmail, role: decoded.role || 'admin', iat: decoded.iat }
-      } catch (jwtErr: any) {
-        return res.status(401).json({ ok: false, error: 'Invalid or expired session token. Please log in again.' })
-      }
+    // Standard Cryptographic JWT Verification ONLY
+    let decoded: any
+    try {
+      decoded = jwt.verify(token, JWT_SECRET) as any
+    } catch {
+      return res.status(401).json({ ok: false, error: 'Invalid or expired session token. Please log in again.' })
     }
+
+    const tokenEmail = decoded.email || ''
+    const tokenIssuedAt = decoded.iat ? decoded.iat * 1000 : 0
+    req.admin = { email: tokenEmail, role: decoded.role || 'admin', iat: decoded.iat }
 
     // Check if admin password was changed after this token was created
     const db = mongoose.connection.db
