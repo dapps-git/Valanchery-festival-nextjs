@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   ArrowRight,
   Play,
@@ -13,6 +13,22 @@ import { PublicNavbar } from '../../components/PublicNavbar'
 
 export function HomePage() {
   const [videoModalOpen, setVideoModalOpen] = useState(false)
+
+  // If a user scans a QR code that points to the home page with a coupon code,
+  // automatically forward them to the registration page with the coupon query.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    const rawParam =
+      params.get('coupon') ||
+      params.get('token') ||
+      params.get('id') ||
+      params.get('c') ||
+      params.get('code')
+    if (rawParam) {
+      window.location.replace(`/register${window.location.search}`)
+    }
+  }, [])
 
   return (
     <div className="w-full bg-[#f8fafc] text-[#0f172a] font-sans select-none scroll-smooth min-h-screen overflow-x-hidden">

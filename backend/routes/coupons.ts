@@ -15,7 +15,7 @@ router.get(['/qr/:id', '/qr/:id.png'], async (req, res) => {
 
     // Determine domain from origin, referer, or default
     const origin = req.get('origin') || req.get('referer')
-    let baseUrl = 'https://www.valancheryfestival.com'
+    let baseUrl = process.env.PUBLIC_SITE_URL || 'https://www.valancheryshoppingfestival.com'
     if (origin) {
       try {
         const u = new URL(origin)
