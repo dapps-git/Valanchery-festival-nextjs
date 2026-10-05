@@ -114,9 +114,25 @@ export function LuckyDrawPage() {
             .map((w) => (w.couponId || (w as any).participantCouponId || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase())
             .filter(Boolean)
         )
+        const normalWonCoupons = new Set(
+          knownWinners
+            .filter((w) => w.competitionType !== 'Mega')
+            .map((w) => (w.couponId || (w as any).participantCouponId || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase())
+            .filter(Boolean)
+        )
+
         const sanitized = res.participants.filter((p) => {
           const c = (p.couponId || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase()
-          if (comp === 'Mega' && c && megaWonCoupons.has(c)) return false
+          if (!c) return false
+
+          if (comp === 'Mega') {
+            // Mega: Coupons that already won Mega CANNOT participate in Mega
+            // (Coupons that won Normal ARE allowed to participate in Mega)
+            if (megaWonCoupons.has(c)) return false
+          } else {
+            // Normal: Coupons that won Mega OR Normal CANNOT participate in Normal
+            if (megaWonCoupons.has(c) || normalWonCoupons.has(c)) return false
+          }
           return true
         })
         setEligiblePool(sanitized)
