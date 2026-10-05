@@ -26,31 +26,34 @@ dotenv.config()
 const app = express()
 const PORT = process.env.PORT || 5000
 const MONGODB_URI = process.env.MONGODB_URI || ''
-const JWT_SECRET = process.env.JWT_SECRET || 'valanchery_festival_admin_secret_jwt_key_2026_xyz987'
+const JWT_SECRET = process.env.JWT_SECRET || ''
 
-const ALLOWED_ORIGINS = [
-  'https://www.valancheryshoppingfestival.com',
-  'https://valancheryshoppingfestival.com',
-  'https://admin.valancheryshoppingfestival.com',
-  'http://localhost:3000',
-  'http://localhost:3001',
-  'http://localhost:5000',
-]
+const isAllowedOrigin = (origin?: string): boolean => {
+  if (!origin) return true // Allow requests with no origin (curl, server-to-server, Render health check)
+  return (
+    origin.includes('vercel.app') ||
+    origin.includes('valancheryshoppingfestival.com') ||
+    origin.includes('valanchery-festival') ||
+    origin.includes('localhost') ||
+    origin.includes('127.0.0.1')
+  )
+}
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (server-to-server, curl, Postman, Render healthcheck)
-      if (!origin) return callback(null, true)
-      if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true)
-      return callback(new Error(`CORS: Origin not allowed — ${origin}`), false)
-    },
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-    credentials: true,
-  })
-)
-app.options('*', cors())
+const corsMiddleware = cors({
+  origin: (origin, callback) => {
+    if (isAllowedOrigin(origin)) {
+      // Return origin directly so browsers accept credentials and preflight
+      return callback(null, origin || true)
+    }
+    return callback(null, false)
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  credentials: true,
+})
+
+app.use(corsMiddleware)
+app.options('*', corsMiddleware)
 // Gzip/Deflate compression — halves payload size under high load
 app.use(compression())
 app.use(express.json({ limit: '1mb' }))
