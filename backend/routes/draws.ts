@@ -84,25 +84,38 @@ router.post('/confirm-winner', requireAdminAuth, async (req, res) => {
     }
 
     // 2. BACKEND ELIGIBILITY VALIDATION - Exact Matrix Rule from Database
-    // Fetch all existing win records for this participant
-    const existingWins = await Winner.find({ participantId }).lean()
+    // Validated strictly by couponId / entrant ID, NEVER by phone number.
+    const participantDoc = await Participant.findOne({ id: participantId })
+    const actualCoupon = (participantDoc?.couponId || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase()
+
+    const checkConditions: any[] = [{ participantId }]
+    if (actualCoupon) {
+      checkConditions.push({ couponId: actualCoupon })
+      checkConditions.push({ participantCouponId: actualCoupon })
+    }
+
+    const existingWins = await Winner.find({
+      $or: checkConditions,
+      status: 'Confirmed',
+    }).lean()
+
     const hasWonMega = existingWins.some((w: any) => w.competitionType === 'Mega')
     const hasWonNormal = existingWins.some((w: any) => w.competitionType === 'Normal')
 
     if (competitionType === 'Mega') {
-      // MEGA WINNER cannot win Mega again
+      // MEGA WINNER cannot win Mega again with the SAME coupon
       if (hasWonMega) {
-        return res.status(400).json({ ok: false, error: 'Participant has already won Mega Competition and is ineligible.' })
+        return res.status(400).json({ ok: false, error: 'This coupon has already won Mega Competition and cannot win again in Mega.' })
       }
-      // Participant who has won Normal IS ELIGIBLE for Mega (hasWonNormal is OK)
+      // Participant coupon that has won Normal IS ELIGIBLE for Mega (hasWonNormal is OK)
     } else if (competitionType === 'Normal') {
       // MEGA WINNER cannot participate in Normal
       if (hasWonMega) {
-        return res.status(400).json({ ok: false, error: 'Participant has already won Mega Competition and cannot participate in Normal Competition.' })
+        return res.status(400).json({ ok: false, error: 'This coupon has already won Mega Competition and cannot participate in Normal Competition.' })
       }
-      // NORMAL WINNER cannot win Normal again
+      // NORMAL WINNER cannot win Normal again with the same coupon
       if (hasWonNormal) {
-        return res.status(400).json({ ok: false, error: 'Participant has already won Normal Competition and cannot win again in Normal.' })
+        return res.status(400).json({ ok: false, error: 'This coupon has already won Normal Competition and cannot win again in Normal.' })
       }
     }
 

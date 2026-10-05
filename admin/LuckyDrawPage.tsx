@@ -105,8 +105,21 @@ export function LuckyDrawPage() {
     setPoolError('')
     try {
       const res = await api.getEligibleParticipants(comp)
-      if (res && res.ok) {
-        setEligiblePool(res.participants || [])
+      if (res && res.ok && Array.isArray(res.participants)) {
+        // Enforce strict couponId exclusion against local winners as well
+        const knownWinners = data.winners || []
+        const megaWonCoupons = new Set(
+          knownWinners
+            .filter((w) => w.competitionType === 'Mega')
+            .map((w) => (w.couponId || (w as any).participantCouponId || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase())
+            .filter(Boolean)
+        )
+        const sanitized = res.participants.filter((p) => {
+          const c = (p.couponId || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase()
+          if (comp === 'Mega' && c && megaWonCoupons.has(c)) return false
+          return true
+        })
+        setEligiblePool(sanitized)
       } else {
         // Fallback to strict frontend matrix calculation using database data
         computeFallbackPool(comp)

@@ -199,9 +199,68 @@ router.post('/bulk', requireAdminAuth, async (req, res) => {
   }
 })
 
-// 3. Get all participants (ADMIN ONLY)
-router.get('/', requireAdminAuth, async (_req, res) => {
+// 3. Get all participants OR dynamic eligible pool (ADMIN ONLY)
+// Validated strictly by couponId, NEVER by phone number.
+router.get('/', requireAdminAuth, async (req, res) => {
   try {
+    const eligibleOnly = req.query.eligible === 'true'
+    const competitionType = (req.query.competitionType as string) || 'Normal'
+
+    if (eligibleOnly) {
+      const { Winner } = await import('../models/Winner.js')
+      const allWinners = await Winner.find({ status: 'Confirmed' }).lean()
+
+      const megaWinnerCoupons = new Set<string>()
+      const normalWinnerCoupons = new Set<string>()
+
+      for (const w of allWinners) {
+        const cId = (w.couponId || (w as any).participantCouponId || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase()
+        if (w.competitionType === 'Mega') {
+          if (cId) megaWinnerCoupons.add(cId)
+          if (w.participantId) megaWinnerCoupons.add(w.participantId)
+        } else {
+          if (cId) normalWinnerCoupons.add(cId)
+          if (w.participantId) normalWinnerCoupons.add(w.participantId)
+        }
+      }
+
+      // Populate couponId from participant records if missing in winner doc
+      const missingPartIds = Array.from(new Set([...megaWinnerCoupons, ...normalWinnerCoupons])).filter((id) => !id.startsWith('VF') && id.length !== 13)
+      if (missingPartIds.length > 0) {
+        const pDocs = await Participant.find({ id: { $in: missingPartIds } }).select('id couponId').lean()
+        for (const p of pDocs) {
+          if (p.couponId) {
+            const clean = p.couponId.replace(/[^A-Za-z0-9]/g, '').toUpperCase()
+            if (megaWinnerCoupons.has(p.id)) megaWinnerCoupons.add(clean)
+            if (normalWinnerCoupons.has(p.id)) normalWinnerCoupons.add(clean)
+          }
+        }
+      }
+
+      let excludeCoupons: Set<string>
+      if (competitionType === 'Mega') {
+        // Mega Draw: Exclude coupons that have already won Mega
+        // (Coupons that won Normal are STILL ELIGIBLE for Mega)
+        excludeCoupons = megaWinnerCoupons
+      } else {
+        // Normal Draw: Coupons that won Mega or Normal cannot participate
+        excludeCoupons = new Set<string>([...megaWinnerCoupons, ...normalWinnerCoupons])
+      }
+
+      const allParticipants = await Participant.find({ status: 'Active', eligibility: { $ne: 'Ineligible' } })
+        .sort({ registeredAt: -1, createdAt: -1 })
+        .lean()
+
+      const filtered = allParticipants.filter((p) => {
+        const cleanCoupon = (p.couponId || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase()
+        if (cleanCoupon && excludeCoupons.has(cleanCoupon)) return false
+        if (p.id && excludeCoupons.has(p.id)) return false
+        return true
+      })
+
+      return res.json({ ok: true, count: filtered.length, participants: filtered })
+    }
+
     const participants = await Participant.find().sort({ createdAt: -1 }).lean()
     res.json({ ok: true, participants })
   } catch (error: any) {
