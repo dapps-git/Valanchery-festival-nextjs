@@ -106,32 +106,44 @@ export function LuckyDrawPage() {
     try {
       const res = await api.getEligibleParticipants(comp)
       if (res && res.ok && Array.isArray(res.participants)) {
-        // Enforce strict couponId exclusion against local winners as well
+        // Enforce strict phone-level block for Mega winners, and couponId exclusion for Normal winners
         const knownWinners = data.winners || []
-        const megaWonCoupons = new Set(
-          knownWinners
-            .filter((w) => w.competitionType === 'Mega')
-            .map((w) => (w.couponId || (w as any).participantCouponId || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase())
-            .filter(Boolean)
-        )
-        const normalWonCoupons = new Set(
-          knownWinners
-            .filter((w) => w.competitionType !== 'Mega')
-            .map((w) => (w.couponId || (w as any).participantCouponId || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase())
-            .filter(Boolean)
-        )
+        const participantsList = data.participants || []
+        const partMap = new Map(participantsList.map((p) => [p.id, p]))
+
+        const megaWonCoupons = new Set<string>()
+        const megaWonPhones = new Set<string>()
+        const normalWonCoupons = new Set<string>()
+
+        knownWinners.forEach((w) => {
+          const cId = (w.couponId || (w as any).participantCouponId || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase()
+          const p = partMap.get(w.participantId)
+          const phone = (p?.phone || (w as any).phone || '').replace(/\D/g, '').slice(-10)
+
+          if (w.competitionType === 'Mega') {
+            if (cId) megaWonCoupons.add(cId)
+            if (w.participantId) megaWonCoupons.add(w.participantId)
+            if (phone) megaWonPhones.add(phone)
+          } else {
+            if (cId) normalWonCoupons.add(cId)
+            if (w.participantId) normalWonCoupons.add(w.participantId)
+          }
+        })
 
         const sanitized = res.participants.filter((p) => {
           const c = (p.couponId || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase()
+          const phone = (p.phone || '').replace(/\D/g, '').slice(-10)
           if (!c) return false
 
+          // 1. SUPREME RULE: Once a phone number has won Mega, it is BLOCKED from BOTH Mega AND Normal
+          if (phone && megaWonPhones.has(phone)) return false
+
           if (comp === 'Mega') {
-            // Mega: Coupons that already won Mega CANNOT participate in Mega
-            // (Coupons that won Normal ARE allowed to participate in Mega)
-            if (megaWonCoupons.has(c)) return false
+            // Mega: Specific coupon cannot win Mega again
+            if (megaWonCoupons.has(c) || (p.id && megaWonCoupons.has(p.id))) return false
           } else {
-            // Normal: Coupons that won Mega OR Normal CANNOT participate in Normal
-            if (megaWonCoupons.has(c) || normalWonCoupons.has(c)) return false
+            // Normal: Coupon that won Mega or Normal cannot win Normal again
+            if (megaWonCoupons.has(c) || normalWonCoupons.has(c) || (p.id && normalWonCoupons.has(p.id))) return false
           }
           return true
         })
@@ -149,19 +161,21 @@ export function LuckyDrawPage() {
 
   // Exact Competition Eligibility Matrix:
   // - Never won: Mega ✅, Normal ✅
-  // - Won Normal: Mega ✅ (Normal winners can enter Mega), Normal ❌ (Cannot win Normal twice)
-  // - Won Mega: Mega ❌ (Cannot win Mega twice), Normal ❌ (Mega winners cannot enter Normal)
-  // Validated strictly by couponId / entrant ID, NEVER by phone number.
+  // - Won Normal: Mega ✅ (Normal winners can enter Mega with other coupons), Normal ❌ (That coupon cannot win Normal twice)
+  // - Won Mega: Mega ❌, Normal ❌ (PHONE NUMBER BLOCKED from both competitions forever)
   const computeFallbackPool = (comp: CompetitionType) => {
     const winners = data.winners || []
     const prizes = data.prizes || []
     const draws = data.draws || []
+    const allParticipants: Participant[] = data.participants || []
+    const partMap = new Map(allParticipants.map((p) => [p.id, p]))
 
     const prizeMap = new Map(prizes.map((p) => [p.id, p]))
     const drawMap = new Map(draws.map((d) => [d.id, d]))
 
-    const megaWinnerKeys = new Set<string>()
-    const normalWinnerKeys = new Set<string>()
+    const megaWinnerCoupons = new Set<string>()
+    const megaWinnerPhones = new Set<string>()
+    const normalWinnerCoupons = new Set<string>()
 
     winners.forEach((w) => {
       const prize = prizeMap.get(w.prizeId)
@@ -172,20 +186,18 @@ export function LuckyDrawPage() {
         prize?.competitionType ||
         'Normal'
 
-      if (compType === 'Mega') {
-        if (w.participantId) megaWinnerKeys.add(w.participantId)
-        if ((w as any).couponId) megaWinnerKeys.add((w as any).couponId)
-      } else {
-        if (w.participantId) normalWinnerKeys.add(w.participantId)
-        if ((w as any).couponId) normalWinnerKeys.add((w as any).couponId)
-      }
-    })
+      const cId = (w.couponId || (w as any).participantCouponId || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase()
+      const p = partMap.get(w.participantId)
+      const phone = (p?.phone || (w as any).phone || '').replace(/\D/g, '').slice(-10)
 
-    // Map participant coupon codes to winner keys
-    const allParticipants: Participant[] = data.participants || []
-    allParticipants.forEach((p: Participant) => {
-      if (megaWinnerKeys.has(p.id) && p.couponId) megaWinnerKeys.add(p.couponId)
-      if (normalWinnerKeys.has(p.id) && p.couponId) normalWinnerKeys.add(p.couponId)
+      if (compType === 'Mega') {
+        if (w.participantId) megaWinnerCoupons.add(w.participantId)
+        if (cId) megaWinnerCoupons.add(cId)
+        if (phone) megaWinnerPhones.add(phone)
+      } else {
+        if (w.participantId) normalWinnerCoupons.add(w.participantId)
+        if (cId) normalWinnerCoupons.add(cId)
+      }
     })
 
     const participants = allParticipants.filter(
@@ -194,21 +206,21 @@ export function LuckyDrawPage() {
 
     let filtered: Participant[] = []
     if (comp === 'Mega') {
-      // Mega Draw: Exclude coupons that have already won Mega
-      // Normal winners CAN participate in Mega
       filtered = participants.filter((p) => {
-        const hasWonMega =
-          megaWinnerKeys.has(p.id) || (p.couponId && megaWinnerKeys.has(p.couponId))
-        return !hasWonMega
+        const phone = (p.phone || '').replace(/\D/g, '').slice(-10)
+        const c = (p.couponId || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase()
+        if (phone && megaWinnerPhones.has(phone)) return false
+        if (megaWinnerCoupons.has(p.id) || (c && megaWinnerCoupons.has(c))) return false
+        return true
       })
     } else {
-      // Normal Draw: Coupons that won Mega or Normal cannot participate
       filtered = participants.filter((p) => {
-        const hasWonMega =
-          megaWinnerKeys.has(p.id) || (p.couponId && megaWinnerKeys.has(p.couponId))
-        const hasWonNormal =
-          normalWinnerKeys.has(p.id) || (p.couponId && normalWinnerKeys.has(p.couponId))
-        return !hasWonMega && !hasWonNormal
+        const phone = (p.phone || '').replace(/\D/g, '').slice(-10)
+        const c = (p.couponId || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase()
+        if (phone && megaWinnerPhones.has(phone)) return false
+        if (megaWinnerCoupons.has(p.id) || (c && megaWinnerCoupons.has(c))) return false
+        if (normalWinnerCoupons.has(p.id) || (c && normalWinnerCoupons.has(c))) return false
+        return true
       })
     }
 

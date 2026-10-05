@@ -211,40 +211,39 @@ router.get('/', requireAdminAuth, async (req, res) => {
       const allWinners = await Winner.find({ status: 'Confirmed' }).lean()
 
       const megaWinnerCoupons = new Set<string>()
+      const megaWinnerPhones = new Set<string>()
       const normalWinnerCoupons = new Set<string>()
 
       for (const w of allWinners) {
         const cId = ((w as any).couponId || (w as any).participantCouponId || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase()
+        const rawPhone = (w as any).phone || (w as any).participantPhone || ''
+        const phone = rawPhone.replace(/\D/g, '').slice(-10)
+
         if (w.competitionType === 'Mega') {
           if (cId) megaWinnerCoupons.add(cId)
           if (w.participantId) megaWinnerCoupons.add(w.participantId)
+          if (phone) megaWinnerPhones.add(phone)
         } else {
           if (cId) normalWinnerCoupons.add(cId)
           if (w.participantId) normalWinnerCoupons.add(w.participantId)
         }
       }
 
-      // Populate couponId from participant records if missing in winner doc
-      const missingPartIds = Array.from(new Set([...megaWinnerCoupons, ...normalWinnerCoupons])).filter((id) => !id.startsWith('VF') && id.length !== 13)
-      if (missingPartIds.length > 0) {
-        const pDocs = await Participant.find({ id: { $in: missingPartIds } }).select('id couponId').lean()
+      // Populate missing phone numbers and couponIds from participant records
+      const allWinnerPartIds = Array.from(new Set([...megaWinnerCoupons, ...normalWinnerCoupons])).filter((id) => id.startsWith('VF') || id.length > 5)
+      if (allWinnerPartIds.length > 0) {
+        const pDocs = await Participant.find({ id: { $in: allWinnerPartIds } }).select('id couponId phone').lean()
         for (const p of pDocs) {
-          if (p.couponId) {
-            const clean = p.couponId.replace(/[^A-Za-z0-9]/g, '').toUpperCase()
-            if (megaWinnerCoupons.has(p.id)) megaWinnerCoupons.add(clean)
-            if (normalWinnerCoupons.has(p.id)) normalWinnerCoupons.add(clean)
+          const cleanCoupon = (p.couponId || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase()
+          const cleanPhone = (p.phone || '').replace(/\D/g, '').slice(-10)
+          if (megaWinnerCoupons.has(p.id)) {
+            if (cleanCoupon) megaWinnerCoupons.add(cleanCoupon)
+            if (cleanPhone) megaWinnerPhones.add(cleanPhone)
+          }
+          if (normalWinnerCoupons.has(p.id) && cleanCoupon) {
+            normalWinnerCoupons.add(cleanCoupon)
           }
         }
-      }
-
-      let excludeCoupons: Set<string>
-      if (competitionType === 'Mega') {
-        // Mega Draw: Exclude coupons that have already won Mega
-        // (Coupons that won Normal are STILL ELIGIBLE for Mega)
-        excludeCoupons = megaWinnerCoupons
-      } else {
-        // Normal Draw: Coupons that won Mega or Normal cannot participate
-        excludeCoupons = new Set<string>([...megaWinnerCoupons, ...normalWinnerCoupons])
       }
 
       const allParticipants = await Participant.find({ status: 'Active', eligibility: { $ne: 'Ineligible' } })
@@ -252,9 +251,21 @@ router.get('/', requireAdminAuth, async (req, res) => {
         .lean()
 
       const filtered = allParticipants.filter((p) => {
+        const phone = (p.phone || '').replace(/\D/g, '').slice(-10)
         const cleanCoupon = (p.couponId || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase()
-        if (cleanCoupon && excludeCoupons.has(cleanCoupon)) return false
-        if (p.id && excludeCoupons.has(p.id)) return false
+
+        // 1. SUPREME RULE: Once a phone number has won Mega, it is BLOCKED from BOTH Mega AND Normal
+        if (phone && megaWinnerPhones.has(phone)) return false
+
+        if (competitionType === 'Mega') {
+          // Mega: Specific coupon cannot win Mega again
+          if (cleanCoupon && megaWinnerCoupons.has(cleanCoupon)) return false
+          if (p.id && megaWinnerCoupons.has(p.id)) return false
+        } else {
+          // Normal: Specific coupon that won Mega or Normal cannot win Normal again
+          if (cleanCoupon && (megaWinnerCoupons.has(cleanCoupon) || normalWinnerCoupons.has(cleanCoupon))) return false
+          if (p.id && (megaWinnerCoupons.has(p.id) || normalWinnerCoupons.has(p.id))) return false
+        }
         return true
       })
 

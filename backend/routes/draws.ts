@@ -85,10 +85,37 @@ router.post('/confirm-winner', requireAdminAuth, async (req, res) => {
     }
 
     // 2. BACKEND ELIGIBILITY VALIDATION - Exact Matrix Rule from Database
-    // Validated strictly by couponId / entrant ID, NEVER by phone number.
     const participantDoc = await Participant.findOne({ id: participantId })
     const actualCoupon = (participantDoc?.couponId || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase()
+    const participantPhone = (participantDoc?.phone || '').replace(/\D/g, '').slice(-10)
 
+    // Check if this PHONE NUMBER has already won Mega Competition
+    if (participantPhone) {
+      // Find all participants with this phone
+      const samePhoneParticipants = await Participant.find({
+        phone: { $regex: new RegExp(`${participantPhone}$`) },
+      }).select('id').lean()
+      const samePhonePartIds = samePhoneParticipants.map((p) => p.id)
+
+      const phoneWonMega = await Winner.findOne({
+        status: 'Confirmed',
+        competitionType: 'Mega',
+        $or: [
+          { participantId: { $in: samePhonePartIds } },
+          { phone: { $regex: new RegExp(`${participantPhone}$`) } },
+          { participantPhone: { $regex: new RegExp(`${participantPhone}$`) } },
+        ],
+      }).lean()
+
+      if (phoneWonMega) {
+        return res.status(400).json({
+          ok: false,
+          error: 'This participant (phone number) has already won Mega Competition and cannot participate again.',
+        })
+      }
+    }
+
+    // Check conditions for this specific coupon
     const checkConditions: any[] = [{ participantId }]
     if (actualCoupon) {
       checkConditions.push({ couponId: actualCoupon })
