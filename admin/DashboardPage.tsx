@@ -22,11 +22,11 @@ export function DashboardPage() {
   const unusedCount = Math.max(0, totalCouponsCount - usedCount)
 
   // Map winner participant IDs
-  const winnerParticipantIds = new Set(data.winners.map((w) => w.participantId))
-  const registeredCount = data.participants.length
-  const wonCount = data.winners.length
-  const activePoolCount = data.participants.filter(
-    (p) => p.status === 'Active' && !winnerParticipantIds.has(p.id)
+  const winnerParticipantIds = new Set((data.winners || []).filter(Boolean).map((w) => w.participantId))
+  const registeredCount = (data.participants || []).length
+  const wonCount = (data.winners || []).length
+  const activePoolCount = (data.participants || []).filter(
+    (p) => p && p.status === 'Active' && !winnerParticipantIds.has(p.id)
   ).length
 
   const handleDownloadBatch = async (batchId: string, batchName: string, batchCount = 10000) => {

@@ -35,7 +35,7 @@ export function QrViewerPage({ couponId: initialCouponId }: { couponId?: string 
 
   const cleanId = (couponId || '').trim().toUpperCase()
 
-  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://www.valancheryfestival.com'
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://www.valancheryshoppingfestival.com'
   const registerUrl = `${baseUrl}/register?coupon=${cleanId}`
 
   useEffect(() => {

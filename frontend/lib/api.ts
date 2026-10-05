@@ -38,7 +38,7 @@ export const api = {
 
   async validateCoupon(code: string): Promise<{ valid: boolean; status: string; coupon?: any; message: string }> {
     try {
-      const res = await fetchWithTimeout(`${API_BASE}/coupons/validate?code=${encodeURIComponent(code)}`, {}, 18000)
+      const res = await fetchWithTimeout(`${API_BASE}/coupons/validate?code=${encodeURIComponent(code)}`, {}, 25000)
       if (res.ok) {
         return await res.json()
       }
@@ -64,7 +64,7 @@ export const api = {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(participant),
         },
-        25000
+        45000   // 45s timeout — backend may be serving thousands concurrently
       )
       return await res.json()
     } catch (err: any) {

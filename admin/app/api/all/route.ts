@@ -19,14 +19,10 @@ export async function GET(request: Request) {
     }
 
     if (token) {
-      if (token.startsWith('admin_token_')) {
+      try {
+        jwt.verify(token, JWT_SECRET)
         isAdmin = true
-      } else {
-        try {
-          jwt.verify(token, JWT_SECRET)
-          isAdmin = true
-        } catch {}
-      }
+      } catch {}
     }
 
     const db = await connectDB()

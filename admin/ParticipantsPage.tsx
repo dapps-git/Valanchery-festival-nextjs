@@ -51,7 +51,8 @@ export function ParticipantsPage() {
         competitionType: CompetitionType
       }
     >()
-    data.winners.forEach((w) => {
+    ;(data.winners || []).forEach((w) => {
+      if (!w) return
       const draw = getDraw(w.drawId)
       const prize = getPrize(w.prizeId)
       const compType: CompetitionType =
@@ -70,7 +71,8 @@ export function ParticipantsPage() {
   }, [data.winners, getDraw, getPrize])
 
   const filtered = useMemo(() => {
-    return [...data.participants]
+    return [...(data.participants || [])]
+      .filter(Boolean)
       .sort((a, b) => {
         const timeA = new Date(a.createdAt || a.registeredAt || 0).getTime()
         const timeB = new Date(b.createdAt || b.registeredAt || 0).getTime()

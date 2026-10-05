@@ -25,6 +25,14 @@ export function extractCouponId(input?: string | null): string | null {
         if (clean.length > 13) return clean.slice(0, 13)
         if (clean.length >= 8) return clean
       }
+
+      // Check pathname (e.g. /qr/ABC1234567890 or /register/ABC1234567890)
+      const segments = url.pathname.split('/').filter(Boolean)
+      const last = segments[segments.length - 1]
+      if (last) {
+        const cleanLast = last.replace(/[^A-Za-z0-9]/g, '').toUpperCase()
+        if (cleanLast.length === 13 || cleanLast.length === 10) return cleanLast
+      }
     }
   } catch {
     // fallback

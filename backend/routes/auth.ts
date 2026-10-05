@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken'
 import { Resend } from 'resend'
 import dotenv from 'dotenv'
 import path from 'path'
+import { loginLimiter, otpLimiter } from '../middleware/rateLimiter.js'
 
 const router = Router()
 
@@ -39,8 +40,8 @@ const getJwtSecret = () => {
   return process.env.JWT_SECRET || 'valanchery_festival_admin_secret_jwt_key_2026_xyz987'
 }
 
-// Login route with bcrypt verification & cryptographic 24h JWT
-router.post('/login', async (req, res) => {
+// Login route — rate limited to 10 attempts per 15 min per IP
+router.post('/login', loginLimiter, async (req, res) => {
   try {
     const { email, password } = req.body || {}
     const cleanEmail = (email || '').trim().toLowerCase()
@@ -126,32 +127,16 @@ router.get(['/me', '/verify'], async (req, res) => {
       return res.status(401).json({ ok: false, error: 'No active session or invalid token' })
     }
 
-    let tokenIssuedAt = 0
-    let tokenEmail = ''
-
-    if (token.startsWith('admin_token_')) {
-      // Legacy token format fallback: admin_token_<timestamp>_<hexEmail>
-      const parts = token.split('_')
-      const timestamp = parseInt(parts[2], 10)
-      if (isNaN(timestamp) || Date.now() - timestamp > 24 * 60 * 60 * 1000) {
-        return res.status(401).json({ ok: false, error: 'Session expired (24 hours). Please log in again.' })
-      }
-      tokenIssuedAt = timestamp
-      if (parts[3]) {
-        try {
-          tokenEmail = Buffer.from(parts[3], 'hex').toString('utf8')
-        } catch {}
-      }
-    } else {
-      // Cryptographic JWT Verification
-      try {
-        const decoded = jwt.verify(token, getJwtSecret()) as any
-        tokenEmail = decoded.email || ''
-        tokenIssuedAt = decoded.iat ? decoded.iat * 1000 : 0
-      } catch (jwtErr: any) {
-        return res.status(401).json({ ok: false, error: 'Session expired or invalid signature. Please log in again.' })
-      }
+    // Strict cryptographic JWT verification only
+    let decoded: any
+    try {
+      decoded = jwt.verify(token, getJwtSecret()) as any
+    } catch {
+      return res.status(401).json({ ok: false, error: 'Session expired or invalid signature. Please log in again.' })
     }
+
+    const tokenEmail = decoded.email || ''
+    const tokenIssuedAt = decoded.iat ? decoded.iat * 1000 : 0
 
     // Check if password was changed after this token was created
     const db = mongoose.connection.db
@@ -180,8 +165,8 @@ router.post('/logout', async (_req, res) => {
   res.json({ ok: true, message: 'Logged out successfully' })
 })
 
-// Forgot Password -> Send OTP
-router.post('/forgot-password', async (req, res) => {
+// Forgot Password -> Send OTP — rate limited to 5 per 15 min per IP
+router.post('/forgot-password', otpLimiter, async (req, res) => {
   try {
     const { email } = req.body || {}
     const cleanEmail = (email || '').trim().toLowerCase()
@@ -258,8 +243,8 @@ router.post('/forgot-password', async (req, res) => {
   }
 })
 
-// Verify OTP
-router.post('/verify-otp', async (req, res) => {
+// Verify OTP — rate limited to 5 per 15 min per IP
+router.post('/verify-otp', otpLimiter, async (req, res) => {
   try {
     const { email, otp } = req.body || {}
     const cleanEmail = (email || '').trim().toLowerCase()

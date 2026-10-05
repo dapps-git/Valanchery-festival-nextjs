@@ -4,6 +4,7 @@ import { Coupon } from '../models/Coupon.js'
 import { CouponBatch } from '../models/CouponBatch.js'
 import { Counter } from '../models/Counter.js'
 import { requireAdminAuth } from '../middleware/auth.js'
+import { registerLimiter } from '../middleware/rateLimiter.js'
 
 const router = Router()
 
@@ -43,8 +44,8 @@ export async function getNextParticipantId(): Promise<string> {
   return `VF2026-${String(counter.seq).padStart(5, '0')}`
 }
 
-// 1. Register a single participant
-router.post('/register', async (req, res) => {
+// 1. Register a single participant — rate limited: 200/min per IP (each person has a unique coupon)
+router.post('/register', registerLimiter, async (req, res) => {
   try {
     const { name, phone: rawPhone, address, location, couponId: rawCoupon } = req.body
 
@@ -64,14 +65,9 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ ok: false, error: 'Please enter a valid 13-character coupon code' })
     }
 
-    // Check if coupon already used by someone else (indexed lean lookup)
-    const usedBy = await Participant.findOne({ couponId: cleanCoupon }).select('name registeredAt').lean()
-    if (usedBy) {
-      return res.status(400).json({ ok: false, error: 'This coupon has already been used and is no longer valid.' })
-    }
-
-    // Resolve coupon — search by 13-character code (id) ONLY
-    const existingCoupon = await Coupon.findOne({ id: cleanCoupon }).lean()
+    // Single DB read: fetch coupon and check status atomically
+    // This replaces two separate pre-flight checks (usedBy + existingCoupon) with one
+    const existingCoupon = await Coupon.findOne({ id: cleanCoupon }).select('id status batchId').lean()
     if (!existingCoupon) {
       return res.status(400).json({ ok: false, error: 'Coupon not found. Please check the 13-character code.' })
     }
@@ -80,7 +76,7 @@ router.post('/register', async (req, res) => {
     }
 
     // Use the canonical coupon id for storage
-    const canonicalCouponId = existingCoupon?.id || cleanCoupon
+    const canonicalCouponId = existingCoupon.id
 
     const participantName = name?.trim() || `Shopper ${phone.slice(-4)}`
     const now = new Date().toISOString().slice(0, 10)

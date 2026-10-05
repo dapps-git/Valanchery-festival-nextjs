@@ -495,6 +495,14 @@ export function RegisterPage() {
                           value={form.couponId}
                           maxLength={13}
                           onChange={(e) => handleCouponChange(e.target.value)}
+                          onPaste={(e) => {
+                            const pasted = e.clipboardData?.getData('text') || ''
+                            const extracted = extractCouponId(pasted)
+                            if (extracted) {
+                              e.preventDefault()
+                              handleCouponChange(extracted)
+                            }
+                          }}
                           onBlur={handleCouponBlur}
                           onKeyDown={handleCouponKeyDown}
                           placeholder="Enter 13-digit coupon code"

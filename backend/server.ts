@@ -1,6 +1,7 @@
 import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
+import compression from 'compression'
 import dotenv from 'dotenv'
 import mongoose from 'mongoose'
 import jwt from 'jsonwebtoken'
@@ -27,15 +28,32 @@ const PORT = process.env.PORT || 5000
 const MONGODB_URI = process.env.MONGODB_URI || ''
 const JWT_SECRET = process.env.JWT_SECRET || 'valanchery_festival_admin_secret_jwt_key_2026_xyz987'
 
+const ALLOWED_ORIGINS = [
+  'https://www.valancheryshoppingfestival.com',
+  'https://valancheryshoppingfestival.com',
+  'https://admin.valancheryshoppingfestival.com',
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'http://localhost:5000',
+]
+
 app.use(
   cors({
-    origin: '*',
+    origin: (origin, callback) => {
+      // Allow requests with no origin (server-to-server, curl, Postman, Render healthcheck)
+      if (!origin) return callback(null, true)
+      if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true)
+      return callback(new Error(`CORS: Origin not allowed — ${origin}`), false)
+    },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    credentials: true,
   })
 )
 app.options('*', cors())
-app.use(express.json({ limit: '10mb' }))
+// Gzip/Deflate compression — halves payload size under high load
+app.use(compression())
+app.use(express.json({ limit: '1mb' }))
 
 // Aggregated Data Route for ultra-fast single request app hydration
 app.get(['/api/all', '/all'], async (req, res) => {
@@ -49,14 +67,10 @@ app.get(['/api/all', '/all'], async (req, res) => {
 
     let isAdmin = false
     if (token) {
-      if (token.startsWith('admin_token_')) {
+      try {
+        jwt.verify(token, JWT_SECRET)
         isAdmin = true
-      } else {
-        try {
-          jwt.verify(token, JWT_SECRET)
-          isAdmin = true
-        } catch {}
-      }
+      } catch {}
     }
 
     const [prizes, draws, participants, winners, batches, totalCouponsCount, usedCouponsCount] = await Promise.all([
@@ -133,10 +147,13 @@ app.use('/draws', drawsRouter)
 app.use('/winners', winnersRouter)
 app.use('/auth', authRouter)
 
-// ── Start listening FIRST so Render port-scanner succeeds immediately ──
-app.listen(PORT, () => {
-  console.log(`🚀 Valanchery Festival Backend running on http://localhost:${PORT}`)
+// ── Start listening with tuned keep-alive for high concurrency ──
+const server = app.listen(PORT, () => {
+  console.log(`Valanchery Festival Backend running on http://localhost:${PORT}`)
 })
+// Keep TCP connections alive for 65s (above Render/AWS 60s idle timeout)
+server.keepAliveTimeout = 65000
+server.headersTimeout = 70000
 
 // ── MongoDB connection event listeners for 1-year resilience ──
 mongoose.connection.on('disconnected', () => {
@@ -155,8 +172,12 @@ async function connectDB() {
     console.log('Connecting to MongoDB Atlas...')
     await mongoose.connect(MONGODB_URI, {
       serverSelectionTimeoutMS: 20000,
-      maxPoolSize: 100,
-      minPoolSize: 10,
+      socketTimeoutMS: 45000,
+      connectTimeoutMS: 20000,
+      maxPoolSize: 300,
+      minPoolSize: 20,
+      waitQueueTimeoutMS: 30000,
+      maxIdleTimeMS: 60000,
     })
     console.log('✅ Connected to MongoDB Atlas (Database: FESTIVAL)')
 
@@ -168,10 +189,15 @@ async function connectDB() {
 
     // Enforce unique and lookup indexes for sub-millisecond concurrent queries
     await Promise.allSettled([
+      // Coupons: unique on id, compound on (status, id) for fast available-coupon lookup
       Coupon.collection.createIndex({ id: 1 }, { unique: true }),
+      Coupon.collection.createIndex({ status: 1, id: 1 }),
+      Coupon.collection.createIndex({ batchId: 1 }),
+      // Participants: unique id, unique sparse couponId (double-spend guard), phone & date for queries
       Participant.collection.createIndex({ id: 1 }, { unique: true }),
       Participant.collection.createIndex({ couponId: 1 }, { unique: true, sparse: true }),
       Participant.collection.createIndex({ phone: 1 }),
+      Participant.collection.createIndex({ registeredAt: -1 }),
     ])
     console.log('✅ High-concurrency database indexes verified.')
   } catch (error) {

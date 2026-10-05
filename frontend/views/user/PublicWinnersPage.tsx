@@ -7,9 +7,11 @@ import { formatDate, maskPhone } from '../../lib/format'
 export function PublicWinnersPage() {
   const { data, getParticipant, getPrize, getDraw } = useApp()
   const [filter, setFilter] = useState('')
-  const winners = [...data.winners].sort(
-    (a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime() || b.id.localeCompare(a.id)
-  )
+  const winners = [...(data.winners || [])]
+    .filter(Boolean)
+    .sort(
+      (a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime() || (b.id || '').localeCompare(a.id || '')
+    )
 
   const filteredWinners = winners.filter((w) => {
     const p = getParticipant(w.participantId)
