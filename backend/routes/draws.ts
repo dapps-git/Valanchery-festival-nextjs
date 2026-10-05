@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { Draw } from '../models/Draw.js'
 import { Winner } from '../models/Winner.js'
 import { Prize } from '../models/Prize.js'
+import { Participant } from '../models/Participant.js'
 import { requireAdminAuth } from '../middleware/auth.js'
 
 const router = Router()
