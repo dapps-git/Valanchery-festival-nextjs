@@ -372,7 +372,10 @@ export function RegisterPage() {
                 {registeredCoupon && (
                   <div className="flex items-center justify-between">
                     <span className="text-slate-500 font-medium">Coupon Code:</span>
-                    <span className="font-mono font-bold text-[#0097b2]">🎫 {registeredCoupon}</span>
+                    <span className="font-mono font-bold text-[#0097b2] inline-flex items-center gap-1.5">
+                      <Ticket size={13} className="text-[#0097b2] shrink-0" />
+                      <span>{registeredCoupon}</span>
+                    </span>
                   </div>
                 )}
                 <div className="flex items-center justify-between">
