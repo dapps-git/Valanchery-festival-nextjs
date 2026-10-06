@@ -178,7 +178,8 @@ export async function POST(request: Request) {
     // Update prize status
     await prizesCol.updateOne(
       { id: awardedPrizeId },
-      { $set: { status: 'Awarded', assignedDrawId: drawId } }
+      { $set: { status: 'Awarded', assignedDrawId: drawId } },
+      { upsert: true }
     )
 
     return NextResponse.json({ ok: true, winnerId, winner })

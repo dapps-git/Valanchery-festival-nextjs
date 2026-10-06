@@ -3,8 +3,9 @@ import { connectDB } from '@/lib/db'
 
 export const dynamic = 'force-dynamic'
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, context: { params: Promise<{ id: string }> | { id: string } }) {
   try {
+    const params = await context.params
     const id = params.id
     const body = await request.json()
     const db = await connectDB()
@@ -25,8 +26,9 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(request: Request, context: { params: Promise<{ id: string }> | { id: string } }) {
   try {
+    const params = await context.params
     const id = params.id
     const db = await connectDB()
 

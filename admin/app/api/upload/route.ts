@@ -1,16 +1,26 @@
 import { NextResponse } from 'next/server'
 import { v2 as cloudinary } from 'cloudinary'
 
-// Configure Cloudinary
+export const dynamic = 'force-dynamic'
+export const maxDuration = 60
+
+// Configure Cloudinary from environment variables only
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'tfdjrv5b',
-  api_key: process.env.CLOUDINARY_API_KEY || '833542621644837',
-  api_secret: process.env.CLOUDINARY_API_SECRET || '_30QE2KUy9lshSYROYZy75sPTfY',
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
   secure: true,
 })
 
 export async function POST(req: Request) {
   try {
+    if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+      return NextResponse.json(
+        { ok: false, error: 'Cloudinary environment variables (CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET) are missing from configuration.' },
+        { status: 500 }
+      )
+    }
+
     const contentType = req.headers.get('content-type') || ''
 
     let dataUri = ''
@@ -34,10 +44,14 @@ export async function POST(req: Request) {
       }
     }
 
-    // Upload to Cloudinary
+    // Upload and automatically compress into optimized WebP format
     const uploadRes = await cloudinary.uploader.upload(dataUri, {
       folder: 'valanchery_festival/gifts',
       resource_type: 'image',
+      format: 'webp',
+      transformation: [
+        { width: 1200, height: 1200, crop: 'limit', quality: 'auto:good', fetch_format: 'webp' },
+      ],
     })
 
     return NextResponse.json({

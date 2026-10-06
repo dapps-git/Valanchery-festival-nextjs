@@ -5,6 +5,8 @@ import type { Prize, CompetitionType } from '@/types'
 import { Plus, X, Edit3, Trash2, Upload, Sparkles, Loader2, CheckCircle2, Trophy, Gift, ArrowRight, LayoutList, LayoutGrid } from 'lucide-react'
 import { DeleteConfirmModal } from '@/components/DeleteConfirmModal'
 
+import { compressImageToWebP } from '@/lib/imageHelper'
+
 interface CompetitionGiftsPageProps {
   type: CompetitionType
 }
@@ -43,34 +45,40 @@ export function CompetitionGiftsPage({ type }: CompetitionGiftsPageProps) {
     setUploadError('')
     setUploadSuccess('')
 
+    let webpDataUrl = ''
     try {
+      // 1. In-browser compression into WebP format
+      const { blob, dataUrl } = await compressImageToWebP(file, 1200, 0.82)
+      webpDataUrl = dataUrl
+
       const formData = new FormData()
-      formData.append('file', file)
+      formData.append('file', blob, `${file.name.replace(/\.[^/.]+$/, '')}.webp`)
+
+      const token = typeof localStorage !== 'undefined' ? localStorage.getItem('admin_jwt_token') : ''
+      const headers: Record<string, string> = {}
+      if (token) headers['Authorization'] = `Bearer ${token}`
 
       const res = await fetch('/api/upload', {
         method: 'POST',
+        headers,
         body: formData,
       })
 
       const json = await res.json()
       if (json.ok && json.url) {
         setEdit((prev) => (prev ? { ...prev, image: json.url } : null))
-        setUploadSuccess('Uploaded to Cloudinary!')
+        setUploadSuccess('Compressed & uploaded to Cloudinary WebP!')
         setTimeout(() => setUploadSuccess(''), 3000)
       } else {
         throw new Error(json.error || 'Failed to upload image')
       }
     } catch {
-      const reader = new FileReader()
-      reader.onload = (evt) => {
-        const resUrl = evt.target?.result as string
-        if (resUrl) {
-          setEdit((prev) => (prev ? { ...prev, image: resUrl } : null))
-          setUploadSuccess('Image loaded')
-          setTimeout(() => setUploadSuccess(''), 3000)
-        }
+      // Fallback to compressed WebP data URL
+      if (webpDataUrl) {
+        setEdit((prev) => (prev ? { ...prev, image: webpDataUrl } : null))
+        setUploadSuccess('Compressed to WebP')
+        setTimeout(() => setUploadSuccess(''), 3000)
       }
-      reader.readAsDataURL(file)
     } finally {
       setIsUploading(false)
     }

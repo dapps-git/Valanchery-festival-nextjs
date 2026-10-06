@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     const db = await connectDB()
     const id = body.id || `prize-${Date.now()}`
     const prize = { ...body, id }
-    await db.collection('prizes').insertOne(prize)
+    await db.collection('prizes').updateOne({ id }, { $set: prize }, { upsert: true })
     return NextResponse.json({ ok: true, prize }, { status: 201 })
   } catch (err: any) {
     return NextResponse.json({ ok: false, error: err.message }, { status: 500 })

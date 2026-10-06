@@ -4,6 +4,7 @@ import { Confetti } from '@/components/Confetti'
 import { Toast } from '@/components/Toast'
 import { useApp } from '@/context/AppContext'
 import { api } from '@/lib/api'
+import { compressImageToWebP } from '@/lib/imageHelper'
 import type { Participant, Prize, CompetitionType } from '@/types'
 import {
   Sparkles,
@@ -364,7 +365,7 @@ export function LuckyDrawPage() {
     }
   }
 
-  // Cloudinary image upload for new gift
+  // Cloudinary image upload for new gift with in-browser WebP compression
   const handleGiftImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -372,33 +373,37 @@ export function LuckyDrawPage() {
     setIsUploading(true)
     setUploadSuccess('')
 
+    let webpDataUrl = ''
     try {
+      const { blob, dataUrl } = await compressImageToWebP(file, 1200, 0.82)
+      webpDataUrl = dataUrl
+
       const formData = new FormData()
-      formData.append('file', file)
+      formData.append('file', blob, `${file.name.replace(/\.[^/.]+$/, '')}.webp`)
+
+      const token = typeof localStorage !== 'undefined' ? localStorage.getItem('admin_jwt_token') : ''
+      const headers: Record<string, string> = {}
+      if (token) headers['Authorization'] = `Bearer ${token}`
 
       const res = await fetch('/api/upload', {
         method: 'POST',
+        headers,
         body: formData,
       })
       const json = await res.json()
       if (json.ok && json.url) {
         setNewGift((prev) => ({ ...prev, image: json.url }))
-        setUploadSuccess('Uploaded to Cloudinary!')
+        setUploadSuccess('Compressed & uploaded to Cloudinary WebP!')
         setTimeout(() => setUploadSuccess(''), 3000)
       } else {
         throw new Error(json.error || 'Upload error')
       }
     } catch {
-      const reader = new FileReader()
-      reader.onload = (evt) => {
-        const resUrl = evt.target?.result as string
-        if (resUrl) {
-          setNewGift((prev) => ({ ...prev, image: resUrl }))
-          setUploadSuccess('Image loaded')
-          setTimeout(() => setUploadSuccess(''), 3000)
-        }
+      if (webpDataUrl) {
+        setNewGift((prev) => ({ ...prev, image: webpDataUrl }))
+        setUploadSuccess('Compressed to WebP')
+        setTimeout(() => setUploadSuccess(''), 3000)
       }
-      reader.readAsDataURL(file)
     } finally {
       setIsUploading(false)
     }
