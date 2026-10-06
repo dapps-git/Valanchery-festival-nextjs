@@ -84,7 +84,7 @@ export function CompetitionGiftsPage({ type }: CompetitionGiftsPageProps) {
         name: edit.name.trim(),
         description: edit.description?.trim() ?? '',
         value: edit.value?.trim() || '₹0',
-        image: edit.image || '/shopping-bags.png',
+        image: edit.image || '',
         competitionType: type,
       })
     } else {
@@ -92,7 +92,7 @@ export function CompetitionGiftsPage({ type }: CompetitionGiftsPageProps) {
         name: edit.name.trim(),
         description: edit.description?.trim() ?? '',
         value: edit.value?.trim() || '₹0',
-        image: edit.image || '/shopping-bags.png',
+        image: edit.image || '',
         assignedDrawId: null,
         status: 'Available',
         competitionType: type,
@@ -203,11 +203,18 @@ export function CompetitionGiftsPage({ type }: CompetitionGiftsPageProps) {
 
                   {/* Gift Thumbnail */}
                   <div className="relative h-20 w-28 sm:h-22 sm:w-32 rounded-[6px] overflow-hidden bg-[#FAF8F5] border border-[#E8E3D8] shrink-0 flex items-center justify-center p-1">
-                    <img
-                      src={p.image || '/shopping-bags.png'}
-                      alt={p.name}
-                      className="h-full w-full object-cover rounded-[4px] transition-transform duration-200 hover:scale-105"
-                    />
+                    {p.image ? (
+                      <img
+                        src={p.image}
+                        alt={p.name}
+                        className="h-full w-full object-cover rounded-[4px] transition-transform duration-200 hover:scale-105"
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center text-stone-400">
+                        {isMega ? <Trophy size={24} className="text-amber-500" /> : <Gift size={24} className="text-cyan-500" />}
+                        <span className="text-[9px] mt-1 text-stone-400">No Image</span>
+                      </div>
+                    )}
                     <div
                       className={`absolute bottom-1 left-1 px-1.5 py-0.2 text-[9px] font-bold uppercase rounded-[2px] text-white shadow-xs ${
                         isMega ? 'bg-amber-800/90' : 'bg-cyan-800/90'
@@ -228,9 +235,25 @@ export function CompetitionGiftsPage({ type }: CompetitionGiftsPageProps) {
                           {p.value}
                         </span>
                       )}
-                      <span className="text-[10px] font-medium text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-[4px]">
+                      <span
+                        className={`text-[10px] font-medium px-2 py-0.5 rounded-[4px] border ${
+                          p.status === 'Awarded'
+                            ? 'text-amber-900 bg-amber-50 border-amber-200'
+                            : 'text-emerald-800 bg-emerald-50 border-emerald-200'
+                        }`}
+                      >
                         {p.status || 'Available'}
                       </span>
+                      {p.status === 'Awarded' && (
+                        <button
+                          type="button"
+                          onClick={() => updatePrize(p.id, { status: 'Available' })}
+                          className="text-[10px] text-stone-500 hover:text-stone-900 underline ml-1 cursor-pointer"
+                          title="Reset this gift so it can be drawn again"
+                        >
+                          Make Available Again
+                        </button>
+                      )}
                     </div>
 
                     <p className="text-xs text-stone-500 font-normal line-clamp-1 sm:line-clamp-2">
@@ -285,12 +308,19 @@ export function CompetitionGiftsPage({ type }: CompetitionGiftsPageProps) {
                 className="border border-[#E8E3D8] bg-white rounded-[6px] shadow-2xs hover:shadow-xs transition duration-200 flex flex-col overflow-hidden"
               >
                 {/* Prize Image */}
-                <div className="relative h-48 w-full overflow-hidden bg-[#FAF8F5]">
-                  <img
-                    src={p.image || '/shopping-bags.png'}
-                    alt={p.name}
-                    className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
-                  />
+                <div className="relative h-48 w-full overflow-hidden bg-[#FAF8F5] flex items-center justify-center">
+                  {p.image ? (
+                    <img
+                      src={p.image}
+                      alt={p.name}
+                      className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center text-stone-400">
+                      {isMega ? <Trophy size={36} className="text-amber-500" /> : <Gift size={36} className="text-cyan-500" />}
+                      <span className="text-[10px] mt-1 text-stone-400">No Image</span>
+                    </div>
+                  )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
 
                   {/* Competition Tag */}
