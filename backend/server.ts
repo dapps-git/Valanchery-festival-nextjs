@@ -56,7 +56,8 @@ app.use(corsMiddleware)
 app.options('*', corsMiddleware)
 // Gzip/Deflate compression — halves payload size under high load
 app.use(compression())
-app.use(express.json({ limit: '1mb' }))
+app.use(express.json({ limit: '50mb' }))
+app.use(express.urlencoded({ limit: '50mb', extended: true }))
 
 // Aggregated Data Route for ultra-fast single request app hydration
 app.get(['/api/all', '/all'], async (req, res) => {

@@ -19,11 +19,33 @@ router.get('/', async (req, res) => {
   }
 })
 
-// Create prize (admin only)
+// Create or upsert prize (admin only)
 router.post('/', requireAdminAuth, async (req, res) => {
   try {
-    const id = `prize-${Date.now()}`
-    const prize = await Prize.create({ ...req.body, id })
+    const id = req.body.id || `prize-${Date.now()}`
+    const status = req.body.status || 'Available'
+    const competitionType = req.body.competitionType || 'Normal'
+    const image = req.body.image || ''
+    const value = req.body.value || '₹0'
+    const description = req.body.description || ''
+    const name = req.body.name || 'Festival Prize'
+
+    const prize = await Prize.findOneAndUpdate(
+      { id },
+      {
+        $set: {
+          id,
+          name,
+          description,
+          value,
+          image,
+          status,
+          competitionType,
+          assignedDrawId: req.body.assignedDrawId || null,
+        },
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    )
     res.status(201).json({ ok: true, prize })
   } catch (error: any) {
     res.status(500).json({ ok: false, error: error.message })
@@ -33,7 +55,8 @@ router.post('/', requireAdminAuth, async (req, res) => {
 // Update prize (admin only)
 router.put('/:id', requireAdminAuth, async (req, res) => {
   try {
-    const updated = await Prize.findOneAndUpdate({ id: req.params.id }, req.body, { new: true }).lean()
+    const patch = { ...req.body }
+    const updated = await Prize.findOneAndUpdate({ id: req.params.id }, { $set: patch }, { new: true }).lean()
     res.json({ ok: true, prize: updated })
   } catch (error: any) {
     res.status(500).json({ ok: false, error: error.message })

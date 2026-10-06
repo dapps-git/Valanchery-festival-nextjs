@@ -84,6 +84,10 @@ export function LuckyDrawPage() {
       const found = competitionGifts.find((p) => p.id === selectedPrizeId)
       if (found) return found
     }
+    // Prefer the first unawarded/available gift
+    const available = competitionGifts.find((p) => p.status !== 'Awarded')
+    if (available) return available
+
     if (competitionGifts.length > 0) {
       return competitionGifts[0]
     }
@@ -408,7 +412,7 @@ export function LuckyDrawPage() {
       name: newGift.name.trim(),
       value: newGift.value.trim() || '₹0',
       description: newGift.description.trim() || `${competitionType} Competition Prize`,
-      image: newGift.image || '/shopping-bags.png',
+      image: newGift.image || '',
       assignedDrawId: null,
       status: 'Available',
       competitionType,
@@ -542,11 +546,28 @@ export function LuckyDrawPage() {
 
             {/* Prize Image Showcase */}
             <div className="relative w-full h-52 sm:h-60 overflow-hidden rounded-[6px] border border-[#E8E3D8] bg-[#FAF8F5] flex items-center justify-center p-2">
-              <img
-                src={activePrize.image || '/shopping-bags.png'}
-                alt={activePrize.name}
-                className="w-full h-full object-contain drop-shadow-sm transition-transform duration-300 hover:scale-105"
-              />
+              {activePrize.image ? (
+                <img
+                  src={activePrize.image}
+                  alt={activePrize.name}
+                  className="w-full h-full object-contain drop-shadow-sm transition-transform duration-300 hover:scale-105"
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center text-center p-4 space-y-2">
+                  <div
+                    className={`h-16 w-16 rounded-full flex items-center justify-center border shadow-xs ${
+                      competitionType === 'Mega'
+                        ? 'bg-amber-100/80 border-amber-300 text-amber-700'
+                        : 'bg-cyan-100/80 border-cyan-300 text-cyan-700'
+                    }`}
+                  >
+                    {competitionType === 'Mega' ? <Trophy size={32} /> : <Gift size={32} />}
+                  </div>
+                  <span className="text-[11px] font-medium text-stone-500">
+                    No image uploaded
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Gift Title & Description */}
@@ -754,11 +775,23 @@ export function LuckyDrawPage() {
 
             {/* Gift Awarded Box */}
             <div className="border border-[#E8E3D8] bg-[#FAF8F5] p-3 rounded-[6px] flex items-center gap-3 text-left">
-              <img
-                src={activePrize.image || '/shopping-bags.png'}
-                alt={activePrize.name}
-                className="w-12 h-12 rounded-[4px] object-cover border border-[#E8E3D8]"
-              />
+              {activePrize.image ? (
+                <img
+                  src={activePrize.image}
+                  alt={activePrize.name}
+                  className="w-12 h-12 rounded-[4px] object-cover border border-[#E8E3D8] shrink-0"
+                />
+              ) : (
+                <div
+                  className={`w-12 h-12 rounded-[4px] border flex items-center justify-center shrink-0 ${
+                    competitionType === 'Mega'
+                      ? 'bg-amber-100 border-amber-300 text-amber-700'
+                      : 'bg-cyan-100 border-cyan-300 text-cyan-700'
+                  }`}
+                >
+                  {competitionType === 'Mega' ? <Trophy size={20} /> : <Gift size={20} />}
+                </div>
+              )}
               <div className="flex-1 truncate">
                 <div className="flex items-center justify-between">
                   <p className="text-[10px] text-stone-400 uppercase">{competitionType} Gift</p>
@@ -846,13 +879,36 @@ export function LuckyDrawPage() {
                       isSelected ? 'bg-[#FAF8F5]' : 'hover:bg-stone-50'
                     }`}
                   >
-                    <img
-                      src={p.image || '/shopping-bags.png'}
-                      alt={p.name}
-                      className="w-10 h-10 rounded-[3px] object-cover border border-[#E8E3D8]"
-                    />
+                    {p.image ? (
+                      <img
+                        src={p.image}
+                        alt={p.name}
+                        className="w-10 h-10 rounded-[3px] object-cover border border-[#E8E3D8] shrink-0"
+                      />
+                    ) : (
+                      <div
+                        className={`w-10 h-10 rounded-[3px] border flex items-center justify-center shrink-0 ${
+                          competitionType === 'Mega'
+                            ? 'bg-amber-50 border-amber-200 text-amber-700'
+                            : 'bg-cyan-50 border-cyan-200 text-cyan-700'
+                        }`}
+                      >
+                        {competitionType === 'Mega' ? <Trophy size={16} /> : <Gift size={16} />}
+                      </div>
+                    )}
                     <div className="flex-1 truncate">
-                      <p className="text-xs font-medium text-stone-900 truncate">{p.name}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs font-medium text-stone-900 truncate">{p.name}</p>
+                        <span
+                          className={`text-[9px] px-1.5 py-0.2 rounded-[2px] font-bold uppercase ${
+                            p.status === 'Awarded'
+                              ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                              : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                          }`}
+                        >
+                          {p.status || 'Available'}
+                        </span>
+                      </div>
                       <p className="text-[11px] text-stone-400 font-light">{p.value || 'Bumper Prize'}</p>
                     </div>
                     {isSelected && <Check size={14} className="text-[#9A7B4F] shrink-0" />}

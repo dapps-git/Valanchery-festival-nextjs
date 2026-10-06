@@ -541,14 +541,29 @@ export function AppProvider({ children }: { children: ReactNode }) {
         refreshData().catch(() => {})
       },
       addPrize: (prize) => {
-        const id = `prize-${Date.now()}`
-        api.addPrize(prize).catch(() => {})
-        const newPrize: Prize = { ...prize, id }
+        const id = (prize as any).id || `prize-${Date.now()}`
+        const newPrize: Prize = {
+          ...prize,
+          id,
+          status: prize.status || 'Available',
+          image: prize.image || '',
+          value: prize.value || '₹0',
+          competitionType: prize.competitionType || 'Normal',
+        }
         setData((prev) => ({ ...prev, prizes: [...prev.prizes, newPrize] }))
+        api.addPrize(newPrize).then((res) => {
+          if (!res.ok) {
+            console.error('Failed to save prize to backend:', res)
+          }
+        }).catch((err) => {
+          console.error('Error saving prize:', err)
+        })
         return id
       },
       updatePrize: (id, patch) => {
-        api.updatePrize(id, patch).catch(() => {})
+        api.updatePrize(id, patch).catch((err) => {
+          console.error('Error updating prize:', err)
+        })
         setData((prev) => ({
           ...prev,
           prizes: prev.prizes.map((p) => (p.id === id ? { ...p, ...patch } : p)),
