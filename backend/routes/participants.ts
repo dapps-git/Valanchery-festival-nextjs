@@ -4,7 +4,7 @@ import { Coupon } from '../models/Coupon.js'
 import { CouponBatch } from '../models/CouponBatch.js'
 import { Counter } from '../models/Counter.js'
 import { requireAdminAuth } from '../middleware/auth.js'
-import { registerLimiter } from '../middleware/rateLimiter.js'
+import { deviceRegistrationLimiter } from '../middleware/rateLimiter.js'
 
 const router = Router()
 
@@ -44,8 +44,8 @@ export async function getNextParticipantId(): Promise<string> {
   return `VF2026-${String(counter.seq).padStart(5, '0')}`
 }
 
-// 1. Register a single participant — rate limited: 200/min per IP (each person has a unique coupon)
-router.post('/register', registerLimiter, async (req, res) => {
+// 1. Register a single participant — rate limited: 20 coupons per 30 minutes, then 2-hour break
+router.post('/register', deviceRegistrationLimiter, async (req, res) => {
   try {
     const { name, phone: rawPhone, address, location, couponId: rawCoupon } = req.body
 

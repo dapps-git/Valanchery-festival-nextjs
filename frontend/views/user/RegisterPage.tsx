@@ -20,6 +20,7 @@ import { useApp } from '../../context/AppContext'
 import { isValidIndianPhone } from '../../lib/format'
 import { Confetti } from '../../components/Confetti'
 import { QrScannerModal } from '../../components/QrScannerModal'
+import { checkDeviceRateLimit, recordDeviceRegistration } from '../../lib/deviceRateLimit'
 import { extractCouponId, formatCouponDisplay } from '../../lib/tokenHelper'
 import { PublicNavbar } from '../../components/PublicNavbar'
 
@@ -240,6 +241,15 @@ export function RegisterPage() {
     setIsSubmitting(true)
     setFormError('')
 
+    // 0. Device Rate Limit Check: 20 coupons within 30 minutes -> 2 hours break
+    const rateCheck = checkDeviceRateLimit()
+    if (rateCheck.isBlocked) {
+      isSubmittingRef.current = false
+      setIsSubmitting(false)
+      setFormError(rateCheck.message)
+      return
+    }
+
     const next: Record<string, string> = {}
 
     // 1. Coupon ID is strictly required
@@ -318,6 +328,7 @@ export function RegisterPage() {
       }
 
       // Success
+      recordDeviceRegistration()
       setSuccessId(result.id)
       setRegisteredCoupon(cleanToken)
       setRegisteredName(userName)

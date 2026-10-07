@@ -3,8 +3,71 @@ import { connectDB } from '@/lib/db'
 
 export const dynamic = 'force-dynamic'
 
+// Server-side IP rate limiting: 20 coupons per 30 minutes, then 2-hour break
+const ipRegistrationRecords = new Map<string, { timestamps: number[]; lockoutUntil?: number }>()
+
+function checkIpRateLimit(ip: string): { isBlocked: boolean; message: string } {
+  const now = Date.now()
+  const windowMs = 30 * 60 * 1000 // 30 minutes
+  const maxRegistrations = 20
+  const lockoutMs = 2 * 60 * 60 * 1000 // 2 hours
+
+  let rec = ipRegistrationRecords.get(ip)
+  if (!rec) {
+    rec = { timestamps: [] }
+    ipRegistrationRecords.set(ip, rec)
+  }
+
+  if (rec.lockoutUntil && now < rec.lockoutUntil) {
+    const remainingSec = Math.ceil((rec.lockoutUntil - now) / 1000)
+    const hours = Math.floor(remainingSec / 3600)
+    const mins = Math.ceil((remainingSec % 3600) / 60)
+    const timeStr = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`
+    return {
+      isBlocked: true,
+      message: `You have registered too many coupons from this device. Please take a break and try again after 2 hours (in ${timeStr}).`,
+    }
+  }
+
+  rec.timestamps = rec.timestamps.filter((ts) => now - ts < windowMs)
+  if (rec.timestamps.length >= maxRegistrations) {
+    rec.lockoutUntil = now + lockoutMs
+    return {
+      isBlocked: true,
+      message: 'You have registered too many coupons from this device. Please take a break and try again after 2 hours.',
+    }
+  }
+
+  return { isBlocked: false, message: '' }
+}
+
+function recordIpRegistration(ip: string) {
+  const now = Date.now()
+  const maxRegistrations = 20
+  const lockoutMs = 2 * 60 * 60 * 1000
+  let rec = ipRegistrationRecords.get(ip)
+  if (!rec) {
+    rec = { timestamps: [] }
+    ipRegistrationRecords.set(ip, rec)
+  }
+  rec.timestamps.push(now)
+  if (rec.timestamps.length >= maxRegistrations) {
+    rec.lockoutUntil = now + lockoutMs
+  }
+}
+
 export async function POST(request: Request) {
   try {
+    const clientIp =
+      request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+      request.headers.get('x-real-ip') ||
+      'unknown'
+
+    const rateCheck = checkIpRateLimit(clientIp)
+    if (rateCheck.isBlocked) {
+      return NextResponse.json({ ok: false, error: rateCheck.message }, { status: 429 })
+    }
+
     const body = await request.json()
     const { name, phone, address, location, couponId } = body || {}
 
@@ -177,6 +240,8 @@ export async function POST(request: Request) {
         )
       }
     }
+
+    recordIpRegistration(clientIp)
 
     return NextResponse.json({
       ok: true,
