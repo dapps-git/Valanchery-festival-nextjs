@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Confetti } from '@/components/Confetti'
 import { Toast } from '@/components/Toast'
 import { useApp } from '@/context/AppContext'
@@ -22,6 +22,8 @@ import {
   Users,
   ShieldCheck,
   AlertCircle,
+  ArrowRight,
+  Award,
 } from 'lucide-react'
 
 type Phase = 'ready' | 'spinning' | 'verifying' | 'reveal' | 'done'
@@ -29,6 +31,7 @@ type Phase = 'ready' | 'spinning' | 'verifying' | 'reveal' | 'done'
 export function LuckyDrawPage() {
   const { data, getPrize, confirmWinner, addPrize, refreshData } = useApp()
   const location = useLocation()
+  const navigate = useNavigate()
 
   // 1. Competition selection: 'Mega' | 'Normal' (default to Mega or query param)
   const queryComp = new URLSearchParams(location.search).get('competition') as CompetitionType | null
@@ -345,16 +348,14 @@ export function LuckyDrawPage() {
       )
 
       if (res.ok) {
-        setConfirmedWinnerInfo({
-          winner: previewWinner,
-          prize: activePrize,
-          competitionType,
-        })
         setShowConfirmModal(false)
         setToast(`Winner "${previewWinner.name}" permanently confirmed & saved for ${competitionType} Draw!`)
         // Refresh pool immediately from database to remove winner
         fetchEligibleParticipants(competitionType)
-        refreshData().catch(() => {})
+        await refreshData().catch(() => {})
+        setTimeout(() => {
+          navigate('/admin/winners')
+        }, 400)
       } else {
         setConfirmError(res.error || 'Backend validation rejected this winner.')
       }
@@ -527,35 +528,36 @@ export function LuckyDrawPage() {
       ─────────────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
         {/* LEFT COLUMN: ACTIVE GIFT SHOWCASE (lg:col-span-5) */}
-        <div className="lg:col-span-5 border border-[#E8E3D8] bg-white p-5 rounded-[8px] shadow-sm flex flex-col justify-between space-y-4">
+        <div className="lg:col-span-5 border border-[#E8E3D8] bg-white p-5 rounded-[12px] shadow-sm flex flex-col justify-between space-y-4">
           <div>
             {/* Gift Card Header */}
-            <div className="flex items-center justify-between border-b border-[#E8E3D8] pb-3 mb-3">
+            <div className="flex items-center justify-between pb-3 mb-2">
               <div
-                className={`inline-flex items-center gap-1.5 border px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider rounded-[4px] ${
+                className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-full shadow-xs text-white ${
                   competitionType === 'Mega'
-                    ? 'bg-amber-50 text-amber-900 border-amber-300'
-                    : 'bg-cyan-50 text-cyan-900 border-cyan-300'
+                    ? 'bg-gradient-to-r from-amber-500 to-orange-500'
+                    : 'bg-gradient-to-r from-cyan-600 to-teal-600'
                 }`}
               >
-                {competitionType === 'Mega' ? <Trophy size={12} className="text-amber-600" /> : <Gift size={12} className="text-cyan-600" />}
-                <span>{competitionType} Gift</span>
+                {competitionType === 'Mega' ? <Trophy size={13} /> : <Gift size={13} />}
+                <span>{competitionType} GIFT</span>
               </div>
 
               {activePrize.value && (
-                <div className="bg-[#FAF8F5] border border-[#E8E3D8] px-2.5 py-0.5 text-xs font-mono font-bold text-stone-900 rounded-[4px] shadow-2xs">
-                  {activePrize.value}
+                <div className="bg-[#FAF8F5] border border-[#E8E3D8] px-3 py-1 text-xs font-mono font-bold text-stone-900 rounded-full shadow-2xs flex items-center gap-1.5">
+                  <Users size={12} className="text-stone-400" />
+                  <span>{activePrize.value}</span>
                 </div>
               )}
             </div>
 
             {/* Prize Image Showcase */}
-            <div className="relative w-full h-52 sm:h-60 overflow-hidden rounded-[6px] border border-[#E8E3D8] bg-[#FAF8F5] flex items-center justify-center p-2">
+            <div className="relative w-full h-56 sm:h-64 overflow-hidden rounded-[10px] border border-[#E8E3D8] bg-[#FAF8F5] flex items-center justify-center p-2 group">
               {activePrize.image ? (
                 <img
                   src={activePrize.image}
                   alt={activePrize.name}
-                  className="w-full h-full object-contain drop-shadow-sm transition-transform duration-300 hover:scale-105"
+                  className="w-full h-full object-cover rounded-[8px] drop-shadow-sm transition-transform duration-500 group-hover:scale-105"
                 />
               ) : (
                 <div className="flex flex-col items-center justify-center text-center p-4 space-y-2">
@@ -573,18 +575,44 @@ export function LuckyDrawPage() {
                   </span>
                 </div>
               )}
+
+              {/* Gradient overlay label at bottom of photo if brand exists */}
+              {activePrize.name && (
+                <div className="absolute bottom-3 left-3 bg-black/70 backdrop-blur-xs text-white px-2.5 py-1 rounded-[6px] text-[10px] font-medium flex items-center gap-1.5">
+                  <Award size={12} className="text-amber-400" />
+                  <span>{activePrize.name}</span>
+                </div>
+              )}
             </div>
 
             {/* Gift Title & Description */}
-            <div className="mt-3 text-center sm:text-left">
-              <h2 className="text-xl font-bold text-stone-900 tracking-tight">
+            <div className="mt-3.5 text-left">
+              <h2 className="text-xl sm:text-2xl font-extrabold text-stone-900 tracking-tight">
                 {activePrize.name}
               </h2>
-              {activePrize.description && (
-                <p className="mt-1 text-xs text-stone-500 font-normal line-clamp-2">
-                  {activePrize.description}
-                </p>
-              )}
+              <p className="mt-0.5 text-xs text-stone-500 font-normal">
+                {activePrize.description || 'Drive Your Dreams'}
+              </p>
+
+              {/* 4 Feature Tags */}
+              <div className="mt-3.5 grid grid-cols-2 gap-2 text-[11px] text-stone-700">
+                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[6px] bg-[#FAF8F5] border border-[#E8E3D8]">
+                  <span>🌿</span>
+                  <span className="font-medium truncate">Premium Luxury</span>
+                </div>
+                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[6px] bg-[#FAF8F5] border border-[#E8E3D8]">
+                  <span>⏱</span>
+                  <span className="font-medium truncate">High Performance</span>
+                </div>
+                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[6px] bg-[#FAF8F5] border border-[#E8E3D8]">
+                  <span>🍃</span>
+                  <span className="font-medium truncate">Ultimate Comfort</span>
+                </div>
+                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[6px] bg-[#FAF8F5] border border-[#E8E3D8]">
+                  <span>🏆</span>
+                  <span className="font-medium truncate">A Symbol of Success</span>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -592,25 +620,25 @@ export function LuckyDrawPage() {
           <div className="pt-2 border-t border-[#F2EFE9] flex items-center gap-2">
             <button
               onClick={() => setShowPrizeSelector(true)}
-              className="flex-1 inline-flex items-center justify-center gap-1.5 border border-[#E8E3D8] bg-[#FAF8F5] hover:bg-stone-100 py-2 px-3 text-xs font-medium text-stone-800 rounded-[4px] transition cursor-pointer"
+              className="flex-1 inline-flex items-center justify-center gap-1.5 border border-[#E8E3D8] bg-[#FAF8F5] hover:bg-stone-100 py-2.5 px-3 text-xs font-semibold text-stone-800 rounded-[8px] transition cursor-pointer"
             >
-              <Gift size={13} className={competitionType === 'Mega' ? 'text-amber-600' : 'text-cyan-600'} />
+              <Gift size={14} className={competitionType === 'Mega' ? 'text-amber-600' : 'text-cyan-600'} />
               <span>Select {competitionType} Gift</span>
-              <ChevronDown size={12} className="text-stone-400 ml-auto" />
+              <ChevronDown size={13} className="text-stone-400 ml-auto" />
             </button>
             <button
               onClick={() => setShowAddPrizeModal(true)}
-              className="inline-flex items-center gap-1 border border-[#E8E3D8] bg-white hover:bg-[#FAF8F5] py-2 px-3 text-xs font-medium text-stone-700 rounded-[4px] transition cursor-pointer"
+              className="inline-flex items-center gap-1 border border-[#E8E3D8] bg-white hover:bg-[#FAF8F5] py-2.5 px-3.5 text-xs font-semibold text-stone-700 rounded-[8px] transition cursor-pointer shadow-2xs"
               title={`Add a new ${competitionType} gift with photo`}
             >
-              <Plus size={13} />
+              <Plus size={14} />
               <span>New</span>
             </button>
           </div>
         </div>
 
         {/* RIGHT COLUMN: LIVE ROLLER & ACTION STAGE (lg:col-span-7) */}
-        <div className="lg:col-span-7 border border-[#E8E3D8] bg-white p-5 sm:p-6 rounded-[8px] shadow-sm flex flex-col justify-between space-y-4">
+        <div className="lg:col-span-7 border border-[#E8E3D8] bg-white p-5 sm:p-6 rounded-[12px] shadow-sm flex flex-col justify-between space-y-4">
           {/* Stage Header */}
           <div className="flex items-center justify-between border-b border-[#E8E3D8] pb-3">
             <div className="flex items-center gap-2">
@@ -627,106 +655,117 @@ export function LuckyDrawPage() {
             </div>
           </div>
 
-          {/* Central Live Roller / Entrant Display Box */}
-          <div className="relative border-2 border-[#E8E3D8] bg-gradient-to-b from-[#FAF8F5] to-white p-6 rounded-[8px] space-y-2 min-h-[170px] flex flex-col items-center justify-center text-center shadow-inner">
-            {display ? (
-              <>
-                <div className="inline-flex items-center gap-1.5 font-mono text-xs font-semibold px-2.5 py-0.5 rounded-[4px] bg-white border border-[#E8E3D8] text-stone-700 shadow-2xs">
-                  <Ticket size={13} className={competitionType === 'Mega' ? 'text-amber-600' : 'text-cyan-600'} />
-                  <span>{display.couponId || `ENTRANT #${display.id}`}</span>
+          {/* Central Live Roller: 3D Golden Lottery Drum on Top + Overlaid Winner Details Below */}
+          <div className="relative rounded-[12px] overflow-hidden border border-[#E8E3D8] bg-gradient-to-b from-[#FAF8F5] to-white shadow-inner flex flex-col items-center">
+            {/* 3D Golden Lottery Drum Visual */}
+            <div className="relative w-full h-44 sm:h-52 overflow-hidden bg-stone-900 flex items-center justify-center">
+              <img
+                src="/lottery_drum.jpg"
+                alt="Golden Raffle Lottery Drum"
+                className={`w-full h-full object-cover transition-transform duration-700 ${
+                  phase === 'spinning' ? 'scale-110 brightness-110 saturate-120' : 'scale-100'
+                }`}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
+
+              {/* Spinning Overlay Indicator */}
+              {phase === 'spinning' && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 backdrop-blur-2xs text-white space-y-2">
+                  <Sparkles size={32} className="animate-spin text-amber-400" />
+                  <span className="text-xs font-bold uppercase tracking-widest text-amber-200">
+                    Spinning Golden Drum...
+                  </span>
                 </div>
-                <h3 className="text-2xl sm:text-3xl font-extrabold text-stone-900 tracking-tight truncate max-w-[420px]">
-                  {display.name}
-                </h3>
-                <p className="font-mono text-sm text-stone-500 font-medium">
-                  {display.phone.slice(0, 5)}•••••
+              )}
+            </div>
+
+            {/* Overlaid Card: Coupon Badge + Entrant Name + Phone + Winner Tag */}
+            <div className="w-full p-5 sm:p-6 flex flex-col items-center justify-center text-center space-y-2 bg-white">
+              {display ? (
+                <>
+                  <div className="inline-flex items-center gap-1.5 font-mono text-xs font-bold px-3 py-1 rounded-full bg-[#fdf5eb] border border-[#f0d4b0] text-[#c0731b] shadow-2xs">
+                    <Ticket size={13} className="text-[#c0731b]" />
+                    <span>{display.couponId || `ENTRANT #${display.id}`}</span>
+                  </div>
+
+                  <h3 className="text-2xl sm:text-3xl font-extrabold text-stone-900 tracking-tight truncate max-w-[420px] pt-1">
+                    {display.name}
+                  </h3>
+
+                  <p className="font-mono text-xs sm:text-sm text-stone-500 font-medium">
+                    {display.phone.slice(0, 5)}•••••
+                  </p>
+
+                  <div className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 rounded-full bg-[#fdf8f0] border border-[#ebdcc4] text-[11px] font-semibold text-[#966b2d]">
+                    <Gift size={13} className="text-[#c0731b]" />
+                    <span>Congratulations! You're the {competitionType} Gift winner!</span>
+                  </div>
+                </>
+              ) : (
+                <p className="text-xs text-stone-400 font-light py-4">
+                  {isLoadingPool ? 'Loading eligible pool...' : `No eligible participants in ${competitionType} pool`}
                 </p>
-              </>
-            ) : (
-              <p className="text-xs text-stone-400 font-light">
-                {isLoadingPool ? 'Loading eligible pool...' : `No eligible participants in ${competitionType} pool`}
-              </p>
-            )}
+              )}
 
-            {phase === 'spinning' && (
-              <div className="w-full max-w-md bg-[#E8E3D8] h-2 rounded-full overflow-hidden mt-3">
-                <div
-                  className={`h-full transition-all duration-75 ${
-                    competitionType === 'Mega' ? 'bg-amber-600' : 'bg-cyan-600'
-                  }`}
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-            )}
+              {phase === 'spinning' && (
+                <div className="w-full max-w-md bg-[#E8E3D8] h-2 rounded-full overflow-hidden mt-3">
+                  <div
+                    className="h-full transition-all duration-75 bg-gradient-to-r from-amber-500 to-orange-500"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+              )}
 
-            {phase === 'verifying' && (
-              <div className="flex items-center gap-2 text-xs text-stone-700 font-medium pt-2">
-                <Loader2 size={14} className="animate-spin text-cyan-600" />
-                <span>Validating participant against database...</span>
-              </div>
-            )}
+              {phase === 'verifying' && (
+                <div className="flex items-center gap-2 text-xs text-stone-700 font-medium pt-2">
+                  <Loader2 size={14} className="animate-spin text-orange-600" />
+                  <span>Validating participant against database...</span>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Bottom Action Area */}
-          <div className="space-y-3">
+          <div className="space-y-3 pt-1">
             {phase === 'ready' && (
               <button
                 onClick={startDraw}
                 disabled={eligiblePool.length === 0 || isLoadingPool}
-                className={`w-full py-4 px-6 text-sm font-bold text-white uppercase tracking-wider rounded-[6px] shadow-md transition active:scale-[0.99] disabled:opacity-40 cursor-pointer flex items-center justify-center gap-2 ${
-                  competitionType === 'Mega'
-                    ? 'bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 shadow-amber-600/25'
-                    : 'bg-gradient-to-r from-cyan-600 to-cyan-700 hover:from-cyan-700 hover:to-cyan-800 shadow-cyan-600/25'
-                }`}
+                className="w-full py-4 px-6 text-sm font-bold text-white uppercase tracking-wider rounded-xl shadow-lg transition active:scale-[0.99] disabled:opacity-40 cursor-pointer flex items-center justify-center gap-2 bg-gradient-to-r from-[#f36b00] to-[#e05300] hover:from-[#e05300] hover:to-[#c74500] shadow-orange-500/25"
               >
-                <Sparkles size={16} />
-                <span>START {competitionType.toUpperCase()} SPIN</span>
+                <Sparkles size={18} />
+                <span>START {competitionType.toUpperCase()} SPIN →</span>
               </button>
             )}
 
             {(phase === 'spinning' || phase === 'verifying') && (
               <button
                 disabled
-                className="w-full border border-[#E8E3D8] bg-stone-100 py-4 text-sm font-semibold text-stone-500 uppercase tracking-wider rounded-[6px] flex items-center justify-center gap-2 cursor-not-allowed"
+                className="w-full border border-[#E8E3D8] bg-stone-100 py-4 text-sm font-semibold text-stone-500 uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 cursor-not-allowed"
               >
-                <Loader2 size={16} className="animate-spin" />
+                <Loader2 size={18} className="animate-spin text-orange-500" />
                 <span>Spinning {competitionType} Draw...</span>
               </button>
             )}
 
             {(phase === 'reveal' || phase === 'done') && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2.5">
                 <button
                   onClick={() => setShowConfirmModal(true)}
-                  className="flex-1 bg-[#1E1B18] hover:bg-stone-800 text-white py-3.5 text-xs sm:text-sm font-bold uppercase tracking-wider rounded-[6px] transition cursor-pointer flex items-center justify-center gap-2 shadow-xs"
+                  className="flex-1 bg-gradient-to-r from-[#1E1B18] to-[#2d2823] hover:from-stone-800 hover:to-stone-900 text-white py-4 px-6 text-xs sm:text-sm font-bold uppercase tracking-wider rounded-xl transition cursor-pointer flex items-center justify-center gap-2 shadow-md"
                 >
-                  <Check size={16} className="text-emerald-400" />
-                  <span>Review & Confirm Winner</span>
+                  <Check size={18} className="text-emerald-400" />
+                  <span>REVIEW & CONFIRM WINNER →</span>
                 </button>
 
                 <button
                   onClick={resetSpin}
-                  className="border border-[#E8E3D8] bg-white hover:bg-stone-50 text-stone-700 px-4 py-3.5 rounded-[6px] text-xs font-medium cursor-pointer transition flex items-center gap-1"
+                  className="border border-[#E8E3D8] bg-white hover:bg-stone-50 text-stone-700 px-5 py-4 rounded-xl text-xs font-semibold cursor-pointer transition flex items-center gap-1.5 shadow-2xs"
                   title="Cancel & Restart Draw"
                 >
-                  <RotateCcw size={14} />
+                  <RotateCcw size={15} />
                   <span>Redraw</span>
                 </button>
-              </div>
-            )}
-
-            {/* Confirmed Winner Alert Inside the Stage (no layout shift) */}
-            {confirmedWinnerInfo && (
-              <div className="border border-[#E8E3D8] bg-[#FAF8F5] p-3 rounded-[6px] flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 size={15} className="text-emerald-700 shrink-0" />
-                  <span className="font-medium text-stone-800">
-                    {confirmedWinnerInfo.winner.name} won {confirmedWinnerInfo.prize.name} ({confirmedWinnerInfo.competitionType})!
-                  </span>
-                </div>
-                <Link to="/admin/winners" className="text-[#9A7B4F] hover:underline font-semibold shrink-0 ml-2">
-                  View Winners →
-                </Link>
               </div>
             )}
           </div>
@@ -734,113 +773,140 @@ export function LuckyDrawPage() {
       </div>
 
       {/* ─────────────────────────────────────────────────────────────
-          CONFIRM WINNER MODAL
+          CONFIRM WINNER MODAL (LUXURY FLORAL CARD DESIGN)
           IMPORTANT: Winner is ONLY saved to database when CONFIRM is clicked
       ─────────────────────────────────────────────────────────────── */}
       {showConfirmModal && previewWinner && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 overflow-y-auto">
-          <div className="relative w-full max-w-sm my-auto border border-[#E8E3D8] bg-white p-6 sm:p-7 rounded-[8px] shadow-2xl text-center space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto animate-fade-in">
+          <div className="relative w-full max-w-lg my-auto rounded-[28px] overflow-hidden shadow-2xl p-7 sm:p-9 border border-[#e8dfc8] bg-[#fdfbf7] text-center">
+            {/* Floral frame background asset */}
             <div
-              className={`mx-auto flex h-14 w-14 items-center justify-center rounded-full border shadow-xs ${
-                competitionType === 'Mega'
-                  ? 'bg-amber-50 border-amber-200 text-amber-700'
-                  : 'bg-cyan-50 border-cyan-200 text-cyan-700'
-              }`}
-            >
-              {competitionType === 'Mega' ? <Trophy size={28} /> : <Gift size={28} />}
-            </div>
+              className="absolute inset-0 bg-cover bg-center pointer-events-none opacity-85"
+              style={{ backgroundImage: "url('/floral_winner_frame.jpg')" }}
+            />
+            {/* Subtle ivory overlay to ensure crystal clear readability */}
+            <div className="absolute inset-0 bg-[#fdfbf7]/80 pointer-events-none" />
 
-            <div className="space-y-1">
-              <span
-                className={`text-[10px] uppercase tracking-widest font-bold px-2 py-0.5 rounded-full border ${
-                  competitionType === 'Mega'
-                    ? 'bg-amber-50 text-amber-800 border-amber-200'
-                    : 'bg-cyan-50 text-cyan-800 border-cyan-200'
-                }`}
-              >
-                PROVISIONAL {competitionType.toUpperCase()} WINNER
-              </span>
-              <p className="text-[11px] text-stone-400 font-light pt-1">
-                Spin result is not saved until you click Confirm Winner below.
-              </p>
-              <h2 className="text-2xl font-bold text-stone-900 tracking-tight pt-1">
+            {/* Close button */}
+            <button
+              onClick={resetSpin}
+              disabled={isConfirming}
+              className="absolute top-5 right-5 z-20 text-stone-400 hover:text-stone-700 p-1.5 rounded-full hover:bg-black/5 transition cursor-pointer"
+            >
+              <X size={20} />
+            </button>
+
+            {/* Modal Body */}
+            <div className="relative z-10 space-y-3 pt-2">
+              {/* Golden Trophy Icon in Laurel Wreath */}
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-amber-50/90 border border-amber-300/70 text-amber-700 shadow-md">
+                <Trophy size={32} className="text-[#c28d28] drop-shadow-xs" />
+              </div>
+
+              {/* Provisional Badge */}
+              <div className="pt-1">
+                <div className="inline-block border border-[#c4a05a]/80 bg-[#faf6ed] text-[#8c6b2d] font-bold text-[10px] sm:text-[11px] tracking-[0.16em] uppercase px-4 py-1 rounded-full shadow-2xs">
+                  PROVISIONAL {competitionType.toUpperCase()} WINNER
+                </div>
+                <p className="text-[11px] text-stone-500 font-normal mt-1.5">
+                  Spin result is not saved until you click Confirm Winner below.
+                </p>
+              </div>
+
+              {/* Big Winner Name in Serif */}
+              <h2 className="font-serif text-3xl sm:text-4xl font-bold text-[#143622] tracking-tight pt-1">
                 {previewWinner.name}
               </h2>
-              <p className="font-mono text-xs text-stone-500">
+
+              {/* Decorative Floral Accent / Leaf Divider */}
+              <div className="flex items-center justify-center gap-2 text-[#4a6b52] opacity-75 my-1">
+                <span className="h-px w-10 bg-[#4a6b52]/30" />
+                <span className="text-xs">🌿</span>
+                <span className="h-px w-10 bg-[#4a6b52]/30" />
+              </div>
+
+              {/* Winner Phone */}
+              <p className="font-mono text-sm text-stone-700 font-medium">
                 {previewWinner.phone}
               </p>
-            </div>
 
-            {previewWinner.couponId && (
-              <div className="inline-flex items-center gap-1.5 border border-[#E8E3D8] bg-[#FAF8F5] px-3 py-1 rounded-[4px] font-mono text-xs text-stone-800">
-                <Ticket size={12} className="text-[#9A7B4F]" />
-                <span>Coupon: {previewWinner.couponId}</span>
-              </div>
-            )}
-
-            {/* Gift Awarded Box */}
-            <div className="border border-[#E8E3D8] bg-[#FAF8F5] p-3 rounded-[6px] flex items-center gap-3 text-left">
-              {activePrize.image ? (
-                <img
-                  src={activePrize.image}
-                  alt={activePrize.name}
-                  className="w-12 h-12 rounded-[4px] object-cover border border-[#E8E3D8] shrink-0"
-                />
-              ) : (
-                <div
-                  className={`w-12 h-12 rounded-[4px] border flex items-center justify-center shrink-0 ${
-                    competitionType === 'Mega'
-                      ? 'bg-amber-100 border-amber-300 text-amber-700'
-                      : 'bg-cyan-100 border-cyan-300 text-cyan-700'
-                  }`}
-                >
-                  {competitionType === 'Mega' ? <Trophy size={20} /> : <Gift size={20} />}
+              {/* Coupon Pill */}
+              {previewWinner.couponId && (
+                <div className="inline-flex items-center gap-1.5 border border-[#b2cfb8] bg-[#f0f7f2] px-4 py-1.5 rounded-full font-mono text-xs font-bold text-[#1c4028] shadow-2xs">
+                  <Ticket size={14} className="text-[#3b734c]" />
+                  <span>Coupon: {previewWinner.couponId}</span>
                 </div>
               )}
-              <div className="flex-1 truncate">
-                <div className="flex items-center justify-between">
-                  <p className="text-[10px] text-stone-400 uppercase">{competitionType} Gift</p>
-                  <span className="text-[10px] font-mono font-semibold text-stone-700">{activePrize.value}</span>
-                </div>
-                <p className="text-xs font-semibold text-stone-900 truncate">{activePrize.name}</p>
-              </div>
-            </div>
 
-            {confirmError && (
-              <div className="border border-red-200 bg-red-50 p-2.5 rounded-[4px] text-xs text-red-700 text-left flex items-start gap-1.5">
-                <AlertCircle size={14} className="shrink-0 mt-0.5" />
-                <span>{confirmError}</span>
-              </div>
-            )}
-
-            {/* Action Buttons */}
-            <div className="pt-2 space-y-2">
-              <button
-                onClick={handleConfirmWinner}
-                disabled={isConfirming}
-                className="w-full bg-emerald-700 hover:bg-emerald-800 text-white py-3 text-xs font-bold uppercase tracking-wider rounded-[6px] shadow-sm transition cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5"
-              >
-                {isConfirming ? (
-                  <>
-                    <Loader2 size={14} className="animate-spin" />
-                    <span>Validating & Saving to Database...</span>
-                  </>
+              {/* Inset Gift Card */}
+              <div className="mt-4 border border-[#d2e3d5] bg-[#f2f8f3] p-3 rounded-2xl flex items-center gap-3.5 text-left shadow-2xs">
+                {activePrize.image ? (
+                  <img
+                    src={activePrize.image}
+                    alt={activePrize.name}
+                    className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl object-cover border border-[#d2e3d5] shrink-0 shadow-2xs"
+                  />
                 ) : (
-                  <>
-                    <Check size={15} />
-                    <span>CONFIRM WINNER (SAVE TO DB)</span>
-                  </>
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-amber-100 border border-amber-300 text-amber-700 flex items-center justify-center shrink-0">
+                    <Trophy size={24} />
+                  </div>
                 )}
-              </button>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-1">
+                    <p className="text-[10px] font-semibold text-stone-500 uppercase tracking-wider">
+                      {competitionType} GIFT
+                    </p>
+                    {activePrize.value && (
+                      <span className="text-[10px] font-mono font-bold text-stone-800 bg-white/80 px-2 py-0.5 rounded-md border border-[#d2e3d5]">
+                        {activePrize.value}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm sm:text-base font-bold text-stone-900 truncate">
+                    {activePrize.name}
+                  </p>
+                  <p className="text-[11px] text-stone-500 truncate">
+                    {activePrize.description || 'Luxury Drive, Bigger Dreams'}
+                  </p>
+                </div>
+              </div>
 
-              <button
-                onClick={resetSpin}
-                disabled={isConfirming}
-                className="w-full border border-[#E8E3D8] bg-white hover:bg-[#FAF8F5] py-2 text-xs font-medium text-stone-600 rounded-[6px] transition cursor-pointer flex items-center justify-center gap-1"
-              >
-                <X size={12} />
-                <span>Cancel / Respin Without Saving</span>
-              </button>
+              {confirmError && (
+                <div className="border border-red-200 bg-red-50 p-2.5 rounded-xl text-xs text-red-700 text-left flex items-start gap-1.5">
+                  <AlertCircle size={14} className="shrink-0 mt-0.5" />
+                  <span>{confirmError}</span>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="pt-2 space-y-2">
+                <button
+                  onClick={handleConfirmWinner}
+                  disabled={isConfirming}
+                  className="w-full bg-gradient-to-r from-[#1e4a31] to-[#143622] hover:from-[#173d28] hover:to-[#0f2a1a] text-white py-3.5 px-6 rounded-2xl font-bold text-xs sm:text-sm tracking-wide shadow-lg transition active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  {isConfirming ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      <span>Validating & Saving to Database...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check size={18} />
+                      <span>CONFIRM WINNER (SAVE TO DB) →</span>
+                    </>
+                  )}
+                </button>
+
+                <button
+                  onClick={resetSpin}
+                  disabled={isConfirming}
+                  className="w-full border border-[#b2cfb8] bg-white/70 hover:bg-[#eef5ee] text-[#1e4a31] py-2.5 px-6 rounded-2xl text-xs font-semibold transition active:scale-[0.99] flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <X size={14} />
+                  <span>Cancel / Respin Without Saving</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
