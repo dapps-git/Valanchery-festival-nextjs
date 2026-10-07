@@ -71,8 +71,13 @@ export async function middleware(request: NextRequest) {
     )
   }
 
-  const secret = process.env.JWT_SECRET || 'valanchery_festival_admin_secret_jwt_key_2026_xyz987'
-
+  const secret = process.env.JWT_SECRET
+  if (!secret) {
+    return NextResponse.json(
+      { ok: false, error: 'Server configuration error: JWT_SECRET missing' },
+      { status: 500 }
+    )
+  }
 
   const isValid = await verifyJwt(token, secret)
   if (!isValid) {

@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken'
 import { Resend } from 'resend'
 import dotenv from 'dotenv'
 import path from 'path'
+import crypto from 'node:crypto'
 import { loginLimiter, otpLimiter } from '../middleware/rateLimiter.js'
 
 const router = Router()
@@ -37,7 +38,11 @@ const getOtpEmail = () => {
 }
 const getJwtSecret = () => {
   ensureEnvLoaded()
-  return process.env.JWT_SECRET || 'valanchery_festival_admin_secret_jwt_key_2026_xyz987'
+  const secret = process.env.JWT_SECRET
+  if (!secret) {
+    throw new Error('JWT_SECRET environment variable is missing')
+  }
+  return secret
 }
 
 // Login route — rate limited to 10 attempts per 15 min per IP
@@ -181,7 +186,7 @@ router.post('/forgot-password', otpLimiter, async (req, res) => {
     }
 
     const db = mongoose.connection.db
-    const otp = Math.floor(100000 + Math.random() * 900000).toString()
+    const otp = crypto.randomInt(100000, 1000000).toString()
     const otpExpires = new Date(Date.now() + 10 * 60 * 1000)
 
     if (db) {
