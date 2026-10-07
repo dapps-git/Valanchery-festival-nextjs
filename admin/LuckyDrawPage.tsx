@@ -24,6 +24,8 @@ import {
   AlertCircle,
   ArrowRight,
   Award,
+  Crown,
+  User,
 } from 'lucide-react'
 
 type Phase = 'ready' | 'spinning' | 'verifying' | 'reveal' | 'done'
@@ -456,19 +458,19 @@ export function LuckyDrawPage() {
       {/* ─────────────────────────────────────────────────────────────
           1. TOP BAR: COMPETITION SELECTOR & ELIGIBILITY BAR
       ─────────────────────────────────────────────────────────────── */}
-      <div className="w-full flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 border border-[#E8E3D8] bg-white p-2.5 rounded-[8px] shadow-2xs">
-        {/* Competition Switcher */}
-        <div className="flex items-center gap-1.5 p-1 bg-[#FAF8F5] rounded-[6px] border border-[#E8E3D8] shrink-0">
+      <div className="w-full flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+        {/* 1. Competition Switcher Card */}
+        <div className="flex items-center gap-1.5 p-1.5 bg-white rounded-2xl border border-[#E8E3D8] shadow-2xs shrink-0">
           <button
             type="button"
             onClick={() => {
               if (phase === 'spinning' || phase === 'verifying') return
               setCompetitionType('Mega')
             }}
-            className={`py-2 px-3.5 rounded-[4px] text-xs font-bold tracking-wider uppercase transition flex items-center gap-2 cursor-pointer ${
+            className={`py-2 px-4 rounded-xl text-xs font-extrabold tracking-wider uppercase transition flex items-center gap-2 cursor-pointer ${
               competitionType === 'Mega'
-                ? 'bg-gradient-to-r from-amber-600 to-amber-700 text-white shadow-xs'
-                : 'text-stone-600 hover:text-stone-900 hover:bg-white'
+                ? 'bg-[#b86815] text-white shadow-xs'
+                : 'text-stone-500 hover:text-stone-800 hover:bg-stone-50'
             }`}
           >
             <Trophy size={14} className={competitionType === 'Mega' ? 'text-amber-200' : 'text-stone-400'} />
@@ -481,55 +483,56 @@ export function LuckyDrawPage() {
               if (phase === 'spinning' || phase === 'verifying') return
               setCompetitionType('Normal')
             }}
-            className={`py-2 px-3.5 rounded-[4px] text-xs font-bold tracking-wider uppercase transition flex items-center gap-2 cursor-pointer ${
+            className={`py-2 px-4 rounded-xl text-xs font-extrabold tracking-wider uppercase transition flex items-center gap-2 cursor-pointer ${
               competitionType === 'Normal'
-                ? 'bg-gradient-to-r from-cyan-600 to-cyan-700 text-white shadow-xs'
-                : 'text-stone-600 hover:text-stone-900 hover:bg-white'
+                ? 'bg-[#134e3f] text-white shadow-xs'
+                : 'text-stone-500 hover:text-stone-800 hover:bg-stone-50'
             }`}
           >
-            <Gift size={14} className={competitionType === 'Normal' ? 'text-cyan-200' : 'text-stone-400'} />
+            <Gift size={14} className={competitionType === 'Normal' ? 'text-emerald-200' : 'text-stone-400'} />
             <span>NORMAL COMPETITION</span>
           </button>
         </div>
 
-        {/* Dynamic Eligibility Rule Banner */}
-        <div className="flex-1 px-3 py-2 rounded-[6px] bg-[#FAF8F5] border border-[#E8E3D8] text-[11px] text-stone-600 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span
-              className={`h-2.5 w-2.5 rounded-full shrink-0 ${
-                competitionType === 'Mega' ? 'bg-amber-500 animate-pulse' : 'bg-cyan-500 animate-pulse'
-              }`}
-            />
-            <span>
+        {/* 2. Dynamic Eligibility Rule Card */}
+        <div className="flex-1 px-4 py-2.5 rounded-2xl bg-white border border-[#E8E3D8] shadow-2xs text-xs text-stone-700 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className={`h-7 w-7 rounded-lg flex items-center justify-center shrink-0 ${
+              competitionType === 'Mega' ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-emerald-50 text-[#134e3f] border border-emerald-200'
+            }`}>
+              {competitionType === 'Mega' ? <Trophy size={14} /> : <Gift size={14} />}
+            </div>
+            <span className="text-[11px] leading-tight">
               {competitionType === 'Mega' ? (
                 <>
-                  <strong className="text-stone-900 font-semibold">Mega Eligibility:</strong> Open to all participants, including Normal winners. Previous Mega winners excluded.
+                  <strong className="text-stone-900 font-bold">Mega Eligibility:</strong> Open to all participants, including Normal winners. Previous Mega winners excluded.
                 </>
               ) : (
                 <>
-                  <strong className="text-stone-900 font-semibold">Normal Eligibility:</strong> Open to all un-won coupons. Same phone numbers can participate with other coupons.
+                  <strong className="text-stone-900 font-bold">Normal Eligibility:</strong> Open to all un-won coupons. Same phone numbers can participate with other coupons.
                 </>
               )}
             </span>
           </div>
           <Link
             to={competitionType === 'Mega' ? '/admin/mega-competition' : '/admin/normal-competition'}
-            className="text-[#9A7B4F] hover:underline font-semibold shrink-0 ml-3"
+            className="text-stone-700 hover:text-stone-900 font-bold text-xs shrink-0 hover:underline flex items-center gap-1"
           >
-            Manage Gifts →
+            <span>Manage Gifts</span>
+            <span>→</span>
           </Link>
         </div>
 
-        {/* Live Pool Count Badge */}
-        <div className="flex items-center gap-2 text-xs text-stone-700 px-3.5 py-2 rounded-[6px] bg-[#FAF8F5] border border-[#E8E3D8] shrink-0 font-medium">
-          <Users size={14} className="text-stone-500" />
+        {/* 3. Live Pool Count Badge Card */}
+        <div className="flex items-center gap-2 text-xs text-stone-800 px-4 py-2.5 rounded-2xl bg-white border border-[#E8E3D8] shadow-2xs shrink-0 font-bold">
+          <Users size={15} className="text-stone-500" />
           {isLoadingPool ? (
-            <span className="flex items-center gap-1 text-[11px] text-stone-400">
+            <span className="flex items-center gap-1 text-[11px] text-stone-400 font-normal">
               <Loader2 size={12} className="animate-spin" /> Loading pool...
             </span>
           ) : (
             <span>
-              <strong className="text-stone-900 font-bold">{eligiblePool.length.toLocaleString()}</strong> eligible
+              <strong className="text-stone-900 font-black">{eligiblePool.length.toLocaleString()}</strong> eligible
             </span>
           )}
         </div>
@@ -540,89 +543,78 @@ export function LuckyDrawPage() {
       ─────────────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
         {/* LEFT COLUMN: ACTIVE GIFT SHOWCASE (lg:col-span-5) */}
-        <div className="lg:col-span-5 border border-[#E8E3D8] bg-white p-5 rounded-[12px] shadow-sm flex flex-col justify-between space-y-4">
+        <div className="lg:col-span-5 border border-[#E8E3D8] bg-white p-5 rounded-2xl shadow-sm flex flex-col justify-between space-y-4">
           <div>
             {/* Gift Card Header */}
             <div className="flex items-center justify-between pb-3 mb-2">
               <div
-                className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-full shadow-xs text-white ${
+                className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold uppercase tracking-wider rounded-full shadow-xs text-white ${
                   competitionType === 'Mega'
-                    ? 'bg-gradient-to-r from-amber-500 to-orange-500'
-                    : 'bg-gradient-to-r from-cyan-600 to-teal-600'
+                    ? 'bg-[#b86815]'
+                    : 'bg-[#134e3f]'
                 }`}
               >
                 {competitionType === 'Mega' ? <Trophy size={13} /> : <Gift size={13} />}
                 <span>{competitionType} GIFT</span>
               </div>
 
-              {activePrize.value && (
-                <div className="bg-[#FAF8F5] border border-[#E8E3D8] px-3 py-1 text-xs font-mono font-bold text-stone-900 rounded-full shadow-2xs flex items-center gap-1.5">
-                  <Users size={12} className="text-stone-400" />
-                  <span>{activePrize.value}</span>
-                </div>
-              )}
+              <div className="bg-[#f4f5f6] border border-[#e5e7eb] px-3 py-1 text-xs font-mono font-bold text-stone-800 rounded-full shadow-2xs flex items-center gap-1.5">
+                <Users size={12} className="text-stone-400" />
+                <span>{activePrize.value ? (activePrize.value.startsWith('₹') ? activePrize.value : `₹${activePrize.value}`) : '₹0'}</span>
+              </div>
             </div>
 
             {/* Prize Image Showcase */}
-            <div className="relative w-full h-56 sm:h-64 overflow-hidden rounded-[10px] border border-[#E8E3D8] bg-[#FAF8F5] flex items-center justify-center p-2 group">
-              {activePrize.image ? (
+            <div className="relative w-full aspect-[4/3] sm:h-64 overflow-hidden rounded-2xl border border-[#d8e6ef] bg-gradient-to-b from-[#f2f7fb] via-[#e6f0f7] to-[#d9e8f4] flex items-center justify-center p-4 group">
+              {/* Top-Right Prize Tag Chip */}
+              <div className="absolute top-3 right-3 z-10 bg-white/95 backdrop-blur-xs border border-white/80 text-[#17386d] px-3 py-1 rounded-full text-[11px] font-extrabold tracking-wide uppercase flex items-center gap-1.5 shadow-2xs">
+                <span>❄</span>
+                <span>{activePrize.name || 'FRIDGE'}</span>
+              </div>
+
+              {activePrize.image && activePrize.image !== '/kvves-logo-round.png' ? (
                 <img
                   src={activePrize.image}
                   alt={activePrize.name}
-                  className="w-full h-full object-cover rounded-[8px] drop-shadow-sm transition-transform duration-500 group-hover:scale-105"
+                  className="w-full h-full object-contain drop-shadow-sm transition-transform duration-500 group-hover:scale-105"
                 />
               ) : (
-                <div className="flex flex-col items-center justify-center text-center p-4 space-y-2">
-                  <div
-                    className={`h-16 w-16 rounded-full flex items-center justify-center border shadow-xs ${
-                      competitionType === 'Mega'
-                        ? 'bg-amber-100/80 border-amber-300 text-amber-700'
-                        : 'bg-cyan-100/80 border-cyan-300 text-cyan-700'
-                    }`}
-                  >
-                    {competitionType === 'Mega' ? <Trophy size={32} /> : <Gift size={32} />}
-                  </div>
-                  <span className="text-[11px] font-medium text-stone-500">
-                    No image uploaded
-                  </span>
-                </div>
-              )}
-
-              {/* Gradient overlay label at bottom of photo if brand exists */}
-              {activePrize.name && (
-                <div className="absolute bottom-3 left-3 bg-black/70 backdrop-blur-xs text-white px-2.5 py-1 rounded-[6px] text-[10px] font-medium flex items-center gap-1.5">
-                  <Award size={12} className="text-amber-400" />
-                  <span>{activePrize.name}</span>
+                <div className="flex flex-col items-center justify-center text-center p-2">
+                  <img
+                    src="/kvves-logo-round.png"
+                    alt="KVVES Emblem"
+                    className="w-40 h-40 sm:w-44 sm:h-44 object-contain drop-shadow-xs"
+                  />
                 </div>
               )}
             </div>
 
             {/* Gift Title & Description */}
             <div className="mt-3.5 text-left">
-              <h2 className="text-xl sm:text-2xl font-extrabold text-stone-900 tracking-tight">
-                {activePrize.name}
+              <h2 className="text-2xl font-black text-stone-900 tracking-tight uppercase">
+                {activePrize.name || 'FRIDGE'}
               </h2>
-              {activePrize.description && (
-                <p className="mt-0.5 text-xs text-stone-500 font-normal">
-                  {activePrize.description}
-                </p>
-              )}
+              <p className="mt-1 text-xs text-stone-500 font-normal">
+                {activePrize.description || 'Cool comfort for your everyday life.'}
+              </p>
             </div>
           </div>
 
           {/* Bottom Gift Selector Actions */}
-          <div className="pt-2 border-t border-[#F2EFE9] flex items-center gap-2">
+          <div className="pt-3 border-t border-[#F2EFE9] flex items-center gap-2">
             <button
               onClick={() => setShowPrizeSelector(true)}
-              className="flex-1 inline-flex items-center justify-center gap-1.5 border border-[#E8E3D8] bg-[#FAF8F5] hover:bg-stone-100 py-2.5 px-3 text-xs font-semibold text-stone-800 rounded-[8px] transition cursor-pointer"
+              className="flex-1 inline-flex items-center justify-between border border-[#e2e8f0] bg-white hover:bg-stone-50 py-2.5 px-3.5 text-xs font-semibold text-stone-800 rounded-xl transition cursor-pointer shadow-2xs"
             >
-              <Gift size={14} className={competitionType === 'Mega' ? 'text-amber-600' : 'text-cyan-600'} />
-              <span>Select {competitionType} Gift</span>
-              <ChevronDown size={13} className="text-stone-400 ml-auto" />
+              <div className="flex items-center gap-2">
+                <Gift size={14} className={competitionType === 'Mega' ? 'text-amber-600' : 'text-[#134e3f]'} />
+                <span>Select {competitionType} Gift</span>
+              </div>
+              <ChevronDown size={14} className="text-stone-400" />
             </button>
             <button
               onClick={() => setShowAddPrizeModal(true)}
-              className="inline-flex items-center gap-1 border border-[#E8E3D8] bg-white hover:bg-[#FAF8F5] py-2.5 px-3.5 text-xs font-semibold text-stone-700 rounded-[8px] transition cursor-pointer shadow-2xs"
+              className="inline-flex items-center gap-1 border border-[#e2e8f0] bg-white hover:bg-stone-50 py-2.5 px-3.5 text-xs font-semibold text-stone-700 rounded-xl transition cursor-pointer shadow-2xs"
               title={`Add a new ${competitionType} gift with photo`}
             >
               <Plus size={14} />
@@ -632,39 +624,55 @@ export function LuckyDrawPage() {
         </div>
 
         {/* RIGHT COLUMN: LIVE ROLLER & ACTION STAGE (lg:col-span-7) */}
-        <div className="lg:col-span-7 border border-[#E8E3D8] bg-white p-5 sm:p-6 rounded-[12px] shadow-sm flex flex-col justify-between space-y-4">
+        <div className="lg:col-span-7 border border-[#E8E3D8] bg-white p-5 sm:p-6 rounded-2xl shadow-sm flex flex-col justify-between space-y-4">
           {/* Stage Header */}
           <div className="flex items-center justify-between border-b border-[#E8E3D8] pb-3">
             <div className="flex items-center gap-2">
               <span className={`h-2.5 w-2.5 rounded-full ${
-                phase === 'spinning' ? 'bg-amber-500 animate-ping' : phase === 'reveal' ? 'bg-emerald-500' : 'bg-emerald-600'
+                phase === 'spinning' ? 'bg-amber-500 animate-ping' : 'bg-emerald-500'
               }`} />
-              <span className="text-xs font-bold uppercase tracking-wider text-stone-800">
+              <span className="text-xs font-black uppercase tracking-wider text-stone-800">
                 {phase === 'spinning' ? 'Spinning Live Draw' : phase === 'verifying' ? 'Verifying Result' : phase === 'reveal' ? 'Winner Preview' : 'Live Draw Stage Ready'}
               </span>
             </div>
 
-            <div className="text-xs text-stone-500 font-mono">
-              Stage: <strong className="text-stone-800">{competitionType} Competition</strong>
+            <div className="text-xs text-stone-500">
+              Stage: <strong className="font-bold text-[#134e3f]">{competitionType} Competition</strong>
             </div>
           </div>
 
           {/* Central Live Roller: 3D Golden Lottery Drum on Top + Overlaid Winner Details Below */}
-          <div className="relative rounded-[12px] overflow-hidden border border-[#E8E3D8] bg-gradient-to-b from-[#FAF8F5] to-white shadow-inner flex flex-col items-center">
-            {/* 3D Golden Lottery Drum Visual */}
-            <div className="relative w-full h-44 sm:h-52 overflow-hidden bg-stone-900 flex items-center justify-center">
+          <div className="relative rounded-2xl overflow-hidden border border-[#E0DBD0] flex flex-col items-center shadow-xs">
+            {/* 3D Golden Lottery Drum Visual Banner */}
+            <div className="relative w-full h-44 sm:h-52 overflow-hidden bg-[#0c2417] flex items-center justify-between shadow-inner">
+              {/* Golden Drum Image on Right */}
               <img
                 src="/lottery_drum.jpg"
                 alt="Golden Raffle Lottery Drum"
-                className={`w-full h-full object-cover transition-transform duration-700 ${
-                  phase === 'spinning' ? 'scale-110 brightness-110 saturate-120' : 'scale-100'
+                className={`absolute right-0 top-0 h-full w-[60%] sm:w-[56%] object-cover object-center pointer-events-none transition-transform duration-700 ${
+                  phase === 'spinning' ? 'scale-110 brightness-110' : 'scale-100'
                 }`}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
+
+              {/* Left Dark Gradient Overlay for seamless text contrast */}
+              <div className="absolute inset-0 bg-gradient-to-r from-[#0a2318] via-[#0a2318]/95 via-45% to-transparent pointer-events-none" />
+
+              {/* Left Text Block */}
+              <div className="relative z-10 pl-6 sm:pl-8 text-left space-y-1">
+                <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] text-[#d6b258]">
+                  THIS COULD BE
+                </p>
+                <h3 className="font-serif text-2xl sm:text-3xl font-black text-[#fae8b4] tracking-tight uppercase leading-none drop-shadow-xs">
+                  YOUR LUCKY<br />MOMENT
+                </h3>
+                <p className="pt-2 text-[10px] sm:text-[11px] font-medium text-[#c5dac8] tracking-wide">
+                  Real People <span className="opacity-60">•</span> Real Coupons <span className="opacity-60">•</span> Real Prizes
+                </p>
+              </div>
 
               {/* Spinning Overlay Indicator */}
               {phase === 'spinning' && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 backdrop-blur-2xs text-white space-y-2">
+                <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/40 backdrop-blur-2xs text-white space-y-2">
                   <Sparkles size={32} className="animate-spin text-amber-400" />
                   <span className="text-xs font-bold uppercase tracking-widest text-amber-200">
                     Spinning Golden Drum...
@@ -673,50 +681,91 @@ export function LuckyDrawPage() {
               )}
             </div>
 
-            {/* Overlaid Card: Coupon Badge + Entrant Name + Phone + Winner Tag */}
-            <div className="w-full p-5 sm:p-6 flex flex-col items-center justify-center text-center space-y-2 bg-white">
-              {display ? (
-                <>
-                  <div className="inline-flex items-center gap-1.5 font-mono text-xs font-bold px-3 py-1 rounded-full bg-[#fdf5eb] border border-[#f0d4b0] text-[#c0731b] shadow-2xs">
-                    <Ticket size={13} className="text-[#c0731b]" />
-                    <span>{display.couponId || `ENTRANT #${display.id}`}</span>
+            {/* Overlaid Card: Entrant Details in Mint Green Box */}
+            <div className="relative w-full p-5 sm:p-6 flex flex-col items-center justify-center text-center space-y-2 bg-[#f5f9f6] border-t border-[#ddeadf]">
+              {/* Botanical Leaf Accents in Corners */}
+              <div className="absolute top-2 left-2 pointer-events-none text-[#7ba586] opacity-60">
+                <svg width="40" height="40" viewBox="0 0 40 40" fill="currentColor">
+                  <path d="M0,0 C12,0 20,8 20,20 C10,20 0,12 0,0 Z" />
+                  <path d="M10,0 C18,2 26,12 28,26 C16,22 10,12 10,0 Z" opacity="0.6" />
+                  <path d="M0,10 C2,18 12,26 26,28 C22,16 12,10 0,10 Z" opacity="0.6" />
+                </svg>
+              </div>
+              <div className="absolute top-2 right-2 pointer-events-none text-[#7ba586] opacity-60 -scale-x-100">
+                <svg width="40" height="40" viewBox="0 0 40 40" fill="currentColor">
+                  <path d="M0,0 C12,0 20,8 20,20 C10,20 0,12 0,0 Z" />
+                  <path d="M10,0 C18,2 26,12 28,26 C16,22 10,12 10,0 Z" opacity="0.6" />
+                  <path d="M0,10 C2,18 12,26 26,28 C22,16 12,10 0,10 Z" opacity="0.6" />
+                </svg>
+              </div>
+
+              {/* Decorative Laurel Wreath Sprigs flanking entrant row */}
+              <div className="absolute left-8 sm:left-14 top-1/2 -translate-y-1/2 pointer-events-none text-[#8da892] opacity-80 hidden sm:block">
+                <svg width="22" height="52" viewBox="0 0 22 52" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M11 48 C11 28 16 14 20 4" strokeLinecap="round" />
+                  <path d="M11 42 C5 39 3 35 7 32 C9 35 11 38 11 42 Z" fill="currentColor" fillOpacity="0.4" />
+                  <path d="M12 33 C17 30 18 25 14 22 C12 25 12 29 12 33 Z" fill="currentColor" fillOpacity="0.4" />
+                  <path d="M13 24 C7 21 5 17 9 14 C11 17 13 20 13 24 Z" fill="currentColor" fillOpacity="0.4" />
+                  <path d="M15 15 C19 12 20 7 16 5 C14 8 15 11 15 15 Z" fill="currentColor" fillOpacity="0.4" />
+                </svg>
+              </div>
+              <div className="absolute right-8 sm:right-14 top-1/2 -translate-y-1/2 pointer-events-none text-[#8da892] opacity-80 hidden sm:block">
+                <svg width="22" height="52" viewBox="0 0 22 52" fill="none" stroke="currentColor" strokeWidth="1.5" className="-scale-x-100">
+                  <path d="M11 48 C11 28 16 14 20 4" strokeLinecap="round" />
+                  <path d="M11 42 C5 39 3 35 7 32 C9 35 11 38 11 42 Z" fill="currentColor" fillOpacity="0.4" />
+                  <path d="M12 33 C17 30 18 25 14 22 C12 25 12 29 12 33 Z" fill="currentColor" fillOpacity="0.4" />
+                  <path d="M13 24 C7 21 5 17 9 14 C11 17 13 20 13 24 Z" fill="currentColor" fillOpacity="0.4" />
+                  <path d="M15 15 C19 12 20 7 16 5 C14 8 15 11 15 15 Z" fill="currentColor" fillOpacity="0.4" />
+                </svg>
+              </div>
+
+              {/* Coupon Badge */}
+              <div className="inline-flex items-center gap-1.5 font-mono text-xs font-bold px-3.5 py-1 rounded-full bg-[#fbf7ed] border border-[#e8d7ae] text-[#694b18] shadow-2xs">
+                <Ticket size={13} className="text-[#a07424]" />
+                <span>{display ? (display.couponId || `ENTRANT #${display.id}`) : 'M39K3362WVF01'}</span>
+              </div>
+
+              {/* Center Entrant Row: Avatar + Name + Phone */}
+              <div className="flex items-center justify-center gap-3.5 my-1">
+                <div className="relative">
+                  <Crown size={14} className="absolute -top-3.5 left-1/2 -translate-x-1/2 text-[#2d5a37] fill-[#2d5a37]" />
+                  <div className="w-12 h-12 rounded-full bg-[#1b4332] flex items-center justify-center text-white shadow-2xs border-2 border-[#ddeadf]">
+                    <User size={22} className="text-white" />
                   </div>
+                </div>
 
-                  <h3 className="text-2xl sm:text-3xl font-extrabold text-stone-900 tracking-tight truncate max-w-[420px] pt-1">
-                    {display.name}
+                <div className="text-left">
+                  <h3 className="text-2xl sm:text-3xl font-black text-[#132e1d] tracking-tight leading-tight">
+                    {display ? display.name : 'Nil'}
                   </h3>
-
-                  <p className="font-mono text-xs sm:text-sm text-stone-500 font-medium">
-                    {display.phone.slice(0, 5)}•••••
+                  <p className="font-mono text-xs font-bold text-stone-600 tracking-wider">
+                    {display ? `${display.phone.slice(0, 5)}•••••` : '98473•••••'}
                   </p>
+                </div>
+              </div>
 
-                  {phase === 'reveal' && previewWinner ? (
-                    <div className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 rounded-full bg-[#fdf8f0] border border-[#ebdcc4] text-[11px] font-semibold text-[#966b2d] animate-in zoom-in-95">
-                      <Gift size={13} className="text-[#c0731b]" />
-                      <span>Congratulations! You're the {competitionType} Gift winner!</span>
-                    </div>
-                  ) : phase === 'spinning' ? (
-                    <div className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-[11px] font-semibold text-amber-700">
-                      <Sparkles size={12} className="animate-spin text-amber-600" />
-                      <span>Picking random winner...</span>
-                    </div>
-                  ) : (
-                    <div className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 rounded-full bg-stone-50 border border-stone-200 text-[11px] font-normal text-stone-500">
-                      <Sparkles size={12} className="text-stone-400" />
-                      <span>Ready for live draw • Press Start Draw</span>
-                    </div>
-                  )}
-                </>
+              {/* Status Pill */}
+              {phase === 'reveal' && previewWinner ? (
+                <div className="inline-flex items-center gap-1.5 mt-1 px-3.5 py-1.5 rounded-full bg-[#fdf8f0] border border-[#ebdcc4] text-[11px] font-semibold text-[#966b2d] animate-in zoom-in-95">
+                  <Gift size={13} className="text-[#c0731b]" />
+                  <span>Congratulations! You're the {competitionType} Gift winner!</span>
+                </div>
+              ) : phase === 'spinning' ? (
+                <div className="inline-flex items-center gap-1.5 mt-1 px-3.5 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-[11px] font-semibold text-amber-700">
+                  <Sparkles size={12} className="animate-spin text-amber-600" />
+                  <span>Picking random winner...</span>
+                </div>
               ) : (
-                <p className="text-xs text-stone-400 font-light py-4">
-                  {isLoadingPool ? 'Loading eligible pool...' : `No eligible participants in ${competitionType} pool`}
-                </p>
+                <div className="inline-flex items-center gap-1.5 mt-1 px-3.5 py-1.5 rounded-full bg-white border border-[#ddeadf] text-[11px] font-medium text-[#2d5a37] shadow-2xs">
+                  <Sparkles size={12} className="text-[#3b734c]" />
+                  <span>Ready for live draw • Press Start Draw</span>
+                </div>
               )}
 
               {phase === 'spinning' && (
                 <div className="w-full max-w-md bg-[#E8E3D8] h-2 rounded-full overflow-hidden mt-3">
                   <div
-                    className="h-full transition-all duration-75 bg-gradient-to-r from-amber-500 to-orange-500"
+                    className="h-full transition-all duration-75 bg-gradient-to-r from-emerald-500 to-[#134e3f]"
                     style={{ width: `${progress}%` }}
                   />
                 </div>
@@ -724,7 +773,7 @@ export function LuckyDrawPage() {
 
               {phase === 'verifying' && (
                 <div className="flex items-center gap-2 text-xs text-stone-700 font-medium pt-2">
-                  <Loader2 size={14} className="animate-spin text-orange-600" />
+                  <Loader2 size={14} className="animate-spin text-emerald-600" />
                   <span>Validating participant against database...</span>
                 </div>
               )}
@@ -737,7 +786,11 @@ export function LuckyDrawPage() {
               <button
                 onClick={startDraw}
                 disabled={eligiblePool.length === 0 || isLoadingPool}
-                className="w-full py-4 px-6 text-sm font-bold text-white uppercase tracking-wider rounded-xl shadow-lg transition active:scale-[0.99] disabled:opacity-40 cursor-pointer flex items-center justify-center gap-2 bg-gradient-to-r from-[#f36b00] to-[#e05300] hover:from-[#e05300] hover:to-[#c74500] shadow-orange-500/25"
+                className={`w-full py-4 px-6 text-sm font-black text-white uppercase tracking-wider rounded-2xl shadow-md transition active:scale-[0.99] disabled:opacity-40 cursor-pointer flex items-center justify-center gap-2 ${
+                  competitionType === 'Normal'
+                    ? 'bg-gradient-to-r from-[#24703d] via-[#1a5b30] to-[#114725] hover:from-[#206637] hover:to-[#0e3c1f] shadow-green-900/20'
+                    : 'bg-gradient-to-r from-[#b86815] via-[#a0560e] to-[#7f4208] shadow-amber-900/20'
+                }`}
               >
                 <Sparkles size={18} />
                 <span>START {competitionType.toUpperCase()} SPIN →</span>
@@ -747,9 +800,9 @@ export function LuckyDrawPage() {
             {(phase === 'spinning' || phase === 'verifying') && (
               <button
                 disabled
-                className="w-full border border-[#E8E3D8] bg-stone-100 py-4 text-sm font-semibold text-stone-500 uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 cursor-not-allowed"
+                className="w-full border border-[#E8E3D8] bg-stone-100 py-4 text-sm font-semibold text-stone-500 uppercase tracking-wider rounded-2xl flex items-center justify-center gap-2 cursor-not-allowed"
               >
-                <Loader2 size={18} className="animate-spin text-orange-500" />
+                <Loader2 size={18} className="animate-spin text-emerald-600" />
                 <span>Spinning {competitionType} Draw...</span>
               </button>
             )}
