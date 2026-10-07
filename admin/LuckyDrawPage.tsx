@@ -143,14 +143,13 @@ export function LuckyDrawPage() {
           const phone = (p.phone || '').replace(/\D/g, '').slice(-10)
           if (!c) return false
 
-          // 1. SUPREME RULE: Once a phone number has won Mega, it is BLOCKED from BOTH Mega AND Normal
-          if (phone && megaWonPhones.has(phone)) return false
-
           if (comp === 'Mega') {
-            // Mega: Specific coupon cannot win Mega again
+            // Mega: Phone that has won Mega cannot win Mega again; specific coupon cannot win Mega again
+            if (phone && megaWonPhones.has(phone)) return false
             if (megaWonCoupons.has(c) || (p.id && megaWonCoupons.has(p.id))) return false
           } else {
             // Normal: Coupon that won Mega or Normal cannot win Normal again
+            // Same phone numbers CAN participate with other coupons!
             if (megaWonCoupons.has(c) || normalWonCoupons.has(c) || (p.id && normalWonCoupons.has(p.id))) return false
           }
           return true
@@ -223,9 +222,8 @@ export function LuckyDrawPage() {
       })
     } else {
       filtered = participants.filter((p) => {
-        const phone = (p.phone || '').replace(/\D/g, '').slice(-10)
         const c = (p.couponId || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase()
-        if (phone && megaWinnerPhones.has(phone)) return false
+        // In Normal: same phone numbers can participate with other coupons! Only exclude won coupons.
         if (megaWinnerCoupons.has(p.id) || (c && megaWinnerCoupons.has(c))) return false
         if (normalWinnerCoupons.has(p.id) || (c && normalWinnerCoupons.has(c))) return false
         return true
@@ -509,7 +507,7 @@ export function LuckyDrawPage() {
                 </>
               ) : (
                 <>
-                  <strong className="text-stone-900 font-semibold">Normal Eligibility:</strong> Only participants who have never won any draw (Mega or Normal) can enter.
+                  <strong className="text-stone-900 font-semibold">Normal Eligibility:</strong> Open to all un-won coupons. Same phone numbers can participate with other coupons.
                 </>
               )}
             </span>
@@ -604,29 +602,11 @@ export function LuckyDrawPage() {
               <h2 className="text-xl sm:text-2xl font-extrabold text-stone-900 tracking-tight">
                 {activePrize.name}
               </h2>
-              <p className="mt-0.5 text-xs text-stone-500 font-normal">
-                {activePrize.description || 'Drive Your Dreams'}
-              </p>
-
-              {/* 4 Feature Tags */}
-              <div className="mt-3.5 grid grid-cols-2 gap-2 text-[11px] text-stone-700">
-                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[6px] bg-[#FAF8F5] border border-[#E8E3D8]">
-                  <span>🌿</span>
-                  <span className="font-medium truncate">Premium Luxury</span>
-                </div>
-                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[6px] bg-[#FAF8F5] border border-[#E8E3D8]">
-                  <span>⏱</span>
-                  <span className="font-medium truncate">High Performance</span>
-                </div>
-                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[6px] bg-[#FAF8F5] border border-[#E8E3D8]">
-                  <span>🍃</span>
-                  <span className="font-medium truncate">Ultimate Comfort</span>
-                </div>
-                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[6px] bg-[#FAF8F5] border border-[#E8E3D8]">
-                  <span>🏆</span>
-                  <span className="font-medium truncate">A Symbol of Success</span>
-                </div>
-              </div>
+              {activePrize.description && (
+                <p className="mt-0.5 text-xs text-stone-500 font-normal">
+                  {activePrize.description}
+                </p>
+              )}
             </div>
           </div>
 
@@ -710,10 +690,22 @@ export function LuckyDrawPage() {
                     {display.phone.slice(0, 5)}•••••
                   </p>
 
-                  <div className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 rounded-full bg-[#fdf8f0] border border-[#ebdcc4] text-[11px] font-semibold text-[#966b2d]">
-                    <Gift size={13} className="text-[#c0731b]" />
-                    <span>Congratulations! You're the {competitionType} Gift winner!</span>
-                  </div>
+                  {phase === 'reveal' && previewWinner ? (
+                    <div className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 rounded-full bg-[#fdf8f0] border border-[#ebdcc4] text-[11px] font-semibold text-[#966b2d] animate-in zoom-in-95">
+                      <Gift size={13} className="text-[#c0731b]" />
+                      <span>Congratulations! You're the {competitionType} Gift winner!</span>
+                    </div>
+                  ) : phase === 'spinning' ? (
+                    <div className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-[11px] font-semibold text-amber-700">
+                      <Sparkles size={12} className="animate-spin text-amber-600" />
+                      <span>Picking random winner...</span>
+                    </div>
+                  ) : (
+                    <div className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 rounded-full bg-stone-50 border border-stone-200 text-[11px] font-normal text-stone-500">
+                      <Sparkles size={12} className="text-stone-400" />
+                      <span>Ready for live draw • Press Start Draw</span>
+                    </div>
+                  )}
                 </>
               ) : (
                 <p className="text-xs text-stone-400 font-light py-4">
