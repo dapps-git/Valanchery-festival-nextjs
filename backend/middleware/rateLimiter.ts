@@ -62,12 +62,82 @@ export const otpLimiter = createRateLimiter({
   message: 'Too many OTP requests. Please wait 15 minutes before requesting again.',
 })
 
-// 200 registrations per minute per IP — each person has a unique coupon so this is generous but safe
-export const registerLimiter = createRateLimiter({
-  windowMs: 60 * 1000,
-  max: 200,
-  message: 'Registration rate limit exceeded. Please wait a moment and try again.',
-})
+// 20 registrations per 30 minutes from same IP/device, then 2-hour break
+export function createDeviceRegistrationLimiter() {
+  const windowMs = 30 * 60 * 1000 // 30 minutes
+  const maxRegistrations = 20
+  const lockoutMs = 2 * 60 * 60 * 1000 // 2 hours
+
+  interface DeviceRecord {
+    timestamps: number[]
+    lockoutUntil?: number
+  }
+
+  const records = new Map<string, DeviceRecord>()
+
+  const interval = setInterval(() => {
+    const now = Date.now()
+    for (const [ip, rec] of records.entries()) {
+      if (
+        (!rec.lockoutUntil || now > rec.lockoutUntil) &&
+        (!rec.timestamps.length || now - rec.timestamps[rec.timestamps.length - 1] > windowMs)
+      ) {
+        records.delete(ip)
+      }
+    }
+  }, 10 * 60 * 1000)
+  if (interval.unref) interval.unref()
+
+  return (req: Request, res: Response, next: NextFunction) => {
+    const ip =
+      (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
+      req.socket.remoteAddress ||
+      'unknown'
+
+    const now = Date.now()
+    let rec = records.get(ip)
+    if (!rec) {
+      rec = { timestamps: [] }
+      records.set(ip, rec)
+    }
+
+    // 1. Check active 2-hour lockout
+    if (rec.lockoutUntil && now < rec.lockoutUntil) {
+      const remainingSec = Math.ceil((rec.lockoutUntil - now) / 1000)
+      const hours = Math.floor(remainingSec / 3600)
+      const mins = Math.ceil((remainingSec % 3600) / 60)
+      const timeStr = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`
+      res.setHeader('Retry-After', remainingSec)
+      return res.status(429).json({
+        ok: false,
+        error: `You have registered too many coupons from this device. Please take a break and try again after 2 hours (in ${timeStr}).`,
+      })
+    }
+
+    // Clean timestamps older than 30 mins
+    rec.timestamps = rec.timestamps.filter((ts) => now - ts < windowMs)
+
+    // Check limit
+    if (rec.timestamps.length >= maxRegistrations) {
+      rec.lockoutUntil = now + lockoutMs
+      const remainingSec = Math.ceil(lockoutMs / 1000)
+      res.setHeader('Retry-After', remainingSec)
+      return res.status(429).json({
+        ok: false,
+        error: 'You have registered too many coupons from this device. Please take a break and try again after 2 hours.',
+      })
+    }
+
+    rec.timestamps.push(now)
+    if (rec.timestamps.length >= maxRegistrations) {
+      rec.lockoutUntil = now + lockoutMs
+    }
+
+    next()
+  }
+}
+
+export const deviceRegistrationLimiter = createDeviceRegistrationLimiter()
 
 // 500 coupon validations per minute per IP — accommodates shared festival / mall Wi-Fi networks
 export const couponValidateLimiter = createRateLimiter({
@@ -75,3 +145,4 @@ export const couponValidateLimiter = createRateLimiter({
   max: 500,
   message: 'Coupon validation limit exceeded. Please wait a moment.',
 })
+

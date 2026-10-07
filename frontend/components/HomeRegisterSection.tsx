@@ -15,6 +15,7 @@ import { useApp } from '../context/AppContext'
 import { isValidIndianPhone } from '../lib/format'
 import { Confetti } from './Confetti'
 import { QrScannerModal } from './QrScannerModal'
+import { checkDeviceRateLimit, recordDeviceRegistration } from '../lib/deviceRateLimit'
 import { extractCouponId, formatCouponDisplay } from '../lib/tokenHelper'
 
 export function HomeRegisterSection() {
@@ -144,7 +145,12 @@ export function HomeRegisterSection() {
   const [formError, setFormError] = useState('')
 
   const set = (key: string, value: string) => {
-    setForm((f) => ({ ...f, [key]: value }))
+    let cleanVal = value
+    if (key === 'name') {
+      // Allow letters and spaces only (no numbers or special characters)
+      cleanVal = value.replace(/[^A-Za-z\s]/g, '')
+    }
+    setForm((f) => ({ ...f, [key]: cleanVal }))
     setFormError('')
     if (errors[key]) {
       setErrors((prev) => ({ ...prev, [key]: '' }))
@@ -172,6 +178,15 @@ export function HomeRegisterSection() {
     setIsSubmitting(true)
     setFormError('')
 
+    // 0. Device Rate Limit Check: 20 coupons within 30 minutes -> 2 hours break
+    const rateCheck = checkDeviceRateLimit()
+    if (rateCheck.isBlocked) {
+      isSubmittingRef.current = false
+      setIsSubmitting(false)
+      setFormError(rateCheck.message)
+      return
+    }
+
     const next: Record<string, string> = {}
 
     // 1. Coupon ID validation
@@ -198,9 +213,14 @@ export function HomeRegisterSection() {
       }
     }
 
-    // 2. Name validation
-    if (!form.name.trim()) {
+    // 2. Name validation — strictly letters only
+    const trimmedName = form.name.trim()
+    if (!trimmedName) {
       next.name = 'Full name is required'
+    } else if (!/^[A-Za-z\s]+$/.test(trimmedName)) {
+      next.name = 'Name must contain letters only'
+    } else if (trimmedName.replace(/[^A-Za-z]/g, '').length < 2) {
+      next.name = 'Name must contain at least 2 letters'
     }
 
     // 3. Phone validation
@@ -240,6 +260,7 @@ export function HomeRegisterSection() {
         return
       }
 
+      recordDeviceRegistration()
       setSuccessId(result.id || 'OK')
       setRegisteredCoupon(cleanToken)
       setRegisteredName(userName)
