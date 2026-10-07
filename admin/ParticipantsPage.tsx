@@ -122,8 +122,17 @@ export function ParticipantsPage() {
   const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setAddError('')
-    if (!newParticipant.name.trim()) {
+    const trimmedName = newParticipant.name.trim()
+    if (!trimmedName) {
       setAddError('Please enter full name')
+      return
+    }
+    if (!/^[A-Za-z\s]+$/.test(trimmedName)) {
+      setAddError('Name must contain letters only')
+      return
+    }
+    if (trimmedName.replace(/[^A-Za-z]/g, '').length < 2) {
+      setAddError('Name must contain at least 2 letters')
       return
     }
     const cleanPhone = newParticipant.phone.replace(/\D/g, '').slice(-10)
@@ -449,7 +458,7 @@ export function ParticipantsPage() {
                 className="mt-1 w-full border border-[#E8E3D8] bg-white px-3 py-1.5 text-xs text-stone-900 outline-none focus:border-[#9A7B4F] rounded-[4px]"
                 placeholder="e.g. Muhammed Shafi"
                 value={newParticipant.name}
-                onChange={(e) => setNewParticipant({ ...newParticipant, name: e.target.value })}
+                onChange={(e) => setNewParticipant({ ...newParticipant, name: e.target.value.replace(/[^A-Za-z\s]/g, '') })}
               />
             </div>
             <div>

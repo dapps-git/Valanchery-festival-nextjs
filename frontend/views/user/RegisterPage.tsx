@@ -207,7 +207,12 @@ export function RegisterPage() {
   const [formError, setFormError] = useState('')
 
   const set = (key: string, value: string) => {
-    setForm((f) => ({ ...f, [key]: value }))
+    let cleanVal = value
+    if (key === 'name') {
+      // Allow letters and spaces only (no numbers or special characters)
+      cleanVal = value.replace(/[^A-Za-z\s]/g, '')
+    }
+    setForm((f) => ({ ...f, [key]: cleanVal }))
     setFormError('')
     if (errors[key]) {
       setErrors((prev) => ({ ...prev, [key]: '' }))
@@ -264,9 +269,14 @@ export function RegisterPage() {
       }
     }
 
-    // 2. Name is required
-    if (!form.name.trim()) {
+    // 2. Name validation — strictly letters only
+    const trimmedName = form.name.trim()
+    if (!trimmedName) {
       next.name = 'Full name is required'
+    } else if (!/^[A-Za-z\s]+$/.test(trimmedName)) {
+      next.name = 'Name must contain letters only'
+    } else if (trimmedName.replace(/[^A-Za-z]/g, '').length < 2) {
+      next.name = 'Name must contain at least 2 letters'
     }
 
     // 3. Phone is strictly required

@@ -49,6 +49,17 @@ router.post('/register', registerLimiter, async (req, res) => {
   try {
     const { name, phone: rawPhone, address, location, couponId: rawCoupon } = req.body
 
+    const cleanName = (name || '').trim()
+    if (!cleanName) {
+      return res.status(400).json({ ok: false, error: 'Full name is required' })
+    }
+    if (!/^[A-Za-z\s]+$/.test(cleanName)) {
+      return res.status(400).json({ ok: false, error: 'Name must contain letters only' })
+    }
+    if (cleanName.replace(/[^A-Za-z]/g, '').length < 2) {
+      return res.status(400).json({ ok: false, error: 'Name must be at least 2 letters' })
+    }
+
     if (!rawPhone?.trim()) return res.status(400).json({ ok: false, error: 'Phone number is required' })
 
     const phone = rawPhone.replace(/\D/g, '').slice(-10)
@@ -78,7 +89,7 @@ router.post('/register', registerLimiter, async (req, res) => {
     // Use the canonical coupon id for storage
     const canonicalCouponId = existingCoupon.id
 
-    const participantName = name?.trim() || `Shopper ${phone.slice(-4)}`
+    const participantName = cleanName
     const now = new Date().toISOString().slice(0, 10)
     let newParticipant: any = null
 

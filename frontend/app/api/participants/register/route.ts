@@ -7,6 +7,18 @@ export async function POST(request: Request) {
   try {
     const body = await request.json()
     const { name, phone, address, location, couponId } = body || {}
+
+    const cleanName = (name || '').trim()
+    if (!cleanName) {
+      return NextResponse.json({ ok: false, error: 'Full name is required' }, { status: 400 })
+    }
+    if (!/^[A-Za-z\s]+$/.test(cleanName)) {
+      return NextResponse.json({ ok: false, error: 'Name must contain letters only' }, { status: 400 })
+    }
+    if (cleanName.replace(/[^A-Za-z]/g, '').length < 2) {
+      return NextResponse.json({ ok: false, error: 'Name must be at least 2 letters' }, { status: 400 })
+    }
+
     if (!phone) {
       return NextResponse.json({ ok: false, error: 'Phone number is required' }, { status: 400 })
     }
@@ -97,7 +109,7 @@ export async function POST(request: Request) {
 
     const newParticipant = {
       id: participantId,
-      name: name || 'Festival Participant',
+      name: cleanName,
       phone: cleanPhone,
       address: address || '',
       location: location || '',
