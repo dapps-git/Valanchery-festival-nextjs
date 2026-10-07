@@ -6,7 +6,7 @@ import jwt from 'jsonwebtoken'
 export const dynamic = 'force-dynamic'
 
 const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || '').toLowerCase().trim()
-const JWT_SECRET = process.env.JWT_SECRET || ''
+const JWT_SECRET = process.env.JWT_SECRET || 'valanchery_festival_admin_secret_jwt_key_2026_xyz987'
 
 function createAdminJwtResponse(email: string) {
   const token = jwt.sign(
@@ -70,7 +70,6 @@ export async function POST(request: Request) {
         updatedAt: new Date().toISOString(),
       })
       adminDoc = await col.findOne({ id: 'admin_credential' })
-      console.log('[ADMIN] Auto-seeded default credentials on first login')
     }
 
     if (cleanEmail !== ADMIN_EMAIL) {
