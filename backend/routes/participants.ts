@@ -265,15 +265,14 @@ router.get('/', requireAdminAuth, async (req, res) => {
         const phone = (p.phone || '').replace(/\D/g, '').slice(-10)
         const cleanCoupon = (p.couponId || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase()
 
-        // 1. SUPREME RULE: Once a phone number has won Mega, it is BLOCKED from BOTH Mega AND Normal
-        if (phone && megaWinnerPhones.has(phone)) return false
-
         if (competitionType === 'Mega') {
-          // Mega: Specific coupon cannot win Mega again
+          // Mega: Once a phone number has won Mega, it cannot win Mega again; specific coupon cannot win Mega again
+          if (phone && megaWinnerPhones.has(phone)) return false
           if (cleanCoupon && megaWinnerCoupons.has(cleanCoupon)) return false
           if (p.id && megaWinnerCoupons.has(p.id)) return false
         } else {
-          // Normal: Specific coupon that won Mega or Normal cannot win Normal again
+          // Normal: Specific coupon that won Mega or Normal cannot win Normal again.
+          // Same phone numbers CAN participate with other coupons!
           if (cleanCoupon && (megaWinnerCoupons.has(cleanCoupon) || normalWinnerCoupons.has(cleanCoupon))) return false
           if (p.id && (megaWinnerCoupons.has(p.id) || normalWinnerCoupons.has(p.id))) return false
         }
