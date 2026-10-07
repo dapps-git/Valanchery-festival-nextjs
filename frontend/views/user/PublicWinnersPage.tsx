@@ -14,9 +14,14 @@ export function PublicWinnersPage() {
     )
 
   const filteredWinners = winners.filter((w) => {
+    const wObj = w as any
     const p = getParticipant(w.participantId)
     const prize = getPrize(w.prizeId)
-    const match = `${p?.name || ''} ${p?.phone || ''} ${p?.location || ''} ${prize?.name || ''}`.toLowerCase()
+    const name = wObj.participantName || p?.name || ''
+    const phone = wObj.participantPhone || p?.phone || ''
+    const location = wObj.participantLocation || p?.location || ''
+    const prizeName = wObj.prizeName || prize?.name || ''
+    const match = `${name} ${phone} ${location} ${prizeName}`.toLowerCase()
     return !filter || match.includes(filter.toLowerCase())
   })
 
@@ -71,9 +76,18 @@ export function PublicWinnersPage() {
         {/* Winners Grid */}
         <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {filteredWinners.map((w) => {
-            const p = getParticipant(w.participantId) || { name: 'Winner Participant', phone: '', location: 'Valanchery' }
-            const prize = getPrize(w.prizeId) || { name: 'Festival Prize', value: 'Special Award', image: 'https://images.unsplash.com/photo-1513885535751-8b9238bd345a?auto=format&fit=crop&w=900&q=80' }
+            const wObj = w as any
+            const p = getParticipant(w.participantId)
+            const prize = getPrize(w.prizeId)
             const draw = getDraw(w.drawId)
+
+            const winnerName = wObj.participantName || p?.name || 'Festival Winner'
+            const winnerPhone = wObj.participantPhone || (p?.phone ? maskPhone(p.phone) : 'Verified')
+            const winnerLocation = wObj.participantLocation || p?.location || 'Valanchery'
+            const winnerPrizeName = wObj.prizeName || prize?.name || 'Festival Prize'
+            const winnerPrizeValue = wObj.prizeValue || prize?.value || ''
+            const winnerPrizeImage = wObj.prizeImage || prize?.image || 'https://images.unsplash.com/photo-1513885535751-8b9238bd345a?auto=format&fit=crop&w=900&q=80'
+            const drawNumber = wObj.drawNumber || draw?.number || w.drawId?.replace(/[^0-9]/g, '') || '01'
 
             return (
               <article
@@ -81,16 +95,16 @@ export function PublicWinnersPage() {
                 className="animate-fade-up group relative border border-[#d4a017]/35 bg-black/40 transition hover:border-[#d4a017]"
               >
                 <div className="relative h-44 w-full overflow-hidden bg-black/60 sm:h-48">
-                  {prize.image && (
+                  {winnerPrizeImage && (
                     <img
-                      src={prize.image}
-                      alt={prize.name}
+                      src={winnerPrizeImage}
+                      alt={winnerPrizeName}
                       className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                     />
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
                   <div className="absolute left-3 top-3 border border-[#d4a017]/60 bg-black/70 px-2.5 py-1 text-[10px] font-light tracking-widest text-[#f3d48a]">
-                    DRAW #{draw?.number ? String(draw.number).padStart(2, '0') : w.drawId.replace(/[^0-9]/g, '') || '01'}
+                    DRAW #{String(drawNumber).padStart(2, '0')}
                   </div>
                   <div className="absolute bottom-2 right-3 text-[11px] font-light text-white/70">
                     {formatDate(w.date)}
@@ -100,17 +114,17 @@ export function PublicWinnersPage() {
                 <div className="p-5">
                   <p className="text-[10px] tracking-widest text-[#f3d48a] uppercase">LUCKY WINNER</p>
                   <h2 className="font-display mt-1 text-xl font-light tracking-wide text-white sm:text-2xl">
-                    {p.name}
+                    {winnerName}
                   </h2>
                   <div className="mt-3 space-y-1 text-xs font-light text-white/70">
-                    <p>Phone: {p.phone ? maskPhone(p.phone) : 'Verified'}</p>
-                    {p.location && <p>Location: {p.location}</p>}
+                    <p>Phone: {winnerPhone}</p>
+                    {winnerLocation && <p>Location: {winnerLocation}</p>}
                   </div>
 
                   <div className="mt-4 border-t border-white/10 pt-3">
                     <p className="text-[10px] tracking-widest text-white/40 uppercase">WON PRIZE</p>
-                    <p className="mt-0.5 text-sm font-light text-[#f3d48a]">🎁 {prize.name}</p>
-                    {prize.value && <p className="text-[11px] font-light text-white/50">{prize.value}</p>}
+                    <p className="mt-0.5 text-sm font-light text-[#f3d48a]">🎁 {winnerPrizeName}</p>
+                    {winnerPrizeValue && <p className="text-[11px] font-light text-white/50">{winnerPrizeValue}</p>}
                   </div>
                 </div>
               </article>

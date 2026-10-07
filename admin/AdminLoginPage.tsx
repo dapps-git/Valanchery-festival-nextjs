@@ -35,14 +35,13 @@ export function AdminLoginPage() {
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
 
-  // Load remembered credentials from localStorage on mount
+  // Load remembered email from localStorage on mount (never store plaintext passwords)
   useEffect(() => {
     try {
       if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem('admin_saved_password') // Securely purge any legacy plaintext password
         const savedEmail = localStorage.getItem('admin_saved_email')
-        const savedPassword = localStorage.getItem('admin_saved_password')
         if (savedEmail) setEmail(savedEmail)
-        if (savedPassword) setPassword(savedPassword)
       }
     } catch {}
   }, [])
@@ -74,11 +73,11 @@ export function AdminLoginPage() {
         return
       }
 
-      // Store credentials in localStorage on successful login
+      // Store remembered email in localStorage on successful login (never store plaintext passwords)
       try {
         if (typeof localStorage !== 'undefined') {
           localStorage.setItem('admin_saved_email', email.trim().toLowerCase())
-          localStorage.setItem('admin_saved_password', password.trim())
+          localStorage.removeItem('admin_saved_password')
         }
       } catch {}
 

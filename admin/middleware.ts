@@ -8,7 +8,6 @@ const PUBLIC_API_ROUTES = [
   '/api/auth/reset-password',
   '/api/auth/logout',
   '/api/health',
-  '/api/upload',
 ]
 
 // Helper: decode and verify JWT using Web Crypto API (Edge Runtime compatible)
