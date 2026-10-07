@@ -68,6 +68,7 @@ export interface Winner {
   drawId: string
   participantId: string
   prizeId: string
+  couponId?: string
   competitionType?: CompetitionType
   date: string
   status: 'Confirmed'

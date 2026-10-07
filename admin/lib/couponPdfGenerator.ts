@@ -3,20 +3,29 @@ import type { Coupon, CouponBatch } from '../types'
 const LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
 const DIGITS = '0123456789'
 
-// Helper to generate 13-character ID with 5 letters and 8 numbers randomly mixed in between (e.g. A1D3S123F89K2)
+function getCryptoRandomInt(max: number): number {
+  if (typeof window !== 'undefined' && window.crypto && window.crypto.getRandomValues) {
+    const buf = new Uint32Array(1)
+    window.crypto.getRandomValues(buf)
+    return buf[0] % max
+  }
+  return Math.floor(Math.random() * max)
+}
+
+// Helper to generate 13-character ID with 5 letters and 8 numbers randomly mixed in between using CSPRNG
 function generateMixed13Char(): string {
   const chars: string[] = []
   // 5 letters
   for (let i = 0; i < 5; i++) {
-    chars.push(LETTERS[Math.floor(Math.random() * LETTERS.length)])
+    chars.push(LETTERS[getCryptoRandomInt(LETTERS.length)])
   }
   // 8 digits
   for (let i = 0; i < 8; i++) {
-    chars.push(DIGITS[Math.floor(Math.random() * DIGITS.length)])
+    chars.push(DIGITS[getCryptoRandomInt(DIGITS.length)])
   }
   // Fisher-Yates shuffle so letters and numbers are randomly placed in between
   for (let i = chars.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
+    const j = getCryptoRandomInt(i + 1)
     const temp = chars[i]
     chars[i] = chars[j]
     chars[j] = temp

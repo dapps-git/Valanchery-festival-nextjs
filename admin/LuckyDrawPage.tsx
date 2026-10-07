@@ -267,6 +267,12 @@ export function LuckyDrawPage() {
 
   const pickRandomEligible = () => {
     if (eligiblePool.length === 0) return null
+    if (typeof window !== 'undefined' && window.crypto && window.crypto.getRandomValues) {
+      const buffer = new Uint32Array(1)
+      window.crypto.getRandomValues(buffer)
+      const index = buffer[0] % eligiblePool.length
+      return eligiblePool[index]
+    }
     return eligiblePool[Math.floor(Math.random() * eligiblePool.length)]
   }
 
@@ -289,7 +295,15 @@ export function LuckyDrawPage() {
     const tick = () => {
       const elapsed = Date.now() - start
       setProgress(Math.min(100, (elapsed / duration) * 100))
-      const idx = Math.floor(Math.random() * eligiblePool.length)
+      
+      let idx = 0
+      if (typeof window !== 'undefined' && window.crypto && window.crypto.getRandomValues) {
+        const buf = new Uint32Array(1)
+        window.crypto.getRandomValues(buf)
+        idx = buf[0] % eligiblePool.length
+      } else {
+        idx = Math.floor(Math.random() * eligiblePool.length)
+      }
       setDisplay(eligiblePool[idx])
 
       if (elapsed < duration - 1200) {

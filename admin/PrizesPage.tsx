@@ -51,7 +51,6 @@ export function PrizesPage() {
         throw new Error(json.error || 'Failed to upload to Cloudinary')
       }
     } catch (err: any) {
-      console.warn('Cloudinary upload issue, fallback to WebP:', err)
       if (webpDataUrl) {
         setEdit((prev) => (prev ? { ...prev, image: webpDataUrl } : null))
         setUploadSuccess('Compressed to WebP')
@@ -59,14 +58,6 @@ export function PrizesPage() {
       } else {
         setUploadError(err.message || 'Upload failed')
       }
-    } finally {
-      setIsUploading(false)
-    }
-  }
-          setTimeout(() => setUploadSuccess(''), 3000)
-        }
-      }
-      reader.readAsDataURL(file)
     } finally {
       setIsUploading(false)
     }

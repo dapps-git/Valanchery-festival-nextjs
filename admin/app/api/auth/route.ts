@@ -6,7 +6,13 @@ import jwt from 'jsonwebtoken'
 export const dynamic = 'force-dynamic'
 
 const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || '').toLowerCase().trim()
-const JWT_SECRET = process.env.JWT_SECRET || 'valanchery_festival_admin_secret_jwt_key_2026_xyz987'
+const getJwtSecret = (): string => {
+  const secret = process.env.JWT_SECRET
+  if (!secret) {
+    throw new Error('JWT_SECRET environment variable is missing')
+  }
+  return secret
+}
 
 function createAdminJwtResponse(email: string) {
   const token = jwt.sign(
@@ -14,7 +20,7 @@ function createAdminJwtResponse(email: string) {
       email,
       role: 'admin',
     },
-    JWT_SECRET,
+    getJwtSecret(),
     { expiresIn: '24h' }
   )
 

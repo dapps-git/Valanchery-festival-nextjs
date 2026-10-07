@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import QRCode from 'qrcode'
+import crypto from 'node:crypto'
 import { Coupon } from '../models/Coupon.js'
 import { CouponBatch } from '../models/CouponBatch.js'
 import { Participant } from '../models/Participant.js'
@@ -47,20 +48,20 @@ router.get(['/qr/:id', '/qr/:id.png'], async (req, res) => {
 const LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
 const DIGITS = '0123456789'
 
-// Helper to generate guaranteed unique 13-character coupon ID (5 letters + 8 numbers randomly placed in between)
+// Helper to generate guaranteed unique 13-character coupon ID using CSPRNG (5 letters + 8 numbers randomly placed)
 function generateRandom13Char(): string {
   const chars: string[] = []
   // 5 letters
   for (let i = 0; i < 5; i++) {
-    chars.push(LETTERS[Math.floor(Math.random() * LETTERS.length)])
+    chars.push(LETTERS[crypto.randomInt(0, LETTERS.length)])
   }
   // 8 digits
   for (let i = 0; i < 8; i++) {
-    chars.push(DIGITS[Math.floor(Math.random() * DIGITS.length)])
+    chars.push(DIGITS[crypto.randomInt(0, DIGITS.length)])
   }
-  // Fisher-Yates shuffle
+  // Fisher-Yates shuffle using crypto
   for (let i = chars.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
+    const j = crypto.randomInt(0, i + 1)
     const temp = chars[i]
     chars[i] = chars[j]
     chars[j] = temp

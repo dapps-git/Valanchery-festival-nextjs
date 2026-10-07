@@ -2,7 +2,13 @@ import { Request, Response, NextFunction } from 'express'
 import jwt from 'jsonwebtoken'
 import mongoose from 'mongoose'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'valanchery_festival_admin_secret_jwt_key_2026_xyz987'
+const getJwtSecret = (): string => {
+  const secret = process.env.JWT_SECRET
+  if (!secret) {
+    throw new Error('JWT_SECRET environment variable is missing')
+  }
+  return secret
+}
 
 export interface AuthenticatedRequest extends Request {
   admin?: {
@@ -36,7 +42,7 @@ export async function requireAdminAuth(req: AuthenticatedRequest, res: Response,
     // Standard Cryptographic JWT Verification ONLY
     let decoded: any
     try {
-      decoded = jwt.verify(token, JWT_SECRET) as any
+      decoded = jwt.verify(token, getJwtSecret()) as any
     } catch {
       return res.status(401).json({ ok: false, error: 'Invalid or expired session token. Please log in again.' })
     }
