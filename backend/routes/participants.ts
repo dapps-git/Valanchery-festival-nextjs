@@ -150,7 +150,7 @@ router.post('/register', deviceRegistrationLimiter, async (req, res) => {
         await CouponBatch.updateOne(
           { id: updatedCoupon.batchId },
           { $inc: { unusedCount: -1, usedCount: 1 } }
-        ).catch(() => {})
+        ).catch(() => { })
       } else {
         // Rollback participant to prevent double-spend or invalid coupon registration
         await Participant.deleteOne({ id })
@@ -185,6 +185,7 @@ router.post('/bulk', requireAdminAuth, async (req, res) => {
         continue
       }
       const id = await getNextParticipantId()
+
 
       toInsert.push({
         id,
@@ -414,7 +415,7 @@ router.delete('/:id', requireAdminAuth, async (req, res) => {
         await CouponBatch.updateOne(
           { id: coupon.batchId },
           { $inc: { usedCount: -1, unusedCount: 1 } }
-        ).catch(() => {})
+        ).catch(() => { })
       }
     }
     await Participant.deleteOne({ id: req.params.id })

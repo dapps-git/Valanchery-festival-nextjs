@@ -5,7 +5,7 @@ import jwt from 'jsonwebtoken'
 export const dynamic = 'force-dynamic'
 export const maxDuration = 30
 
-const JWT_SECRET = process.env.JWT_SECRET || 'vf2026_token_sign_key'
+const getJwtSecret = () => process.env.JWT_SECRET
 
 export async function GET(request: Request) {
   try {
@@ -18,9 +18,10 @@ export async function GET(request: Request) {
       if (match) token = match[1]
     }
 
-    if (token) {
+    const jwtSecret = getJwtSecret()
+    if (token && jwtSecret) {
       try {
-        jwt.verify(token, JWT_SECRET)
+        jwt.verify(token, jwtSecret)
         isAdmin = true
       } catch {}
     }

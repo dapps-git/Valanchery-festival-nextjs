@@ -70,7 +70,7 @@ app.get(['/api/all', '/all'], async (req, res) => {
     }
 
     let isAdmin = false
-    if (token) {
+    if (token && JWT_SECRET) {
       try {
         jwt.verify(token, JWT_SECRET)
         isAdmin = true

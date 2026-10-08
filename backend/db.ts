@@ -15,16 +15,24 @@ const globalWithMongo = global as typeof globalThis & {
   _mongoClientPromise?: Promise<MongoClient>
 }
 
-if (!globalWithMongo._mongoClientPromise) {
-  const client = new MongoClient(uri, options)
-  globalWithMongo._mongoClientPromise = client.connect()
-}
-
-const clientPromise = globalWithMongo._mongoClientPromise!
-
 export async function connectDB(): Promise<Db> {
-  const client = await clientPromise
-  return client.db('FESTIVAL')
+  const uri = process.env.MONGODB_URI || ''
+  if (!uri) {
+    throw new Error('MONGODB_URI is not defined in environment variables')
+  }
+
+  if (!globalWithMongo._mongoClientPromise) {
+    const client = new MongoClient(uri, options)
+    globalWithMongo._mongoClientPromise = client.connect()
+  }
+
+  try {
+    const client = await globalWithMongo._mongoClientPromise
+    return client.db('FESTIVAL')
+  } catch (err) {
+    globalWithMongo._mongoClientPromise = undefined
+    throw err
+  }
 }
 
-export default clientPromise
+export default connectDB
