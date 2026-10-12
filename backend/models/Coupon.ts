@@ -10,6 +10,7 @@ export interface ICoupon extends Document {
   usedByParticipantId?: string
   usedByParticipantName?: string
   usedByParticipantPhone?: string
+  isTest?: boolean
 }
 
 const CouponSchema = new Schema<ICoupon>(
@@ -23,10 +24,14 @@ const CouponSchema = new Schema<ICoupon>(
     usedByParticipantId: { type: String },
     usedByParticipantName: { type: String },
     usedByParticipantPhone: { type: String },
+    isTest: { type: Boolean, default: false, index: true },
   },
   {
     timestamps: true,
   }
 )
+
+CouponSchema.index({ isTest: 1, status: 1 })
+CouponSchema.index({ isTest: 1, id: 1 })
 
 export const Coupon = mongoose.model<ICoupon>('Coupon', CouponSchema)

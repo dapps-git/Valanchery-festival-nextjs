@@ -10,6 +10,7 @@ export interface IParticipant extends Document {
   registeredAt: string
   eligibility: 'Eligible' | 'Ineligible'
   status: 'Active' | 'Suspended'
+  isTest?: boolean
 }
 
 const ParticipantSchema = new Schema<IParticipant>(
@@ -23,11 +24,14 @@ const ParticipantSchema = new Schema<IParticipant>(
     registeredAt: { type: String, required: true },
     eligibility: { type: String, enum: ['Eligible', 'Ineligible'], default: 'Eligible', index: true },
     status: { type: String, enum: ['Active', 'Suspended'], default: 'Active', index: true },
+    isTest: { type: Boolean, default: false, index: true },
   },
   {
     timestamps: true,
     autoIndex: false,
   }
 )
+
+ParticipantSchema.index({ isTest: 1, couponId: 1 })
 
 export const Participant = mongoose.model<IParticipant>('Participant', ParticipantSchema)

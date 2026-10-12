@@ -1,4 +1,5 @@
 import type { AppData, Coupon, CouponBatch, Draw, Participant, Prize, Winner } from '../types'
+import { getAdminToken, clearAdminSession } from './session'
 
 const envUrl = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/$/, '')
 const API_BASE = envUrl ? (envUrl.endsWith('/api') ? envUrl : `${envUrl}/api`) : '/api'
@@ -13,12 +14,10 @@ async function fetchWithTimeout(urlOrPath: string, options: RequestInit = {}, ti
 
   const headers = new Headers(options.headers || {})
   
-  // Attach JWT admin token if available in localStorage
-  if (typeof localStorage !== 'undefined') {
-    const token = localStorage.getItem('admin_jwt_token')
-    if (token && !headers.has('Authorization')) {
-      headers.set('Authorization', `Bearer ${token}`)
-    }
+  // Attach JWT admin token if available in session
+  const token = getAdminToken()
+  if (token && !headers.has('Authorization')) {
+    headers.set('Authorization', `Bearer ${token}`)
   }
 
   const controller = new AbortController()
@@ -30,13 +29,11 @@ async function fetchWithTimeout(urlOrPath: string, options: RequestInit = {}, ti
       signal: controller.signal,
     })
 
-    // If session expired (401), clear local session
-    if (res.status === 401 && typeof localStorage !== 'undefined') {
+    // If session expired (401), clear session
+    if (res.status === 401) {
       const isLoginRequest = targetUrl.includes('/auth/login')
       if (!isLoginRequest) {
-        localStorage.removeItem('admin_jwt_token')
-        localStorage.removeItem('admin_jwt_exp')
-        localStorage.removeItem('vf2026_admin_auth')
+        clearAdminSession()
       }
     }
 
@@ -426,4 +423,109 @@ export const api = {
     })
     return res.json()
   },
+
+  /* ==========================================================================
+     TEMPORARY TESTING API - START
+     ========================================================================== */
+  async getTestStats(): Promise<{
+    ok: boolean
+    stats?: {
+      totalTestCoupons: number
+      totalTestParticipants: number
+      unusedTestCoupons: number
+      usedTestCoupons: number
+    }
+    error?: string
+  }> {
+    const res = await fetchWithTimeout(`${API_BASE}/test/stats`, {}, 15000)
+    return res.json()
+  },
+
+  async getTestProgress(): Promise<{
+    ok: boolean
+    job?: {
+      type: string
+      current: number
+      total: number
+      status: string
+      message: string
+      percentage: number
+      error?: string
+    }
+    error?: string
+  }> {
+    const res = await fetchWithTimeout(`${API_BASE}/test/progress`, {}, 10000)
+    return res.json()
+  },
+
+  async generateTestCoupons(count: number): Promise<{
+    ok: boolean
+    message?: string
+    total?: number
+    error?: string
+  }> {
+    const res = await fetchWithTimeout(`${API_BASE}/test/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ count }),
+    }, 30000)
+    return res.json()
+  },
+
+  async setTestCouponsAllUsed(): Promise<{
+    ok: boolean
+    message?: string
+    updatedCount?: number
+    verifiedUsed?: number
+    verifiedUnused?: number
+    error?: string
+  }> {
+    const res = await fetchWithTimeout(`${API_BASE}/test/all-used`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    }, 60000)
+    return res.json()
+  },
+
+  async resetTestCouponsUnused(): Promise<{
+    ok: boolean
+    message?: string
+    resetCount?: number
+    verifiedUnused?: number
+    verifiedUsed?: number
+    error?: string
+  }> {
+    const res = await fetchWithTimeout(`${API_BASE}/test/reset-unused`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    }, 60000)
+    return res.json()
+  },
+
+  async getTestCoupons(params: URLSearchParams): Promise<{
+    ok: boolean
+    coupons?: any[]
+    total?: number
+    page?: number
+    totalPages?: number
+    error?: string
+  }> {
+    const res = await fetchWithTimeout(`${API_BASE}/test/coupons?${params.toString()}`, {}, 15000)
+    return res.json()
+  },
+
+  async getTestParticipants(params: URLSearchParams): Promise<{
+    ok: boolean
+    participants?: any[]
+    total?: number
+    page?: number
+    totalPages?: number
+    error?: string
+  }> {
+    const res = await fetchWithTimeout(`${API_BASE}/test/participants?${params.toString()}`, {}, 15000)
+    return res.json()
+  },
+  /* ==========================================================================
+     TEMPORARY TESTING API - END
+     ========================================================================== */
 }

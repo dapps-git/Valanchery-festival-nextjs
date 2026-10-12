@@ -4,10 +4,13 @@ import { connectDB } from '@/lib/db'
 
 export const dynamic = 'force-dynamic'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'vf2026_token_sign_key'
-
 export async function GET(request: Request) {
   try {
+    const jwtSecret = process.env.JWT_SECRET
+    if (!jwtSecret) {
+      return NextResponse.json({ ok: false, error: 'Server configuration error: JWT_SECRET missing' }, { status: 500 })
+    }
+
     let token = ''
     const authHeader = request.headers.get('authorization')
     if (authHeader && authHeader.startsWith('Bearer ')) {
@@ -22,7 +25,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ ok: false, error: 'No active session found' }, { status: 401 })
     }
 
-    const decoded = jwt.verify(token, JWT_SECRET) as any
+    const decoded = jwt.verify(token, jwtSecret) as any
 
     // Invalidate sessions issued before password change
     try {
