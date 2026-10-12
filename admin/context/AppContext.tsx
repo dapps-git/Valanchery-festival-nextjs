@@ -128,7 +128,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
           localStorage.removeItem(AUTH_KEY)
           setIsAdmin(false)
           api.logout()
-          alert(res.error || 'Admin password was changed. You have been logged out from all systems.')
+          alert(res.error || 'Your admin session has expired. Please log in again.')
+          if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+            window.location.href = '/admin/login'
+          }
         }
       } catch {
         // ignore temporary network blip
@@ -150,6 +153,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
           setIsAdmin(false)
           if (res.error && res.error.toLowerCase().includes('password')) {
             alert(res.error)
+          }
+          if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+            window.location.href = '/admin/login'
           }
         }
       }).catch(() => {})
