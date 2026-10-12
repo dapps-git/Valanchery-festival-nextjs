@@ -77,12 +77,13 @@ router.post('/register', deviceRegistrationLimiter, async (req, res) => {
     }
 
     // Single DB read: fetch coupon and check status atomically
-    const existingCoupon = await Coupon.findOne({ id: cleanCoupon }).select('id status batchId isTest').lean()
+    // This replaces two separate pre-flight checks (usedBy + existingCoupon) with one
+    const existingCoupon = await Coupon.findOne({ id: cleanCoupon }).select('id status batchId').lean()
     if (!existingCoupon) {
-      return res.status(400).json({ ok: false, error: 'Invalid Coupon. Please check the 13-character code.' })
+      return res.status(400).json({ ok: false, error: 'Coupon not found. Please check the 13-character code.' })
     }
     if (existingCoupon.status === 'Used') {
-      return res.status(400).json({ ok: false, error: 'Coupon Already Used' })
+      return res.status(400).json({ ok: false, error: 'This coupon has already been used and is no longer valid.' })
     }
 
     // Use the canonical coupon id for storage
@@ -90,62 +91,6 @@ router.post('/register', deviceRegistrationLimiter, async (req, res) => {
 
     const participantName = cleanName
     const now = new Date().toISOString().slice(0, 10)
-
-    // Handle test coupon redemption atomically
-    if (existingCoupon.isTest) {
-      const updatedTestCoupon = await Coupon.findOneAndUpdate(
-        { id: cleanCoupon, status: { $ne: 'Used' } },
-        {
-          $set: {
-            status: 'Used',
-            usedAt: now,
-            usedByParticipantName: participantName,
-            usedByParticipantPhone: phone,
-          },
-        },
-        { new: true }
-      )
-
-      if (!updatedTestCoupon) {
-        return res.status(400).json({
-          ok: false,
-          error: 'Coupon Already Used',
-        })
-      }
-
-      // Update dummy test participant record
-      let testPart = await Participant.findOneAndUpdate(
-        { couponId: canonicalCouponId, isTest: true },
-        {
-          $set: {
-            name: participantName,
-            phone,
-            address: address?.trim() || 'Valanchery Test Arena',
-            location: location?.trim() || 'Valanchery Test Arena',
-            registeredAt: now,
-          },
-        },
-        { new: true }
-      )
-
-      if (!testPart) {
-        testPart = await Participant.create({
-          id: `TEST-${Date.now()}`,
-          name: participantName,
-          phone,
-          address: address?.trim() || 'Valanchery Test Arena',
-          location: location?.trim() || 'Valanchery Test Arena',
-          couponId: canonicalCouponId,
-          registeredAt: now,
-          eligibility: 'Eligible',
-          status: 'Active',
-          isTest: true,
-        })
-      }
-
-      return res.status(201).json({ ok: true, id: testPart.id, participant: testPart })
-    }
-
     let newParticipant: any = null
 
     for (let attempt = 0; attempt < 5; attempt++) {
@@ -161,13 +106,12 @@ router.post('/register', deviceRegistrationLimiter, async (req, res) => {
           registeredAt: now,
           eligibility: 'Eligible',
           status: 'Active',
-          isTest: false,
         })
         break
       } catch (err: any) {
         if (err?.code === 11000) {
           if (err.keyPattern?.couponId || err.message?.includes('couponId')) {
-            return res.status(400).json({ ok: false, error: 'Coupon Already Used' })
+            return res.status(400).json({ ok: false, error: 'This coupon has already been registered.' })
           }
           // In the rare event of ID collision, retry with next atomic ID
           if (attempt < 4) {
@@ -212,7 +156,7 @@ router.post('/register', deviceRegistrationLimiter, async (req, res) => {
         await Participant.deleteOne({ id })
         return res.status(400).json({
           ok: false,
-          error: 'Coupon Already Used',
+          error: 'This coupon was already redeemed or is no longer available.',
         })
       }
     }
@@ -242,7 +186,7 @@ router.post('/bulk', requireAdminAuth, async (req, res) => {
       }
       const id = await getNextParticipantId()
 
-      toInsert.push()
+
       toInsert.push({
         id,
         name: (input.name || 'Participant').trim(),
@@ -314,7 +258,7 @@ router.get('/', requireAdminAuth, async (req, res) => {
         }
       }
 
-      const allParticipants = await Participant.find({ status: 'Active', eligibility: { $ne: 'Ineligible' }, isTest: { $ne: true } })
+      const allParticipants = await Participant.find({ status: 'Active', eligibility: { $ne: 'Ineligible' } })
         .sort({ registeredAt: -1, createdAt: -1 })
         .lean()
 
@@ -339,7 +283,7 @@ router.get('/', requireAdminAuth, async (req, res) => {
       return res.json({ ok: true, count: filtered.length, participants: filtered })
     }
 
-    const participants = await Participant.find({ isTest: { $ne: true } }).sort({ createdAt: -1 }).lean()
+    const participants = await Participant.find().sort({ createdAt: -1 }).lean()
     res.json({ ok: true, participants })
   } catch (error: any) {
     res.status(500).json({ ok: false, error: error.message })
@@ -386,7 +330,6 @@ router.get('/eligible', requireAdminAuth, async (req, res) => {
     const query: any = {
       status: 'Active',
       eligibility: { $ne: 'Ineligible' },
-      isTest: { $ne: true },
     }
     if (excludeIds.size > 0) {
       query.id = { $nin: Array.from(excludeIds) }
@@ -411,7 +354,6 @@ router.get('/lookup/:query', async (req, res) => {
     const digitsOnly = clean.replace(/\D/g, '')
 
     const participant = await Participant.findOne({
-      isTest: { $ne: true },
       $or: [
         { id: { $regex: new RegExp(`^${escaped}$`, 'i') } },
         { couponId: { $regex: new RegExp(`^${escaped}$`, 'i') } },

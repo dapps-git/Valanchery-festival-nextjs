@@ -5,7 +5,6 @@ import { Toast } from '@/components/Toast'
 import { useApp } from '@/context/AppContext'
 import { api } from '@/lib/api'
 import { compressImageToWebP } from '@/lib/imageHelper'
-import { getAdminToken } from '@/lib/session'
 import type { Participant, Prize, CompetitionType } from '@/types'
 import {
   Sparkles,
@@ -397,7 +396,7 @@ export function LuckyDrawPage() {
       const formData = new FormData()
       formData.append('file', blob, `${file.name.replace(/\.[^/.]+$/, '')}.webp`)
 
-      const token = getAdminToken()
+      const token = typeof localStorage !== 'undefined' ? localStorage.getItem('admin_jwt_token') : ''
       const headers: Record<string, string> = {}
       if (token) headers['Authorization'] = `Bearer ${token}`
 

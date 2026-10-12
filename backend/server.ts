@@ -13,7 +13,6 @@ import prizesRouter from './routes/prizes.js'
 import drawsRouter from './routes/draws.js'
 import winnersRouter from './routes/winners.js'
 import authRouter from './routes/auth.js'
-import testCouponsRouter from './routes/testCoupons.js'
 
 import { Prize } from './models/Prize.js'
 import { Draw } from './models/Draw.js'
@@ -81,11 +80,11 @@ app.get(['/api/all', '/all'], async (req, res) => {
     const [prizes, draws, participants, winners, batches, totalCouponsCount, usedCouponsCount] = await Promise.all([
       Prize.find().lean(),
       Draw.find().sort({ number: 1 }).lean(),
-      isAdmin ? Participant.find({ isTest: { $ne: true } }).sort({ registeredAt: -1, createdAt: -1 }).lean() : Promise.resolve([]),
+      isAdmin ? Participant.find().sort({ registeredAt: -1, createdAt: -1 }).lean() : Promise.resolve([]),
       Winner.find().sort({ date: -1, drawnAt: -1 }).lean(),
       isAdmin ? CouponBatch.find().sort({ createdAt: -1 }).lean() : Promise.resolve([]),
-      Coupon.countDocuments({ isTest: { $ne: true } }),
-      Coupon.countDocuments({ status: 'Used', isTest: { $ne: true } }),
+      Coupon.countDocuments({}),
+      Coupon.countDocuments({ status: 'Used' }),
     ])
 
     res.json({
@@ -143,7 +142,6 @@ app.use('/api/prizes', prizesRouter)
 app.use('/api/draws', drawsRouter)
 app.use('/api/winners', winnersRouter)
 app.use('/api/auth', authRouter)
-app.use('/api/test', testCouponsRouter)
 
 // Fallback direct routes
 app.use('/coupons', couponsRouter)
@@ -152,7 +150,6 @@ app.use('/prizes', prizesRouter)
 app.use('/draws', drawsRouter)
 app.use('/winners', winnersRouter)
 app.use('/auth', authRouter)
-app.use('/test', testCouponsRouter)
 
 // ── Start listening with tuned keep-alive for high concurrency ──
 const server = app.listen(PORT, () => {
@@ -213,13 +210,11 @@ async function connectDB() {
       Coupon.collection.createIndex({ id: 1 }, { unique: true }),
       Coupon.collection.createIndex({ status: 1, id: 1 }),
       Coupon.collection.createIndex({ batchId: 1 }),
-      Coupon.collection.createIndex({ isTest: 1, status: 1 }),
       // Participants: unique id, unique sparse couponId (double-spend guard), phone & date for queries
       Participant.collection.createIndex({ id: 1 }, { unique: true }),
       Participant.collection.createIndex({ couponId: 1 }, { unique: true, sparse: true }),
       Participant.collection.createIndex({ phone: 1 }),
       Participant.collection.createIndex({ registeredAt: -1 }),
-      Participant.collection.createIndex({ isTest: 1 }),
     ])
     console.log('✅ High-concurrency database indexes verified.')
   } catch (error) {

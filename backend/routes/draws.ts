@@ -32,7 +32,6 @@ router.post('/', requireAdminAuth, async (req, res) => {
   }
 })
 
-
 // Update draw (admin only)
 router.put('/:id', requireAdminAuth, async (req, res) => {
   try {
@@ -52,9 +51,9 @@ router.delete('/:id', requireAdminAuth, async (req, res) => {
         await Prize.updateOne(
           { id: draw.prizeId },
           { $set: { status: 'Available' }, $unset: { assignedDrawId: 1 } }
-        ).catch(() => { })
+        ).catch(() => {})
       }
-      await Winner.deleteMany({ drawId: draw.id }).catch(() => { })
+      await Winner.deleteMany({ drawId: draw.id }).catch(() => {})
       await Draw.deleteOne({ id: req.params.id })
     }
     res.json({ ok: true, message: 'Draw deleted' })
@@ -92,12 +91,6 @@ router.post('/confirm-winner', requireAdminAuth, async (req, res) => {
 
     // 2. BACKEND ELIGIBILITY VALIDATION - Exact Matrix Rule from Database
     const participantDoc = await Participant.findOne({ id: participantId })
-    if (!participantDoc) {
-      return res.status(404).json({ ok: false, error: 'Participant not found' })
-    }
-    if (participantDoc.isTest) {
-      return res.status(400).json({ ok: false, error: 'Test participants are excluded from official lucky draw competitions.' })
-    }
     const actualCoupon = (participantDoc?.couponId || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase()
     const participantPhone = (participantDoc?.phone || '').replace(/\D/g, '').slice(-10)
 

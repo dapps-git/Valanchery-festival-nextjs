@@ -15,14 +15,12 @@ import { api } from '@/lib/api'
 import { exportCouponsToXlsx } from '@/lib/exportCsv'
 import { formatShortDate } from '@/lib/format'
 import { DeleteConfirmModal } from '@/components/DeleteConfirmModal'
-import { TestCouponManager } from '@/components/TestCouponManager'
 
 type DeleteTarget = { id: string; name: string }
 
 export function CouponsPage() {
   const { generateCouponBatch, deleteCouponBatch, data, coupons, refreshData } = useApp()
 
-  const [activeTab, setActiveTab] = useState<'production' | 'test'>('test')
   const [count, setCount] = useState<number>(100)
   const [isGeneratingCsv, setIsGeneratingCsv] = useState(false)
   const [deletingBatchId, setDeletingBatchId] = useState<string | null>(null)
@@ -109,16 +107,13 @@ export function CouponsPage() {
   const batches = data.batches || []
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 font-sans font-light text-[#292524]">
+    <div className="mx-auto max-w-3xl space-y-6 font-sans font-light text-[#292524]">
       {/* Title & Navigation */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-[#E8E3D8] pb-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-normal tracking-tight text-stone-900">
-            Coupons Management
+            Generate Coupons
           </h1>
-          <p className="text-xs text-stone-500 mt-0.5">
-            Manage festival printing batches or run temporary load & status simulations.
-          </p>
         </div>
 
         <Link
@@ -130,40 +125,8 @@ export function CouponsPage() {
         </Link>
       </div>
 
-      {/* Mode Switcher Tabs */}
-      <div className="flex items-center gap-2 border-b border-stone-200 pb-2">
-        <button
-          type="button"
-          onClick={() => setActiveTab('test')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition cursor-pointer ${
-            activeTab === 'test'
-              ? 'bg-[#1E1B18] text-[#FAF8F5] shadow-xs'
-              : 'bg-white border border-stone-200 text-stone-600 hover:bg-stone-50'
-          }`}
-        >
-          <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-          <span>🧪 Temporary Testing Suite (10 Lakh, All Used, Reset)</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('production')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition cursor-pointer ${
-            activeTab === 'production'
-              ? 'bg-[#1E1B18] text-[#FAF8F5] shadow-xs'
-              : 'bg-white border border-stone-200 text-stone-600 hover:bg-stone-50'
-          }`}
-        >
-          <Layers size={13} />
-          <span>Production Printed Batches</span>
-        </button>
-      </div>
-
-      {activeTab === 'test' ? (
-        <TestCouponManager />
-      ) : (
-        <>
-          {/* Main Generator Card */}
-          <div className="border border-[#E8E3D8] bg-white p-5 sm:p-6 rounded-[6px] shadow-2xs space-y-5">
+      {/* Main Generator Card */}
+      <div className="border border-[#E8E3D8] bg-white p-5 sm:p-6 rounded-[6px] shadow-2xs space-y-5">
         <div className="space-y-3.5">
           <label className="block text-xs font-normal text-stone-600">
             Quantity
@@ -310,8 +273,6 @@ export function CouponsPage() {
           </div>
         )}
       </div>
-      </>
-      )}
 
       {/* ── Double Confirmation Delete Modal (Type DELETE + Confirm) ── */}
       <DeleteConfirmModal

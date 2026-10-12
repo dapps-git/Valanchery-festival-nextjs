@@ -87,18 +87,18 @@ export function RegisterPage() {
           lastValidatedTokenRef.current = clean
           setTokenStatus({
             status: 'Valid',
-            message: 'Valid Coupon',
+            message: 'Valid Festival Coupon! Ready for registration.',
           })
           setErrors((prev) => ({ ...prev, couponId: '' }))
         } else if (result.status === 'Used') {
           setTokenStatus({
             status: 'Used',
-            message: result.message || 'Coupon Already Used',
+            message: result.message || 'This coupon has already been used and is no longer valid.',
           })
         } else {
           setTokenStatus({
             status: 'Invalid',
-            message: result.message || 'Invalid Coupon',
+            message: result.message || 'Coupon not found. Please check the 13-character code.',
           })
         }
       } catch {

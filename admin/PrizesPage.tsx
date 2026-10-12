@@ -5,7 +5,6 @@ import type { Prize } from '@/types'
 import { Plus, X, Edit3, Trash2, Upload, Sparkles, Loader2, CheckCircle2 } from 'lucide-react'
 import { DeleteConfirmModal } from '@/components/DeleteConfirmModal'
 import { compressImageToWebP } from '@/lib/imageHelper'
-import { getAdminToken } from '@/lib/session'
 
 export function PrizesPage() {
   const { data, addPrize, updatePrize, deletePrize } = useApp()
@@ -33,7 +32,7 @@ export function PrizesPage() {
       const formData = new FormData()
       formData.append('file', blob, `${file.name.replace(/\.[^/.]+$/, '')}.webp`)
 
-      const token = getAdminToken()
+      const token = typeof localStorage !== 'undefined' ? localStorage.getItem('admin_jwt_token') : ''
       const headers: Record<string, string> = {}
       if (token) headers['Authorization'] = `Bearer ${token}`
 
