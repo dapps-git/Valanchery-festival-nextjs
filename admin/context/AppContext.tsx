@@ -5,25 +5,8 @@ import { api } from '../lib/api'
 import { extractCouponId } from '../lib/tokenHelper'
 import type { AppData, Coupon, CouponBatch, Draw, Participant, Prize, Winner } from '../types'
 
-const AUTH_KEY = 'vf2026_admin_auth'
-const TOKEN_KEY = 'admin_jwt_token'
-const TOKEN_EXP_KEY = 'admin_jwt_exp'
-const DATA_KEY = 'vf2026_app_data_v6'
+import { purgeLocalStorage, isSessionValid, setAdminSession, clearAdminSession } from '../lib/session'
 
-function isSessionValid(): boolean {
-  if (typeof localStorage === 'undefined') return false
-  const token = localStorage.getItem(TOKEN_KEY)
-  const expStr = localStorage.getItem(TOKEN_EXP_KEY)
-  if (!token || !expStr) return false
-  const expTime = parseInt(expStr, 10)
-  if (isNaN(expTime) || Date.now() >= expTime) {
-    localStorage.removeItem(TOKEN_KEY)
-    localStorage.removeItem(TOKEN_EXP_KEY)
-    localStorage.removeItem(AUTH_KEY)
-    return false
-  }
-  return true
-}
 
 interface CouponValidationResult {
   valid: boolean
@@ -82,15 +65,8 @@ const AppContext = createContext<AppContextValue | null>(null)
 
 function loadLocalData(): AppData {
   // Always start empty — real data comes from MongoDB only
-  // Clear ALL legacy localStorage keys
-  try {
-    if (typeof localStorage !== 'undefined') {
-      for (const key of ['vf2026_app_data_v1','vf2026_app_data_v2','vf2026_app_data_v3',
-        'vf2026_app_data_v4','vf2026_app_data_v5','vf2026_app_data_v6']) {
-        localStorage.removeItem(key)
-      }
-    }
-  } catch {}
+  // Actively clear all localStorage keys
+  purgeLocalStorage()
   return {
     prizes: [],
     draws: [],
@@ -122,14 +98,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       // Verify with backend if password was changed on another system
       try {
         const res = await api.verifySession()
-        if (!res.ok) {
-          localStorage.removeItem(TOKEN_KEY)
-          localStorage.removeItem(TOKEN_EXP_KEY)
-          localStorage.removeItem(AUTH_KEY)
+          clearAdminSession()
           setIsAdmin(false)
           api.logout()
           alert(res.error || 'Admin password was changed. You have been logged out from all systems.')
-        }
       } catch {
         // ignore temporary network blip
       }
@@ -144,9 +116,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (isAdmin) {
       api.verifySession().then((res) => {
         if (!res.ok) {
-          localStorage.removeItem(TOKEN_KEY)
-          localStorage.removeItem(TOKEN_EXP_KEY)
-          localStorage.removeItem(AUTH_KEY)
+          clearAdminSession()
           setIsAdmin(false)
           if (res.error && res.error.toLowerCase().includes('password')) {
             alert(res.error)
@@ -197,20 +167,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  // Keep local backup (safely capped to avoid localStorage 5MB quota errors)
-  useEffect(() => {
-    try {
-      if (typeof localStorage !== 'undefined') {
-        const backup = {
-          ...data,
-          coupons: (data.coupons || []).slice(0, 100),
-        }
-        localStorage.setItem(DATA_KEY, JSON.stringify(backup))
-      }
-    } catch {
-      // Ignore quota exceeded or storage errors
-    }
-  }, [data])
 
   const value = useMemo<AppContextValue>(() => {
     const getPrize = (id: string) => data.prizes.find((p) => p.id === id)
@@ -318,9 +274,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           if (res && res.ok) {
             const token = res.token || `admin_auth_${Date.now()}`
             const expTime = Date.now() + 24 * 60 * 60 * 1000 // 24 hours
-            localStorage.setItem(TOKEN_KEY, token)
-            localStorage.setItem(TOKEN_EXP_KEY, expTime.toString())
-            localStorage.setItem(AUTH_KEY, '1')
+            setAdminSession(token, expTime)
             setIsAdmin(true)
             return true
           }
@@ -330,9 +284,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }
       },
       logout: () => {
-        localStorage.removeItem(TOKEN_KEY)
-        localStorage.removeItem(TOKEN_EXP_KEY)
-        localStorage.removeItem(AUTH_KEY)
+        clearAdminSession()
         api.logout()
         setIsAdmin(false)
       },
@@ -669,10 +621,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       eligibleParticipants,
       winnerParticipantIds,
       resetToDefaultData: () => {
-        if (typeof localStorage !== 'undefined') {
-          localStorage.removeItem(DATA_KEY)
-          localStorage.removeItem('vf2026_app_data_v2')
-        }
+        purgeLocalStorage()
         refreshData()
       },
     }

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Confetti } from '@/components/Confetti'
 import { useApp } from '@/context/AppContext'
+import { purgeLocalStorage } from '@/lib/session'
 
 import { api } from '@/lib/api'
 import {
@@ -35,15 +36,9 @@ export function AdminLoginPage() {
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
 
-  // Load remembered email from localStorage on mount (never store plaintext passwords)
+  // Ensure zero credentials or app data remain in localStorage
   useEffect(() => {
-    try {
-      if (typeof localStorage !== 'undefined') {
-        localStorage.removeItem('admin_saved_password') // Securely purge any legacy plaintext password
-        const savedEmail = localStorage.getItem('admin_saved_email')
-        if (savedEmail) setEmail(savedEmail)
-      }
-    } catch {}
+    purgeLocalStorage()
   }, [])
 
   // Forgot Password State
@@ -73,13 +68,8 @@ export function AdminLoginPage() {
         return
       }
 
-      // Store remembered email in localStorage on successful login (never store plaintext passwords)
-      try {
-        if (typeof localStorage !== 'undefined') {
-          localStorage.setItem('admin_saved_email', email.trim().toLowerCase())
-          localStorage.removeItem('admin_saved_password')
-        }
-      } catch {}
+      // Purge any residual storage immediately
+      purgeLocalStorage()
 
       setSuccess(true)
       setTimeout(() => {

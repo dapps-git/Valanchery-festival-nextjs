@@ -72,54 +72,59 @@ function generateRandom13Char(): string {
 // 1. Validate a single coupon token — rate limited: 60/min per IP to prevent code guessing
 router.get(['/validate', '/validate/:id'], couponValidateLimiter, async (req, res) => {
   try {
-    const rawId = (req.params.id || req.query.code || '') as string
+    const rawId = (req.params.id || req.query.code || req.query.id || '') as string
     const cleanId = rawId.replace(/[^A-Za-z0-9]/g, '').trim().toUpperCase()
 
-    // Must be exactly 13 characters
+    // Must be a valid coupon code (13 characters)
     if (!cleanId || cleanId.length !== 13) {
       return res.json({
         valid: false,
         status: 'Invalid',
-        message: 'Please enter a valid 13-character festival coupon code.',
+        message: 'Invalid Coupon. Please enter a valid 13-character coupon code.',
       })
     }
 
-    // 1. Check if already redeemed — search by 13-character code (indexed lean lookup)
-    const registeredUser = await Participant.findOne({ couponId: cleanId }).select('registeredAt').lean()
-    if (registeredUser) {
+    // Lookup coupon in database — the database status determines validity
+    const existingCoupon = await Coupon.findOne({ id: cleanId }).select('id status usedAt isTest').lean()
+
+    // Case 3: Invalid coupon - Coupon ID does not exist in database
+    if (!existingCoupon) {
+      return res.json({
+        valid: false,
+        status: 'Invalid',
+        message: 'Invalid Coupon. Code not found in database.',
+      })
+    }
+
+    // Case 2: Used coupon - Coupon status is USED in database
+    if (existingCoupon.status === 'Used') {
       return res.json({
         valid: false,
         status: 'Used',
-        usedAt: registeredUser.registeredAt,
-        message: 'This coupon has already been used and is no longer valid.',
+        usedAt: existingCoupon.usedAt,
+        message: 'Coupon Already Used',
       })
     }
 
-    // 2. Search coupon by 13-character code (id) ONLY — indexed lean lookup
-    const existingCoupon = await Coupon.findOne({ id: cleanId }).select('id status usedAt').lean()
-
-    if (existingCoupon) {
-      if (existingCoupon.status === 'Used') {
+    // For non-test coupons, verify no prior production participant registered it
+    if (!existingCoupon.isTest) {
+      const registeredUser = await Participant.findOne({ couponId: cleanId, isTest: { $ne: true } }).select('registeredAt').lean()
+      if (registeredUser) {
         return res.json({
           valid: false,
           status: 'Used',
-          usedAt: existingCoupon.usedAt,
-          message: 'This coupon has already been used and is no longer valid.',
+          usedAt: registeredUser.registeredAt,
+          message: 'Coupon Already Used',
         })
       }
-      return res.json({
-        valid: true,
-        status: 'Unused',
-        coupon: { id: existingCoupon.id, status: 'Unused' },
-        message: 'Valid Festival Coupon! Ready for registration.',
-      })
     }
 
-    // Coupon not found in DB
+    // Case 1 & Case 4: Valid and unused coupon - Coupon exists and status is UNUSED
     return res.json({
-      valid: false,
-      status: 'Invalid',
-      message: 'Coupon not found. Please check the 13-character code and try again.',
+      valid: true,
+      status: 'Unused',
+      coupon: { id: existingCoupon.id, status: 'Unused', isTest: existingCoupon.isTest },
+      message: 'Valid Coupon',
     })
   } catch (error: any) {
     res.status(500).json({ valid: false, status: 'Invalid', message: error.message })
@@ -232,19 +237,25 @@ router.get('/', requireAdminAuth, async (req, res) => {
     const search  = ((req.query.search as string) || '').trim().toUpperCase()
     const status  = (req.query.status as string) || 'all'
 
-    // Build filter
-    const filter: Record<string, any> = {}
+    // Build filter - strictly isolate test data from production coupons directory
+    const filter: Record<string, any> = { isTest: { $ne: true } }
     if (status === 'Used')   filter.status = 'Used'
     if (status === 'Unused') filter.status = 'Unused'
     if (search) {
-      filter.$or = [
-        { id: { $regex: search, $options: 'i' } },
-        { serialNo: { $regex: search, $options: 'i' } },
+      filter.$and = [
+        { isTest: { $ne: true } },
+        {
+          $or: [
+            { id: { $regex: search, $options: 'i' } },
+            { serialNo: { $regex: search, $options: 'i' } },
+          ],
+        },
       ]
+      delete filter.isTest
     }
 
     const [totalCoupons, filteredCount, coupons, batches] = await Promise.all([
-      Coupon.countDocuments({}),
+      Coupon.countDocuments({ isTest: { $ne: true } }),
       Coupon.countDocuments(filter),
       Coupon.find(filter, {
         id: 1, serialNo: 1, batchId: 1, status: 1,
