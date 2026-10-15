@@ -8,8 +8,8 @@ import {
   Store,
   Users,
 } from 'lucide-react'
-import couponBannerImg from '../../assets/festival-coupon-banner.png'
 import { PublicNavbar } from '../../components/PublicNavbar'
+import { FestivalAdBannerSlider } from '../../components/FestivalAdBannerSlider'
 
 export function HomePage() {
   const [videoModalOpen, setVideoModalOpen] = useState(false)
@@ -59,18 +59,17 @@ export function HomePage() {
                 />
               </picture>
 
-              {/* Desktop / Tablet Content Overlay */}
-              <div className="absolute inset-0 flex items-center">
+              {/* 1. Floating Ad Banner Slideshow Directly ON the Sky of hero.png - Sleek, Compact Size on Laptop */}
+              <div className="absolute top-1 sm:top-1.5 md:top-2 inset-x-0 z-20 flex justify-center px-4 pointer-events-auto">
+                <div className="w-full max-w-sm sm:max-w-md md:max-w-lg">
+                  <FestivalAdBannerSlider />
+                </div>
+              </div>
+
+              {/* 2. Desktop / Tablet Content Overlay (Positioned cleanly below the top banner, logo removed) */}
+              <div className="absolute inset-0 flex flex-col justify-start pt-36 sm:pt-40 md:pt-44 lg:pt-48 xl:pt-52 z-10 pointer-events-none">
                 <div className="w-full max-w-7xl mx-auto px-6 md:px-10 lg:px-14">
-                  <div className="max-w-[50%] lg:max-w-[48%] space-y-1.5 md:space-y-2 lg:space-y-2.5">
-                    {/* Festival Season 2 Logo */}
-                    <div>
-                      <img
-                        src="/valanchery-shopping-festival-logo.png"
-                        alt="Valanchery Shopping Festival - Season 2"
-                        className="h-10 sm:h-12 md:h-16 lg:h-18 w-auto object-contain drop-shadow-sm"
-                      />
-                    </div>
+                  <div className="max-w-[48%] lg:max-w-[44%] space-y-1.5 md:space-y-2 pointer-events-auto">
 
                     {/* Subtitle */}
                     <p className="font-script text-[#0284c7] text-base md:text-xl lg:text-2xl font-bold tracking-wide">
@@ -111,59 +110,58 @@ export function HomePage() {
             </div>
 
             {/* Mobile View Banner: Uses image.png with text & buttons directly ON the banner */}
-            <div className="sm:hidden relative w-full overflow-hidden">
-              <img
-                src="/image.png"
-                alt="Valanchery Shopping Festival"
-                className="w-full h-auto block select-none"
-                loading="eager"
-                fetchPriority="high"
-              />
+            <div className="sm:hidden relative w-full overflow-hidden p-0 m-0">
+              {/* Mobile Ad Banner Slider: 100% Full-bleed with ZERO empty space on right, left or anywhere */}
+              <div className="w-full p-0 m-0 overflow-hidden border-b border-slate-200">
+                <FestivalAdBannerSlider />
+              </div>
 
-              {/* Text & Buttons Overlay directly ON the Mobile Hero Banner */}
-              <div className="absolute inset-0 flex flex-col justify-start px-5 pt-32 xs:pt-36 pb-4 pointer-events-none">
-                <div className="space-y-2 max-w-[92%] pointer-events-auto">
-                  {/* KVVES Valanchery Unit Official Emblem Banner (Transparent - Aligned & Enlarged) */}
-                  <div className="mb-2 flex justify-start">
-                    <img
-                      src="/kvves-valanchery-banner-transparent.png"
-                      alt="Kerala Vyapari Vyavasayi Ekopana Samithi Valanchery Unit"
-                      className="h-10 xs:h-12 max-w-[290px] xs:max-w-[320px] w-auto object-contain object-left block"
-                    />
-                  </div>
+              {/* Mobile Hero Image Frame with dedicated relative overlay */}
+              <div className="relative w-full overflow-hidden">
+                <img
+                  src="/image.png"
+                  alt="Valanchery Shopping Festival"
+                  className="w-full h-auto block select-none"
+                  loading="eager"
+                  fetchPriority="high"
+                />
 
-                  {/* Subtitle */}
-                  <p className="font-script text-[#0284c7] text-base font-bold tracking-wide">
-                    Shop Local • Support Local • Win Together ♡
-                  </p>
+                {/* Text & Buttons Overlay directly ON image.png (Moved down into the clear sky, away from palm leaves) */}
+                <div className="absolute inset-0 flex flex-col justify-start px-5 pt-16 xs:pt-20 pb-4 pointer-events-none">
+                  <div className="space-y-2 max-w-[92%] pointer-events-auto">
+                    {/* Subtitle (Shop Local text adjusted cleanly down) */}
+                    <p className="font-script text-[#0284c7] text-base xs:text-lg font-bold tracking-wide">
+                      Shop Local • Support Local • Win Together ♡
+                    </p>
 
-                  {/* Main Headline - Montserrat font, reduced font weight */}
-                  <h1 className="text-xl font-bold text-[#0369a1] tracking-tight leading-tight font-['Montserrat',sans-serif]">
-                    Valanchery Shopping<br />
-                    Festival
-                  </h1>
+                    {/* Main Headline - Montserrat font, reduced font weight */}
+                    <h1 className="text-xl xs:text-2xl font-bold text-[#0369a1] tracking-tight leading-tight font-['Montserrat',sans-serif]">
+                      Valanchery Shopping<br />
+                      Festival
+                    </h1>
 
-                  {/* Description - Montserrat font */}
-                  <p className="text-slate-600 text-[11px] font-normal leading-relaxed line-clamp-3 font-['Montserrat',sans-serif]">
-                    Organized by Kerala Vyapari Vyavasayi Ekopana Samithi (KVVES) Valanchery Unit. Collect your official coupons from member shops and stand a chance to win mega bumper prizes!
-                  </p>
+                    {/* Description - Montserrat font */}
+                    <p className="text-slate-600 text-[11px] xs:text-xs font-normal leading-relaxed line-clamp-3 font-['Montserrat',sans-serif]">
+                      Organized by Kerala Vyapari Vyavasayi Ekopana Samithi (KVVES) Valanchery Unit. Collect your official coupons from member shops and stand a chance to win mega bumper prizes!
+                    </p>
 
-                  {/* Reduced Size Buttons with Reduced Border Radius (rounded-md / 6px) */}
-                  <div className="pt-1.5 flex items-center gap-2">
-                    <a
-                      href="/register"
-                      className="inline-flex items-center gap-1.5 bg-[#0284c7] hover:bg-[#0369a1] text-white px-3.5 py-1.5 text-[11px] font-semibold tracking-wider uppercase transition shadow-xs active:scale-95 cursor-pointer rounded-md font-['Montserrat',sans-serif]"
-                    >
-                      <span>Register Coupon</span>
-                      <ArrowRight size={12} />
-                    </a>
+                    {/* Reduced Size Buttons with Reduced Border Radius (rounded-md / 6px) */}
+                    <div className="pt-2 flex items-center gap-2">
+                      <a
+                        href="/register"
+                        className="inline-flex items-center gap-1.5 bg-[#0284c7] hover:bg-[#0369a1] text-white px-3.5 py-1.5 text-[11px] font-semibold tracking-wider uppercase transition shadow-xs active:scale-95 cursor-pointer rounded-md font-['Montserrat',sans-serif]"
+                      >
+                        <span>Register Coupon</span>
+                        <ArrowRight size={12} />
+                      </a>
 
-                    <a
-                      href="#why-festival"
-                      className="inline-flex items-center gap-1 bg-white/95 hover:bg-white text-[#0369a1] border border-[#bae6fd] px-3 py-1.5 text-[11px] font-medium tracking-wide transition shadow-2xs rounded-md font-['Montserrat',sans-serif]"
-                    >
-                      <span>Learn More</span>
-                    </a>
+                      <a
+                        href="#why-festival"
+                        className="inline-flex items-center gap-1 bg-white/95 hover:bg-white text-[#0369a1] border border-[#bae6fd] px-3 py-1.5 text-[11px] font-medium tracking-wide transition shadow-2xs rounded-md font-['Montserrat',sans-serif]"
+                      >
+                        <span>Learn More</span>
+                      </a>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -210,7 +208,7 @@ export function HomePage() {
                   {/* Large Official Coupon Card Container */}
                   <div className="relative overflow-hidden bg-white border border-cyan-200/80 shadow-2xl shadow-cyan-950/10 p-2 sm:p-4 transition transform group-hover:scale-[1.005] duration-300 rounded-xl sm:rounded-2xl">
                     <img
-                      src={typeof couponBannerImg === 'string' ? couponBannerImg : (couponBannerImg as any)?.src || '/festival-coupon-banner.png'}
+                      src="/festival-coupon-banner.png"
                       alt="Valanchery Lucky Draw Official Coupon"
                       className="w-full h-auto object-contain block mx-auto rounded-lg sm:rounded-xl"
                     />

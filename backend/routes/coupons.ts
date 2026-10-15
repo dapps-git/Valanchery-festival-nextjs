@@ -135,24 +135,55 @@ router.post('/generate', requireAdminAuth, async (req, res) => {
     const batchId = `BATCH-${Date.now()}`
     const now = new Date().toISOString()
 
+    let startSerial = Number(req.body.startSerial)
+    if (!startSerial || startSerial < 1) {
+      const existingBatches = await CouponBatch.find({}, { startId: 1, endId: 1 }).lean()
+      let maxSerial = 0
+      for (const b of existingBatches) {
+        const matches = `${b.startId || ''} ${b.endId || ''}`.match(/\d+/g) || []
+        for (const m of matches) {
+          const val = parseInt(m, 10)
+          if (val > maxSerial) maxSerial = val
+        }
+      }
+      startSerial = maxSerial + 1
+    }
+
     // Query existing IDs to ensure 100% collision-free batch
     const existingCoupons = await Coupon.find({}, { id: 1 }).lean()
     const existingSet = new Set(existingCoupons.map((c) => c.id))
 
+    const PREFIXES = ['A', 'B', 'C', 'D'] as const
+    const basePerPrefix = Math.floor(count / 4)
+    const remainder = count % 4
+    const prefixCounts: Record<string, number> = {
+      A: basePerPrefix + (remainder >= 1 ? 1 : 0),
+      B: basePerPrefix + (remainder >= 2 ? 1 : 0),
+      C: basePerPrefix + (remainder >= 3 ? 1 : 0),
+      D: basePerPrefix,
+    }
+    const maxRows = Math.max(...Object.values(prefixCounts))
+
     const newCoupons = []
-    for (let i = 0; i < count; i++) {
-      let id = generateRandom13Char()
-      while (existingSet.has(id)) {
-        id = generateRandom13Char()
+    for (let offset = 0; offset < maxRows; offset++) {
+      const serialNum = startSerial + offset
+      for (const prefix of PREFIXES) {
+        if (offset < prefixCounts[prefix]) {
+          let id = generateRandom13Char()
+          while (existingSet.has(id)) {
+            id = generateRandom13Char()
+          }
+          existingSet.add(id)
+          newCoupons.push({
+            id,
+            serialNo: `${prefix}${String(serialNum).padStart(5, '0')}`,
+            batchId,
+            batchName: name,
+            status: 'Unused' as const,
+            createdAt: now,
+          })
+        }
       }
-      existingSet.add(id)
-      newCoupons.push({
-        id,
-        serialNo: String(existingCoupons.length + i + 1).padStart(6, '0'),
-        batchId,
-        status: 'Unused' as const,
-        createdAt: now,
-      })
     }
 
     // High-speed chunked insert for large volumes (1 Lakh+)
@@ -162,12 +193,18 @@ router.post('/generate', requireAdminAuth, async (req, res) => {
       await Coupon.insertMany(slice, { ordered: false })
     }
 
+    const firstSerial = newCoupons[0]?.serialNo || newCoupons[0]?.id || ''
+    const lastSerial = newCoupons[newCoupons.length - 1]?.serialNo || newCoupons[newCoupons.length - 1]?.id || ''
+    const startId = newCoupons.length > 1 ? `${firstSerial} - ${lastSerial}` : firstSerial
+    const endId = lastSerial
+
     const batch = await CouponBatch.create({
       id: batchId,
       name,
+      batchName: name,
       count,
-      startId: newCoupons[0]?.id || '',
-      endId: newCoupons[newCoupons.length - 1]?.id || '',
+      startId,
+      endId,
       createdAt: now,
       unusedCount: count,
       usedCount: 0,
@@ -185,9 +222,14 @@ router.post('/bulk-insert', requireAdminAuth, async (req, res) => {
     const { batch, coupons } = req.body || {}
     
     if (batch && batch.id) {
+      const batchDoc = {
+        ...batch,
+        name: batch.name || batch.batchName,
+        batchName: batch.batchName || batch.name,
+      }
       await CouponBatch.updateOne(
         { id: batch.id },
-        { $set: batch },
+        { $set: batchDoc },
         { upsert: true }
       )
     }

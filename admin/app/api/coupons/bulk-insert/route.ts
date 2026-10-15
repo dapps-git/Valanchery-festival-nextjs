@@ -31,7 +31,8 @@ export async function POST(request: Request) {
         {
           $set: {
             id: batch.id,
-            name: batch.name || `Batch ${batch.id}`,
+            name: batch.name || batch.batchName || `Batch ${batch.id}`,
+            batchName: batch.batchName || batch.name || `Batch ${batch.id}`,
             count: batch.count || coupons.length,
             startId: batch.startId || coupons[0]?.id || '',
             endId: batch.endId || coupons[coupons.length - 1]?.id || '',

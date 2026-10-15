@@ -47,13 +47,44 @@ export function generateUniqueCouponId(existingIds: Set<string>): string {
 export const PREFIXES = ['A', 'B', 'C', 'D'] as const
 export type CouponPrefix = (typeof PREFIXES)[number]
 
+// Calculate the highest serial number across all batches and coupons
+export function getMaxSerialNumber(
+  batches: Array<{ startId?: string; endId?: string }>,
+  coupons?: Array<{ serialNo?: string }>
+): number {
+  let max = 0
+  if (Array.isArray(batches)) {
+    for (const b of batches) {
+      const text = `${b.startId || ''} ${b.endId || ''}`
+      const matches = text.match(/\d+/g) || []
+      for (const m of matches) {
+        const val = parseInt(m, 10)
+        if (val > max) max = val
+      }
+    }
+  }
+  if (Array.isArray(coupons)) {
+    for (const c of coupons) {
+      if (c && c.serialNo) {
+        const match = c.serialNo.match(/\d+/)
+        if (match) {
+          const val = parseInt(match[0], 10)
+          if (val > max) max = val
+        }
+      }
+    }
+  }
+  return max
+}
+
 // Generate a batch of unique coupons with 4 prefixes (A, B, C, D)
-// Each prefix gets 5 digits with leading zeros (A00001..A25000)
+// Each prefix gets 5 digits with leading zeros (A00001..A25000, A00011..A00020, etc.)
 export function createCouponBatch(
   count: number,
   existingIds: Set<string> = new Set(),
   batchName?: string,
-  batchIdOverride?: string
+  batchIdOverride?: string,
+  startSerial: number = 1
 ): { coupons: Coupon[]; batch: CouponBatch } {
   const batchId = batchIdOverride || `BATCH-${Date.now()}`
   const now = new Date().toISOString()
@@ -72,19 +103,22 @@ export function createCouponBatch(
 
   const maxRows = Math.max(...Object.values(prefixCounts))
   const coupons: Coupon[] = []
+  const startNum = Math.max(1, startSerial || 1)
 
-  // Generate sequentially across prefixes: A1, B1, C1, D1, A2, B2, C2, D2...
-  for (let i = 1; i <= maxRows; i++) {
+  // Generate sequentially across prefixes: A(start), B(start), C(start), D(start)...
+  for (let offset = 0; offset < maxRows; offset++) {
+    const i = startNum + offset
     for (const prefix of PREFIXES) {
-      if (i <= prefixCounts[prefix]) {
+      if (offset < prefixCounts[prefix]) {
         const serialNo = `${prefix}${String(i).padStart(5, '0')}`
         const regCode = generateUniqueCouponId(existingIds)
 
         coupons.push({
           id: regCode,       // Unique 13-character security registration code (e.g. SAR6LFPG6LO3I)
-          serialNo,          // Formatted serial number (e.g. A00001, B00001..A25000)
+          serialNo,          // Formatted serial number (e.g. A00011, B00011..A00020)
           prefix,            // 'A' | 'B' | 'C' | 'D'
           batchId,
+          batchName: batchName || `Coupons Batch (${total} pcs)`,
           status: 'Unused',
           createdAt: now,
         })
@@ -92,17 +126,20 @@ export function createCouponBatch(
     }
   }
 
-  const startId = coupons[0]?.serialNo ? `${coupons[0].serialNo} - ${coupons[coupons.length - 1]?.serialNo}` : coupons[0]?.id || ''
-  const endId = coupons[coupons.length - 1]?.serialNo || coupons[coupons.length - 1]?.id || ''
+  const firstSerial = coupons[0]?.serialNo || coupons[0]?.id || ''
+  const lastSerial = coupons[coupons.length - 1]?.serialNo || coupons[coupons.length - 1]?.id || ''
+  const startId = coupons.length > 1 ? `${firstSerial} - ${lastSerial}` : firstSerial
+  const endId = lastSerial
 
+  const resolvedBatchName = batchName || `Coupons Batch (${coupons.length} pcs)`
   const batch: CouponBatch = {
     id: batchId,
-    name: batchName || `Coupons Batch (${coupons.length} pcs)`,
+    name: resolvedBatchName,
+    batchName: resolvedBatchName,
     count: coupons.length,
     startId,
     endId,
     createdAt: now,
-    unusedCount: coupons.length,
     usedCount: 0,
   }
 

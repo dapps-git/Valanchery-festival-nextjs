@@ -51,9 +51,9 @@ router.delete('/:id', requireAdminAuth, async (req, res) => {
         await Prize.updateOne(
           { id: draw.prizeId },
           { $set: { status: 'Available' }, $unset: { assignedDrawId: 1 } }
-        ).catch(() => {})
+        ).catch(() => { })
       }
-      await Winner.deleteMany({ drawId: draw.id }).catch(() => {})
+      await Winner.deleteMany({ drawId: draw.id }).catch(() => { })
       await Draw.deleteOne({ id: req.params.id })
     }
     res.json({ ok: true, message: 'Draw deleted' })
