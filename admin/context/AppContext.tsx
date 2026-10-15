@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { nextParticipantId } from '../lib/format'
-import { createCouponBatch } from '../lib/couponPdfGenerator'
+import { createCouponBatch, getMaxSerialNumber } from '../lib/couponPdfGenerator'
 import { api } from '../lib/api'
 import { extractCouponId } from '../lib/tokenHelper'
 import type { AppData, Coupon, CouponBatch, Draw, Participant, Prize, Winner } from '../types'
@@ -69,7 +69,8 @@ interface AppContextValue {
   generateCouponBatch: (
     count: number,
     name?: string,
-    onProgress?: (saved: number, total: number) => void
+    onProgress?: (saved: number, total: number) => void,
+    startSerial?: number
   ) => Promise<{ batch: CouponBatch; coupons: Coupon[] }>
   validateCoupon: (couponId: string) => CouponValidationResult
   validateCouponAsync: (couponId: string) => Promise<CouponValidationResult>
@@ -344,13 +345,31 @@ export function AppProvider({ children }: { children: ReactNode }) {
       },
       validateCoupon,
       validateCouponAsync,
-      generateCouponBatch: async (count: number, name?: string, onProgress?: (saved: number, total: number) => void) => {
+      generateCouponBatch: async (
+        count: number,
+        name?: string,
+        onProgress?: (saved: number, total: number) => void,
+        startSerial?: number
+      ) => {
         const batchId = `BATCH-${Date.now()}`
         const now = new Date().toISOString()
-        const batchName = name || `Coupons Batch (${count} pcs)`
+        const batchName = name?.trim() || `Coupons Batch (${count} pcs)`
+
+        // Calculate continuous starting serial if not explicitly specified
+        let startingNumber = startSerial
+        if (!startingNumber || startingNumber < 1) {
+          const maxSerial = getMaxSerialNumber(data.batches || [], coupons || [])
+          startingNumber = maxSerial + 1
+        }
 
         const existingIds = new Set((coupons || []).map((c) => c.id))
-        const { coupons: newCoupons, batch } = createCouponBatch(count, existingIds, batchName, batchId)
+        const { coupons: newCoupons, batch } = createCouponBatch(
+          count,
+          existingIds,
+          batchName,
+          batchId,
+          startingNumber
+        )
 
         // Stream to MongoDB in chunks of 5,000 with retry
         const CHUNK_SIZE = 5000
