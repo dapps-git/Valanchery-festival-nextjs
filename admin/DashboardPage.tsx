@@ -84,24 +84,47 @@ export function DashboardPage() {
         </div>
       </div>
 
-      {/* Primary Highlighted Participant Status Cards: Registered vs Unregistered vs Won */}
+      {/* Primary Highlighted Top 3 Metric Cards: TOTAL COUPONS -> USED COUPONS -> UNUSED COUPONS */}
       <div className="grid gap-3 sm:grid-cols-3">
-        {/* 1. REGISTERED ENTRANTS */}
+        {/* 1. TOTAL COUPONS */}
+        <Link
+          to="/admin/coupons-directory"
+          className="border border-[#E8E3D8] bg-white p-4 rounded-[6px] shadow-2xs transition hover:border-stone-400 block group"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wider text-stone-600 flex items-center gap-1.5">
+              <Ticket size={14} className="text-stone-700" />
+              <span>Total Coupons</span>
+            </span>
+            <span className="inline-flex items-center gap-1 border border-stone-300 bg-stone-100 px-2 py-0.5 text-[10px] font-semibold text-stone-800 rounded-[4px]">
+              All Batches
+            </span>
+          </div>
+          <p className="mt-2 text-3xl font-semibold tracking-tight text-stone-900">
+            <AnimatedNumber value={totalCouponsCount} />
+          </p>
+          <div className="mt-2 flex items-center justify-between text-xs text-stone-500 font-normal">
+            <span>Generated: <strong className="text-stone-800 font-semibold">{totalCouponsCount.toLocaleString()}</strong></span>
+            <span className="text-stone-400 group-hover:text-stone-700 transition">View Directory →</span>
+          </div>
+        </Link>
+
+        {/* 2. USED COUPONS */}
         <Link
           to="/admin/participants"
           className="border border-[#E8E3D8] bg-white p-4 rounded-[6px] shadow-2xs transition hover:border-stone-400 block group"
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-wider text-stone-600 flex items-center gap-1.5">
-              <Users size={14} className="text-emerald-700" />
-              <span>Registered Entrants</span>
+              <CheckCircle2 size={14} className="text-emerald-700" />
+              <span>Used Coupons</span>
             </span>
             <span className="inline-flex items-center gap-1 border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-800 rounded-[4px]">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" /> Active
             </span>
           </div>
           <p className="mt-2 text-3xl font-semibold tracking-tight text-stone-900">
-            <AnimatedNumber value={registeredCount} />
+            <AnimatedNumber value={usedCount} />
           </p>
           <div className="mt-2 flex items-center justify-between text-xs text-stone-500 font-normal">
             <span>In Live Pool: <strong className="text-emerald-800 font-semibold">{activePoolCount}</strong></span>
@@ -109,7 +132,7 @@ export function DashboardPage() {
           </div>
         </Link>
 
-        {/* 2. UNREGISTERED COUPONS */}
+        {/* 3. UNUSED COUPONS */}
         <Link
           to="/admin/coupons-directory?status=Unused"
           className="border border-[#E8E3D8] bg-white p-4 rounded-[6px] shadow-2xs transition hover:border-stone-400 block group"
@@ -117,7 +140,7 @@ export function DashboardPage() {
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-wider text-stone-600 flex items-center gap-1.5">
               <Ticket size={14} className="text-[#9A7B4F]" />
-              <span>Unregistered Coupons</span>
+              <span>Unused Coupons</span>
             </span>
             <span className="inline-flex items-center gap-1 border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-800 rounded-[4px]">
               Available
@@ -131,56 +154,53 @@ export function DashboardPage() {
             <span className="text-stone-400 group-hover:text-stone-700 transition">View Coupons →</span>
           </div>
         </Link>
-
-        {/* 3. WON PARTICIPANTS */}
-        <Link
-          to="/admin/winners"
-          className="border border-[#E8E3D8] bg-white p-4 rounded-[6px] shadow-2xs transition hover:border-stone-400 block group"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-stone-600 flex items-center gap-1.5">
-              <Trophy size={14} className="text-[#9A7B4F]" />
-              <span>Won Participants</span>
-            </span>
-            <span className="inline-flex items-center gap-1 border border-[#D8C7A3] bg-[#FBF8F1] px-2 py-0.5 text-[10px] font-semibold text-[#8C6D38] rounded-[4px]">
-              Awarded
-            </span>
-          </div>
-          <p className="mt-2 text-3xl font-semibold tracking-tight text-stone-900">
-            <AnimatedNumber value={wonCount} />
-          </p>
-          <div className="mt-2 flex items-center justify-between text-xs text-stone-500 font-normal">
-            <span>Gifts Awarded: <strong className="text-[#8C6D38] font-semibold">{wonCount}</strong></span>
-            <span className="text-stone-400 group-hover:text-stone-700 transition">View Winners →</span>
-          </div>
-        </Link>
       </div>
 
-      {/* Secondary Quick Metrics */}
-      <div className="grid gap-3 sm:grid-cols-3">
-        <div className="border border-[#E8E3D8] bg-[#FAF8F5] p-3.5 rounded-[6px] flex items-center justify-between">
+      {/* Secondary Quick Metrics (Rest of the boxes below the top 3) */}
+      <div className="grid gap-3 grid-cols-2 sm:grid-cols-4">
+        <Link
+          to="/admin/participants"
+          className="border border-[#E8E3D8] bg-[#FAF8F5] p-3.5 rounded-[6px] flex items-center justify-between hover:border-stone-400 transition group"
+        >
           <div>
-            <p className="text-[11px] font-medium text-stone-500 uppercase tracking-wider">Total Coupons Generated</p>
-            <p className="text-xl font-semibold text-stone-900 mt-0.5">{totalCouponsCount.toLocaleString()}</p>
+            <p className="text-[11px] font-medium text-stone-500 uppercase tracking-wider">Registered Entrants</p>
+            <p className="text-xl font-semibold text-stone-900 mt-0.5">{registeredCount.toLocaleString()}</p>
           </div>
-          <Ticket size={20} className="text-stone-400" />
-        </div>
+          <Users size={20} className="text-stone-400 group-hover:text-emerald-700 transition" />
+        </Link>
 
-        <div className="border border-[#E8E3D8] bg-[#FAF8F5] p-3.5 rounded-[6px] flex items-center justify-between">
+        <Link
+          to="/admin/winners"
+          className="border border-[#E8E3D8] bg-[#FAF8F5] p-3.5 rounded-[6px] flex items-center justify-between hover:border-stone-400 transition group"
+        >
+          <div>
+            <p className="text-[11px] font-medium text-stone-500 uppercase tracking-wider">Won Participants</p>
+            <p className="text-xl font-semibold text-stone-900 mt-0.5">{wonCount.toLocaleString()}</p>
+          </div>
+          <Trophy size={20} className="text-stone-400 group-hover:text-[#9A7B4F] transition" />
+        </Link>
+
+        <Link
+          to="/admin/coupons"
+          className="border border-[#E8E3D8] bg-[#FAF8F5] p-3.5 rounded-[6px] flex items-center justify-between hover:border-stone-400 transition group"
+        >
           <div>
             <p className="text-[11px] font-medium text-stone-500 uppercase tracking-wider">Coupon Batches</p>
             <p className="text-xl font-semibold text-stone-900 mt-0.5">{allBatches.length}</p>
           </div>
-          <Layers size={20} className="text-stone-400" />
-        </div>
+          <Layers size={20} className="text-stone-400 group-hover:text-stone-700 transition" />
+        </Link>
 
-        <div className="border border-[#E8E3D8] bg-[#FAF8F5] p-3.5 rounded-[6px] flex items-center justify-between">
+        <Link
+          to="/admin/prizes"
+          className="border border-[#E8E3D8] bg-[#FAF8F5] p-3.5 rounded-[6px] flex items-center justify-between hover:border-stone-400 transition group"
+        >
           <div>
-            <p className="text-[11px] font-medium text-stone-500 uppercase tracking-wider">Festival Gifts in Vault</p>
+            <p className="text-[11px] font-medium text-stone-500 uppercase tracking-wider">Festival Gifts</p>
             <p className="text-xl font-semibold text-stone-900 mt-0.5">{(data.prizes || []).length}</p>
           </div>
-          <Gift size={20} className="text-[#9A7B4F]" />
-        </div>
+          <Gift size={20} className="text-[#9A7B4F] group-hover:scale-110 transition" />
+        </Link>
       </div>
 
       {/* Prepared Batches Section */}

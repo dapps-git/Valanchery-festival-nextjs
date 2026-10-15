@@ -10,12 +10,14 @@ import {
 } from 'lucide-react'
 import { PublicNavbar } from '../../components/PublicNavbar'
 import { FestivalAdBannerSlider } from '../../components/FestivalAdBannerSlider'
+import { RegisterCouponSection } from '../../components/RegisterCouponSection'
+import { FestivalThreeAdsSection } from '../../components/FestivalThreeAdsSection'
 
 export function HomePage() {
   const [videoModalOpen, setVideoModalOpen] = useState(false)
 
-  // If a user scans a QR code that points to the home page with a coupon code,
-  // automatically forward them to the registration page with the coupon query.
+  // If a user scans a QR code that lands on the home page with a coupon code,
+  // smoothly scroll them directly to the embedded registration section.
   useEffect(() => {
     if (typeof window === 'undefined') return
     const params = new URLSearchParams(window.location.search)
@@ -26,7 +28,10 @@ export function HomePage() {
       params.get('c') ||
       params.get('code')
     if (rawParam) {
-      window.location.replace(`/register${window.location.search}`)
+      setTimeout(() => {
+        const el = document.getElementById('register')
+        if (el) el.scrollIntoView({ behavior: 'smooth' })
+      }, 150)
     }
   }, [])
 
@@ -87,10 +92,10 @@ export function HomePage() {
                       Organized by Kerala Vyapari Vyavasayi Ekopana Samithi (KVVES) Valanchery Unit. Collect your official coupons from member shops and stand a chance to win mega bumper prizes!
                     </p>
 
-                    {/* Action Buttons -> Navigates to inner page /register, reduced size and border radius */}
+                    {/* Action Buttons -> Smooth scroll to #register on page */}
                     <div className="pt-1 flex flex-wrap items-center gap-2">
                       <a
-                        href="/register"
+                        href="#register"
                         className="inline-flex items-center gap-1.5 bg-[#0284c7] hover:bg-[#0369a1] text-white px-3.5 md:px-4 py-1.5 md:py-2 text-[11px] md:text-xs font-semibold tracking-wider uppercase transition shadow-xs active:scale-95 cursor-pointer rounded-md font-['Montserrat',sans-serif]"
                       >
                         <span>Register Coupon</span>
@@ -148,7 +153,7 @@ export function HomePage() {
                     {/* Reduced Size Buttons with Reduced Border Radius (rounded-md / 6px) */}
                     <div className="pt-2 flex items-center gap-2">
                       <a
-                        href="/register"
+                        href="#register"
                         className="inline-flex items-center gap-1.5 bg-[#0284c7] hover:bg-[#0369a1] text-white px-3.5 py-1.5 text-[11px] font-semibold tracking-wider uppercase transition shadow-xs active:scale-95 cursor-pointer rounded-md font-['Montserrat',sans-serif]"
                       >
                         <span>Register Coupon</span>
@@ -168,6 +173,18 @@ export function HomePage() {
             </div>
           </div>
         </section>
+
+        {/* ─────────────────────────────────────────────────────────────
+            FOLD 2: REGISTER COUPON SECTION (Embedded on Home Page)
+        ─────────────────────────────────────────────────────────────── */}
+        <div className="w-full pt-8 sm:pt-12 pb-6 sm:pb-8 bg-gradient-to-b from-white via-cyan-50/30 to-slate-50 border-b border-cyan-100/60">
+          <RegisterCouponSection id="register" />
+        </div>
+
+        {/* ─────────────────────────────────────────────────────────────
+            FOLD 3: 3 ADS DISPLAYED AT THE SAME TIME (Google-Ad Style)
+        ─────────────────────────────────────────────────────────────── */}
+        <FestivalThreeAdsSection />
 
         {/* Full-Width Inner Content Container */}
         <div className="w-full pt-8 sm:pt-10 space-y-6 sm:space-y-8">
