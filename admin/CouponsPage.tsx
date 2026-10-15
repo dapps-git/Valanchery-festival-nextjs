@@ -10,7 +10,6 @@ import {
   AlertTriangle,
   X,
   Tag,
-  Hash,
 } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
 import { api } from '@/lib/api'
@@ -26,7 +25,6 @@ export function CouponsPage() {
 
   const [count, setCount] = useState<number>(100)
   const [batchName, setBatchName] = useState<string>('')
-  const [startSerial, setStartSerial] = useState<number | ''>('')
   const [isGeneratingCsv, setIsGeneratingCsv] = useState(false)
   const [deletingBatchId, setDeletingBatchId] = useState<string | null>(null)
   const [downloadingBatchId, setDownloadingBatchId] = useState<string | null>(null)
@@ -41,10 +39,7 @@ export function CouponsPage() {
   }, [data.batches, coupons])
 
   const nextRecommendedSerial = maxExistingSerial + 1
-  const effectiveStartSerial = typeof startSerial === 'number' && startSerial >= 1 ? startSerial : nextRecommendedSerial
-
   const perPrefix = Math.ceil(count / 4)
-  const effectiveEndSerial = effectiveStartSerial + perPrefix - 1
 
   const openDeleteModal = (id: string, name: string) => {
     setDeleteTarget({ id, name })
@@ -73,7 +68,7 @@ export function CouponsPage() {
   const handleGenerateAndDownloadCsv = async () => {
     if (count <= 0) return
     setIsGeneratingCsv(true)
-    setProgressMsg(`Generating ${count.toLocaleString()} coupons (${perPrefix.toLocaleString()} each for A, B, C, D starting from #${effectiveStartSerial})...`)
+    setProgressMsg(`Generating ${count.toLocaleString()} coupons (${perPrefix.toLocaleString()} each for A, B, C, D starting from #${nextRecommendedSerial})...`)
 
     try {
       const finalBatchName = batchName.trim() || `Batch #${(data.batches || []).length + 1} (${count.toLocaleString()} pcs)`
@@ -84,7 +79,7 @@ export function CouponsPage() {
           const pct = Math.round((saved / total) * 100)
           setProgressMsg(`Saving to database... ${saved.toLocaleString()} / ${total.toLocaleString()} (${pct}%)`)
         },
-        effectiveStartSerial
+        nextRecommendedSerial
       )
 
       const safeName = finalBatchName.replace(/[\\/:*?"<>|]+/g, '_').trim()
@@ -92,7 +87,6 @@ export function CouponsPage() {
       exportCouponsToXlsx(newCoupons, fileName)
       setProgressMsg('Completed. Saved to database and exported as Excel.')
       setBatchName('')
-      setStartSerial('')
       setTimeout(() => setProgressMsg(''), 4000)
     } catch (err: any) {
       console.error('Excel generation error:', err)
@@ -213,55 +207,6 @@ export function CouponsPage() {
           </div>
         </div>
 
-        {/* 3. Starting Serial Number (Continuous Auto-Increment) */}
-        <div className="space-y-1.5 pt-1 border-t border-[#F2EFE9]">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
-            <label className="flex items-center gap-1.5 text-xs font-normal text-stone-700">
-              <Hash size={13} className="text-[#9A7B4F]" />
-              <span>Starting Serial Number</span>
-            </label>
-            {maxExistingSerial > 0 && (
-              <span className="text-[11px] font-mono text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-[4px] self-start sm:self-auto">
-                Continuous: Last ended at #{maxExistingSerial} (Next: #{nextRecommendedSerial})
-              </span>
-            )}
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-mono font-medium text-stone-500 bg-[#FAF8F5] border border-[#E8E3D8] px-3 py-2 rounded-[6px] shrink-0">
-              A / B / C / D
-            </span>
-            <input
-              type="number"
-              min={1}
-              value={startSerial === '' ? '' : startSerial}
-              onChange={(e) => {
-                const val = e.target.value === '' ? '' : Math.max(1, parseInt(e.target.value) || 1)
-                setStartSerial(val)
-              }}
-              placeholder={`Auto: ${nextRecommendedSerial}`}
-              className="w-full border border-[#E8E3D8] bg-white px-3.5 py-2 text-sm font-light text-stone-900 outline-none focus:border-[#9A7B4F] rounded-[6px]"
-            />
-            {typeof startSerial === 'number' && startSerial !== nextRecommendedSerial && (
-              <button
-                type="button"
-                onClick={() => setStartSerial('')}
-                className="text-[11px] text-stone-500 hover:text-stone-800 underline shrink-0 px-1 cursor-pointer"
-              >
-                Reset to #{nextRecommendedSerial}
-              </button>
-            )}
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2 text-[11px] text-stone-500 font-light pt-0.5">
-            <span>Will generate range:</span>
-            <span className="font-mono font-medium text-stone-800 bg-[#FAF8F5] px-1.5 py-0.5 rounded border border-[#E8E3D8]">
-              A{String(effectiveStartSerial).padStart(5, '0')} - D{String(effectiveEndSerial).padStart(5, '0')}
-            </span>
-            <span className="text-stone-400">({perPrefix.toLocaleString()} coupons per prefix)</span>
-          </div>
-        </div>
-
         {/* Progress message */}
         {progressMsg && (
           <div className="border border-[#E8E3D8] bg-[#FAF8F5] p-3 text-xs text-stone-700 font-normal rounded-[6px] flex items-center gap-2">
@@ -286,7 +231,7 @@ export function CouponsPage() {
               <>
                 <FileSpreadsheet size={15} className="text-[#C2A676]" />
                 <span>
-                  Generate & Export Excel ({count.toLocaleString()} Coupons: A{String(effectiveStartSerial).padStart(5, '0')}..D{String(effectiveEndSerial).padStart(5, '0')})
+                  Generate & Export Excel ({count.toLocaleString()} Coupons)
                 </span>
               </>
             )}
