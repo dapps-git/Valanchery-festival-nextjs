@@ -3,6 +3,7 @@ import mongoose, { Schema, Document } from 'mongoose'
 export interface ICouponBatch extends Document {
   id: string
   name: string
+  batchName?: string
   count: number
   startId: string
   endId: string
@@ -15,6 +16,7 @@ const CouponBatchSchema = new Schema<ICouponBatch>(
   {
     id: { type: String, required: true, unique: true, index: true },
     name: { type: String, required: true },
+    batchName: { type: String, index: true },
     count: { type: Number, required: true },
     startId: { type: String, required: true },
     endId: { type: String, required: true },

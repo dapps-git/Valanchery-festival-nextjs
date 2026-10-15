@@ -97,6 +97,14 @@ export function CouponsDirectoryPage() {
       ? serverFiltered
       : (statusFilter === 'Used' ? usedCount : statusFilter === 'Unused' ? activeCount : totalCount)
 
+  const batchMap = useMemo(() => {
+    const map = new Map<string, string>()
+    ;(data.batches || []).forEach((b) => {
+      if (b && b.id) map.set(b.id, b.name || b.batchName || b.id)
+    })
+    return map
+  }, [data.batches])
+
   const displayCoupons = useMemo(() => {
     if (serverCoupons && serverCoupons.length > 0) {
       let list = serverCoupons
@@ -108,6 +116,7 @@ export function CouponsDirectoryPage() {
             id: c.id,
             serialNo: c.serialNo,
             batchId: c.batchId,
+            batchName: c.batchName || batchMap.get(c.batchId) || '',
             status: c.status,
             createdAt: c.createdAt,
             usedAt: c.usedAt || p?.registeredAt,
@@ -134,6 +143,7 @@ export function CouponsDirectoryPage() {
           id: c.id,
           serialNo: c.serialNo,
           batchId: c.batchId,
+          batchName: c.batchName || batchMap.get(c.batchId) || '',
           status: (p ? 'Used' : c.status) as 'Unused' | 'Used',
           createdAt: c.createdAt,
           usedAt: p?.registeredAt,
@@ -343,9 +353,16 @@ export function CouponsDirectoryPage() {
 
                     <td className="px-4 py-3">
                       {item.serialNo ? (
-                        <span className="font-mono text-xs bg-[#FAF8F5] px-2 py-0.5 rounded-[4px] border border-[#E8E3D8]" style={{ color: '#1c1917', fontWeight: 700 }}>
-                          {String(item.serialNo)}
-                        </span>
+                        <div className="space-y-0.5">
+                          <span className="font-mono text-xs bg-[#FAF8F5] px-2 py-0.5 rounded-[4px] border border-[#E8E3D8] inline-block" style={{ color: '#1c1917', fontWeight: 700 }}>
+                            {String(item.serialNo)}
+                          </span>
+                          {item.batchName && (
+                            <div className="text-[10px] text-stone-500 font-light truncate max-w-[140px]" title={item.batchName}>
+                              {item.batchName}
+                            </div>
+                          )}
+                        </div>
                       ) : (
                         <span style={{ color: '#a8a29e' }}>—</span>
                       )}

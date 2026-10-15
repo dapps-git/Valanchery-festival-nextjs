@@ -178,6 +178,7 @@ router.post('/generate', requireAdminAuth, async (req, res) => {
             id,
             serialNo: `${prefix}${String(serialNum).padStart(5, '0')}`,
             batchId,
+            batchName: name,
             status: 'Unused' as const,
             createdAt: now,
           })
@@ -200,6 +201,7 @@ router.post('/generate', requireAdminAuth, async (req, res) => {
     const batch = await CouponBatch.create({
       id: batchId,
       name,
+      batchName: name,
       count,
       startId,
       endId,
@@ -220,9 +222,14 @@ router.post('/bulk-insert', requireAdminAuth, async (req, res) => {
     const { batch, coupons } = req.body || {}
     
     if (batch && batch.id) {
+      const batchDoc = {
+        ...batch,
+        name: batch.name || batch.batchName,
+        batchName: batch.batchName || batch.name,
+      }
       await CouponBatch.updateOne(
         { id: batch.id },
-        { $set: batch },
+        { $set: batchDoc },
         { upsert: true }
       )
     }

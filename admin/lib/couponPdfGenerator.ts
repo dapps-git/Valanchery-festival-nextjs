@@ -118,6 +118,7 @@ export function createCouponBatch(
           serialNo,          // Formatted serial number (e.g. A00011, B00011..A00020)
           prefix,            // 'A' | 'B' | 'C' | 'D'
           batchId,
+          batchName: batchName || `Coupons Batch (${total} pcs)`,
           status: 'Unused',
           createdAt: now,
         })
@@ -130,14 +131,15 @@ export function createCouponBatch(
   const startId = coupons.length > 1 ? `${firstSerial} - ${lastSerial}` : firstSerial
   const endId = lastSerial
 
+  const resolvedBatchName = batchName || `Coupons Batch (${coupons.length} pcs)`
   const batch: CouponBatch = {
     id: batchId,
-    name: batchName || `Coupons Batch (${coupons.length} pcs)`,
+    name: resolvedBatchName,
+    batchName: resolvedBatchName,
     count: coupons.length,
     startId,
     endId,
     createdAt: now,
-    unusedCount: coupons.length,
     usedCount: 0,
   }
 

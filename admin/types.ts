@@ -23,6 +23,7 @@ export interface Coupon {
   serialNo?: string // Sequential 6-digit prefix ID e.g. "A000001"
   prefix?: 'A' | 'B' | 'C' | 'D' | string
   batchId: string
+  batchName?: string
   status: CouponStatus
   createdAt: string
   usedAt?: string
@@ -34,6 +35,7 @@ export interface Coupon {
 export interface CouponBatch {
   id: string
   name: string
+  batchName?: string
   count: number
   startId: string
   endId: string

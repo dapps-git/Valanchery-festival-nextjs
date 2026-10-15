@@ -4,6 +4,7 @@ export interface ICoupon extends Document {
   id: string // 10-digit unique coupon token
   serialNo: string  // formatted serial like 'A00001', 'B00025'
   batchId: string
+  batchName?: string
   status: 'Unused' | 'Used'
   createdAt: string
   usedAt?: string
@@ -17,6 +18,7 @@ const CouponSchema = new Schema<ICoupon>(
     id: { type: String, required: true, unique: true, index: true },
     serialNo: { type: String, index: true },
     batchId: { type: String, required: true, index: true },
+    batchName: { type: String, index: true },
     status: { type: String, enum: ['Unused', 'Used'], default: 'Unused', index: true },
     createdAt: { type: String, required: true },
     usedAt: { type: String },
