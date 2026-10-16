@@ -12,25 +12,32 @@ export interface BannerSlide {
 
 const BANNERS: BannerSlide[] = [
   {
-    id: 'banner-shopping-festival',
-    title: 'Valanchery Shopping Festival - Purchase Things & Earn Coupon',
-    src: '/banner-shopping-festival.png',
-    alt: 'Valanchery Shopping Festival - Purchase Things & Earn Coupon - Get Exclusive Coupon',
-    link: '/register',
+    id: 'banner-1',
+    title: 'Valanchery Shopping Festival - Banner 1',
+    src: '/banner1.webp',
+    alt: 'Valanchery Shopping Festival Banner 1',
+    link: '#register',
   },
   {
-    id: 'festival-coupon-banner',
-    title: 'Official Festival Lucky Draw Coupon - Win Swift Car & Scooters',
-    src: '/festival-coupon-banner.png',
-    alt: 'Valanchery Shopping Festival Official Coupon - Win Swift Car & Scooters',
-    link: '/register',
+    id: 'banner-2',
+    title: 'Valanchery Shopping Festival - Banner 2',
+    src: '/banner2.webp',
+    alt: 'Valanchery Shopping Festival Banner 2',
+    link: '#register',
   },
   {
-    id: 'banner-bumper-draw',
-    title: 'Mega Bumper Lucky Draw - Win Car, Bikes & Gold',
-    src: '/banner-bumper-draw.png',
-    alt: 'Valanchery Festival Mega Bumper Draw - Win Car, Bikes & Gold',
-    link: '/register',
+    id: 'banner-3',
+    title: 'Valanchery Shopping Festival - Banner 3',
+    src: '/banner3.webp',
+    alt: 'Valanchery Shopping Festival Banner 3',
+    link: '#register',
+  },
+  {
+    id: 'banner-4',
+    title: 'Valanchery Shopping Festival - Banner 4',
+    src: '/banner4.webp',
+    alt: 'Valanchery Shopping Festival Banner 4',
+    link: '#register',
   },
 ]
 
