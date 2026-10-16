@@ -89,11 +89,10 @@ export function FestivalAdBannerSlider() {
       onTouchEnd={handleTouchEnd}
     >
       {/* 
-        Zero Border Radius (rounded-none).
+        Clean Rounded Border & Shadow for Banner.
         Pure 3:1 natural banner aspect ratio (aspect-[1024/342]).
-        No breadcrumb dots or side arrow buttons.
       */}
-      <div className="relative w-full overflow-hidden rounded-none border-0 shadow-md bg-slate-950 aspect-[1024/342] transition-all duration-300">
+      <div className="relative w-full overflow-hidden rounded-lg sm:rounded-xl border border-slate-300 shadow-md sm:shadow-lg bg-white aspect-[1024/342] transition-all duration-300 ring-1 ring-black/5">
         {/* Slides Track */}
         <div
           className="flex w-full h-full transition-transform duration-700 ease-out"

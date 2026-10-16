@@ -64,8 +64,8 @@ export function HomePage() {
                 />
               </picture>
 
-              {/* 1. Floating Ad Banner Slideshow Directly ON the Sky of hero.png - Sleek, Compact Size on Laptop */}
-              <div className="absolute top-1 sm:top-1.5 md:top-2 inset-x-0 z-20 flex justify-center px-4 pointer-events-auto">
+              {/* 1. Floating Ad Banner Slideshow Directly ON the Sky of hero.png - Small distance from navbar with border */}
+              <div className="absolute top-2.5 sm:top-3 md:top-3.5 lg:top-4 inset-x-0 z-20 flex justify-center px-4 pointer-events-auto">
                 <div className="w-full max-w-sm sm:max-w-md md:max-w-lg">
                   <FestivalAdBannerSlider />
                 </div>
@@ -116,8 +116,8 @@ export function HomePage() {
 
             {/* Mobile View Banner: Uses image.png with text & buttons directly ON the banner */}
             <div className="sm:hidden relative w-full overflow-hidden p-0 m-0">
-              {/* Mobile Ad Banner Slider: 100% Full-bleed with ZERO empty space on right, left or anywhere */}
-              <div className="w-full p-0 m-0 overflow-hidden border-b border-slate-200">
+              {/* Mobile Ad Banner Slider: Small distance from navbar and nice border frame */}
+              <div className="w-full px-3 pt-2.5 pb-2">
                 <FestivalAdBannerSlider />
               </div>
 
