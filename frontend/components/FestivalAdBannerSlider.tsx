@@ -12,25 +12,32 @@ export interface BannerSlide {
 
 const BANNERS: BannerSlide[] = [
   {
-    id: 'banner-shopping-festival',
-    title: 'Valanchery Shopping Festival - Purchase Things & Earn Coupon',
-    src: '/banner-shopping-festival.png',
-    alt: 'Valanchery Shopping Festival - Purchase Things & Earn Coupon - Get Exclusive Coupon',
-    link: '/register',
+    id: 'banner-1',
+    title: 'Valanchery Shopping Festival - Banner 1',
+    src: '/banner1.webp',
+    alt: 'Valanchery Shopping Festival Banner 1',
+    link: '#register',
   },
   {
-    id: 'festival-coupon-banner',
-    title: 'Official Festival Lucky Draw Coupon - Win Swift Car & Scooters',
-    src: '/festival-coupon-banner.png',
-    alt: 'Valanchery Shopping Festival Official Coupon - Win Swift Car & Scooters',
-    link: '/register',
+    id: 'banner-2',
+    title: 'Valanchery Shopping Festival - Banner 2',
+    src: '/banner2.webp',
+    alt: 'Valanchery Shopping Festival Banner 2',
+    link: '#register',
   },
   {
-    id: 'banner-bumper-draw',
-    title: 'Mega Bumper Lucky Draw - Win Car, Bikes & Gold',
-    src: '/banner-bumper-draw.png',
-    alt: 'Valanchery Festival Mega Bumper Draw - Win Car, Bikes & Gold',
-    link: '/register',
+    id: 'banner-3',
+    title: 'Valanchery Shopping Festival - Banner 3',
+    src: '/banner3.webp',
+    alt: 'Valanchery Shopping Festival Banner 3',
+    link: '#register',
+  },
+  {
+    id: 'banner-4',
+    title: 'Valanchery Shopping Festival - Banner 4',
+    src: '/banner4.webp',
+    alt: 'Valanchery Shopping Festival Banner 4',
+    link: '#register',
   },
 ]
 
@@ -89,11 +96,10 @@ export function FestivalAdBannerSlider() {
       onTouchEnd={handleTouchEnd}
     >
       {/* 
-        Zero Border Radius (rounded-none).
+        Clean Rounded Border & Shadow for Banner.
         Pure 3:1 natural banner aspect ratio (aspect-[1024/342]).
-        No breadcrumb dots or side arrow buttons.
       */}
-      <div className="relative w-full overflow-hidden rounded-none border-0 shadow-md bg-slate-950 aspect-[1024/342] transition-all duration-300">
+      <div className="relative w-full overflow-hidden rounded-lg sm:rounded-xl border border-slate-300 shadow-md sm:shadow-lg bg-white aspect-[1024/342] transition-all duration-300 ring-1 ring-black/5">
         {/* Slides Track */}
         <div
           className="flex w-full h-full transition-transform duration-700 ease-out"
