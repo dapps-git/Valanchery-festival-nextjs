@@ -109,6 +109,18 @@ export function HomePage() {
                         <span>Learn More</span>
                       </a>
                     </div>
+
+                    {/* Official Coupon Ticket Preview directly below the buttons */}
+                    <div className="pt-2 sm:pt-2.5 max-w-sm sm:max-w-md">
+                      <div className="rounded-lg sm:rounded-xl overflow-hidden border border-slate-300 shadow-md bg-white ring-1 ring-black/5 hover:shadow-lg transition">
+                        <img
+                          src="/festival-coupon-banner.png"
+                          alt="Official Lucky Draw Coupon Ticket"
+                          className="w-full h-auto block object-contain"
+                          loading="lazy"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -166,6 +178,18 @@ export function HomePage() {
                       >
                         <span>Learn More</span>
                       </a>
+                    </div>
+
+                    {/* Official Coupon Ticket Preview directly below Register Coupon & Learn More */}
+                    <div className="pt-2.5 w-full">
+                      <div className="rounded-lg overflow-hidden border border-slate-300 shadow-md bg-white ring-1 ring-black/5">
+                        <img
+                          src="/festival-coupon-banner.png"
+                          alt="Official Lucky Draw Coupon Ticket"
+                          className="w-full h-auto block object-contain"
+                          loading="lazy"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
