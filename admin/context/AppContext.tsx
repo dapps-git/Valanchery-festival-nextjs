@@ -165,7 +165,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Fetch data from MongoDB Atlas and auto-sync in real-time
   const isRefreshingRef = useRef(false)
-  const refreshData = async () => {
+  const refreshData = async (force = false) => {
+    // Skip polling if page is hidden in background tab to preserve network bandwidth
+    if (!force && typeof document !== 'undefined' && document.hidden) return
     if (isRefreshingRef.current) return
     isRefreshingRef.current = true
     try {
@@ -190,10 +192,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
-    refreshData()
-    // Polling every 20 seconds to prevent Cloudflare / Namecheap 429 rate limits
-    const timer = setInterval(refreshData, 20000)
-    const onFocus = () => refreshData()
+    // Initial fetch on mount
+    refreshData(true)
+
+    // Polling every 60s only when the tab is actively visible
+    const timer = setInterval(() => {
+      if (typeof document !== 'undefined' && !document.hidden) {
+        refreshData()
+      }
+    }, 60000)
+
+    // Immediate refresh whenever admin switches back to the tab
+    const onFocus = () => {
+      if (typeof document !== 'undefined' && !document.hidden) {
+        refreshData(true)
+      }
+    }
     window.addEventListener('focus', onFocus)
     document.addEventListener('visibilitychange', onFocus)
 

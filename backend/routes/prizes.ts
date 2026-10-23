@@ -26,6 +26,12 @@ router.post('/', requireAdminAuth, async (req, res) => {
     const status = req.body.status || 'Available'
     const competitionType = req.body.competitionType || 'Normal'
     const image = req.body.image || ''
+    if (typeof image === 'string' && image.startsWith('data:image')) {
+      return res.status(400).json({
+        ok: false,
+        error: 'Raw base64 images cannot be saved directly into the database. Please upload via Cloudinary to prevent bandwidth exhaustion.',
+      })
+    }
     const value = req.body.value || '₹0'
     const description = req.body.description || ''
     const name = req.body.name || 'Festival Prize'
@@ -56,6 +62,12 @@ router.post('/', requireAdminAuth, async (req, res) => {
 router.put('/:id', requireAdminAuth, async (req, res) => {
   try {
     const patch = { ...req.body }
+    if (typeof patch.image === 'string' && patch.image.startsWith('data:image')) {
+      return res.status(400).json({
+        ok: false,
+        error: 'Raw base64 images cannot be saved directly into the database. Please upload via Cloudinary to prevent bandwidth exhaustion.',
+      })
+    }
     const updated = await Prize.findOneAndUpdate({ id: req.params.id }, { $set: patch }, { new: true }).lean()
     res.json({ ok: true, prize: updated })
   } catch (error: any) {

@@ -141,6 +141,7 @@ export function createCouponBatch(
     endId,
     createdAt: now,
     usedCount: 0,
+    unusedCount: coupons.length,
   }
 
   return { coupons, batch }

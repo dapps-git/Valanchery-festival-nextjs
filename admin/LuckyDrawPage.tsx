@@ -72,6 +72,7 @@ export function LuckyDrawPage() {
   })
   const [isUploading, setIsUploading] = useState(false)
   const [uploadSuccess, setUploadSuccess] = useState('')
+  const [uploadError, setUploadError] = useState('')
 
   // Load Competition-specific gifts from database
   const competitionGifts = useMemo(() => {
@@ -413,12 +414,8 @@ export function LuckyDrawPage() {
       } else {
         throw new Error(json.error || 'Upload error')
       }
-    } catch {
-      if (webpDataUrl) {
-        setNewGift((prev) => ({ ...prev, image: webpDataUrl }))
-        setUploadSuccess('Compressed to WebP')
-        setTimeout(() => setUploadSuccess(''), 3000)
-      }
+    } catch (err: any) {
+      setUploadError(err.message || 'Image upload failed. Please verify Cloudinary configuration.')
     } finally {
       setIsUploading(false)
     }

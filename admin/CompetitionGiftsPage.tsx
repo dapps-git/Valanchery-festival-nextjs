@@ -72,13 +72,8 @@ export function CompetitionGiftsPage({ type }: CompetitionGiftsPageProps) {
       } else {
         throw new Error(json.error || 'Failed to upload image')
       }
-    } catch {
-      // Fallback to compressed WebP data URL
-      if (webpDataUrl) {
-        setEdit((prev) => (prev ? { ...prev, image: webpDataUrl } : null))
-        setUploadSuccess('Compressed to WebP')
-        setTimeout(() => setUploadSuccess(''), 3000)
-      }
+    } catch (err: any) {
+      setUploadError(err.message || 'Image upload failed. Please verify Cloudinary configuration.')
     } finally {
       setIsUploading(false)
     }
