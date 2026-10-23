@@ -51,13 +51,7 @@ export function PrizesPage() {
         throw new Error(json.error || 'Failed to upload to Cloudinary')
       }
     } catch (err: any) {
-      if (webpDataUrl) {
-        setEdit((prev) => (prev ? { ...prev, image: webpDataUrl } : null))
-        setUploadSuccess('Compressed to WebP')
-        setTimeout(() => setUploadSuccess(''), 3000)
-      } else {
-        setUploadError(err.message || 'Upload failed')
-      }
+      setUploadError(err.message || 'Image upload failed. Please verify Cloudinary configuration.')
     } finally {
       setIsUploading(false)
     }
