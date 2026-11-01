@@ -159,19 +159,6 @@ const server = app.listen(PORT, () => {
 server.keepAliveTimeout = 65000
 server.headersTimeout = 70000
 
-// ── Self-Keepalive Ping: Prevents Render free instance from spinning down into sleep ──
-const KEEP_ALIVE_URL = process.env.RENDER_EXTERNAL_URL
-if (KEEP_ALIVE_URL) {
-  setInterval(async () => {
-    try {
-      const healthUrl = `${KEEP_ALIVE_URL.replace(/\/$/, '')}/health`
-      await fetch(healthUrl)
-    } catch {
-      // Background keepalive ping silently ignores transient network drops
-    }
-  }, 10 * 60 * 1000) // Every 10 minutes
-}
-
 // ── MongoDB connection event listeners for 1-year resilience ──
 mongoose.connection.on('disconnected', () => {
   console.warn('⚠️ MongoDB disconnected. Mongoose will attempt automatic reconnection...')

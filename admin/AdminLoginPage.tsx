@@ -494,7 +494,7 @@ export function AdminLoginPage() {
                 </div>
 
                 <p className="text-[10px] text-stone-400 font-light leading-normal">
-                  ⚠️ Once saved, default password (<strong>Admin@2026</strong>) will be disabled permanently. Only your new password will be accepted.
+                  ⚠️ Once saved, default password (<strong>Festival@2027</strong>) will be disabled permanently. Only your new password will be accepted.
                 </p>
 
                 <div className="pt-2 flex gap-2">
