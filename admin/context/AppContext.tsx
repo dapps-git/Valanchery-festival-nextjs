@@ -109,37 +109,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<AppData>(loadLocalData)
   const [isOnline, setIsOnline] = useState(false)
 
-  // 24-hour auto logout monitor + password change verification
+  // 24-hour auto logout monitor (checked locally with 0 network calls)
   useEffect(() => {
-    const checkSessionExpiry = async () => {
+    const checkSessionExpiry = () => {
       if (!isAdmin) return
       if (!isSessionValid()) {
         setIsAdmin(false)
         api.logout()
         alert('Your admin session has expired (24 hours). Please log in again.')
-        return
-      }
-
-      // Verify with backend if password was changed on another system
-      try {
-        const res = await api.verifySession()
-        if (!res.ok) {
-          localStorage.removeItem(TOKEN_KEY)
-          localStorage.removeItem(TOKEN_EXP_KEY)
-          localStorage.removeItem(AUTH_KEY)
-          setIsAdmin(false)
-          api.logout()
-          alert(res.error || 'Your admin session has expired. Please log in again.')
-          if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
-            window.location.href = '/admin/login'
-          }
+        if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+          window.location.href = '/admin/login'
         }
-      } catch {
-        // ignore temporary network blip
       }
     }
 
-    const interval = setInterval(checkSessionExpiry, 15000)
+    const interval = setInterval(checkSessionExpiry, 60000)
     return () => clearInterval(interval)
   }, [isAdmin])
 
@@ -195,12 +179,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     // Initial fetch on mount
     refreshData(true)
 
-    // Polling every 60s only when the tab is actively visible
+    // Relaxed polling every 3 minutes, only when tab is actively visible
     const timer = setInterval(() => {
       if (typeof document !== 'undefined' && !document.hidden) {
         refreshData()
       }
-    }, 60000)
+    }, 180000)
 
     // Immediate refresh whenever admin switches back to the tab
     const onFocus = () => {

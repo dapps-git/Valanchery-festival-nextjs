@@ -17,7 +17,8 @@ dotenv.config()
 
 const MONGODB_URI = process.env.MONGODB_URI!
 const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || '').toLowerCase().trim()
-const DEFAULT_PASSWORD = 'Admin@2026'
+const DEFAULT_PASSWORD = 'Festival@2027'
+const isForce = process.argv.includes('--force')
 
 async function seed() {
   if (!MONGODB_URI) {
@@ -34,8 +35,8 @@ async function seed() {
     const col = db.collection('admin_settings')
 
     const existing = await col.findOne({ id: 'admin_credential' })
-    if (existing) {
-      console.log('⚠️  Admin credential already seeded. Skipping.')
+    if (existing && !isForce) {
+      console.log('⚠️  Admin credential already seeded. Skipping (use --force to overwrite).')
       console.log(`   Email: ${existing.email}`)
       console.log(`   Custom password set: ${existing.isCustomPassword ? 'YES' : 'NO (default active)'}`)
       return
@@ -43,19 +44,28 @@ async function seed() {
 
     const hashedPassword = await bcrypt.hash(DEFAULT_PASSWORD, 12)
 
-    await col.insertOne({
-      id: 'admin_credential',
-      email: ADMIN_EMAIL,
-      password: hashedPassword,
-      isCustomPassword: false,   // false = default password still valid
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    })
+    await col.updateOne(
+      { id: 'admin_credential' },
+      {
+        $set: {
+          id: 'admin_credential',
+          email: ADMIN_EMAIL,
+          password: hashedPassword,
+          isCustomPassword: false,   // false = default password still valid until changed
+          passwordChangedAt: null,
+          updatedAt: new Date().toISOString(),
+        },
+        $setOnInsert: {
+          createdAt: new Date().toISOString(),
+        },
+      },
+      { upsert: true }
+    )
 
     console.log('✅ Admin credentials seeded!')
     console.log(`   Email:    ${ADMIN_EMAIL}`)
     console.log(`   Password: ${DEFAULT_PASSWORD}  (hashed with bcrypt)`)
-    console.log('   Change it via the admin panel → Forgot Password → OTP flow')
+    console.log('   Note: Once changed via admin panel, the default password is permanently disabled.')
   } finally {
     await client.close()
   }

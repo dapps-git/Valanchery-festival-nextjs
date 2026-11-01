@@ -66,7 +66,7 @@ export async function POST(request: Request) {
 
     // ── Auto-seed on first login ────────────────────────────────────────────
     if (!adminDoc) {
-      const hashedDefault = await bcrypt.hash('Admin@2026', 12)
+      const hashedDefault = await bcrypt.hash('Festival@2027', 12)
       await col.insertOne({
         id: 'admin_credential',
         email: ADMIN_EMAIL,
@@ -90,8 +90,8 @@ export async function POST(request: Request) {
       isMatch = cleanPass === storedHash
     }
 
-    // Default password ONLY works if NO custom password has ever been set
-    if (!isMatch && !adminDoc?.isCustomPassword && cleanPass === 'Admin@2026') {
+    // Default password ONLY works if NO custom password has ever been set and never changed
+    if (!isMatch && !adminDoc?.isCustomPassword && !adminDoc?.passwordChangedAt && cleanPass === 'Festival@2027') {
       isMatch = true
     }
 

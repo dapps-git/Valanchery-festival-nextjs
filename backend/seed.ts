@@ -102,7 +102,7 @@ export async function seedDatabase() {
       const existing = await col.findOne({ id: 'admin_credential' })
       if (!existing) {
         const defaultEmail = (process.env.ADMIN_EMAIL || '').toLowerCase().trim()
-        const hashedPassword = await bcrypt.hash('Admin@2026', 12)
+        const hashedPassword = await bcrypt.hash('Festival@2027', 12)
         await col.insertOne({
           id: 'admin_credential',
           email: defaultEmail,

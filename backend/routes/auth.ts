@@ -67,7 +67,7 @@ router.post('/login', loginLimiter, async (req, res) => {
     if (db) {
       adminDoc = await db.collection('admin_settings').findOne({ id: 'admin_credential' })
       if (!adminDoc) {
-        const hashedDefault = await bcrypt.hash('Admin@2026', 12)
+        const hashedDefault = await bcrypt.hash('Festival@2027', 12)
         await db.collection('admin_settings').insertOne({
           id: 'admin_credential',
           email: ADMIN_LOGIN_EMAIL,
@@ -91,8 +91,8 @@ router.post('/login', loginLimiter, async (req, res) => {
         isMatch = cleanPass === storedPass
       }
 
-      // Default password ONLY works if NO custom password was ever set
-      if (!isMatch && !adminDoc.isCustomPassword && cleanPass === 'Admin@2026') {
+      // Default password ONLY works if NO custom password was ever set and never changed
+      if (!isMatch && !adminDoc.isCustomPassword && !adminDoc.passwordChangedAt && cleanPass === 'Festival@2027') {
         isMatch = true
       }
 
