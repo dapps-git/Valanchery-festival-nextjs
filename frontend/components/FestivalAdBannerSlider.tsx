@@ -12,6 +12,13 @@ export interface BannerSlide {
 
 const BANNERS: BannerSlide[] = [
   {
+    id: 'banner-solar',
+    title: 'Bayment Solar Shopping Festival',
+    src: '/bayment-solar-festival-banner.jpg',
+    alt: 'Bayment Solar Shopping Festival',
+    link: '#register',
+  },
+  {
     id: 'banner-1',
     title: 'Valanchery Shopping Festival - Banner 1',
     src: '/banner1.webp',

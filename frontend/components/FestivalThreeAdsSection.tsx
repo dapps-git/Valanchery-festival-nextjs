@@ -1,8 +1,8 @@
 'use client'
 
 const BANNERS_GRID = [
-  { id: 'banner-1', src: '/ad-banner-gift.png', alt: 'Festival Shopping & Gifts', link: '#register' },
-  { id: 'banner-2', src: '/ad-banner-cart.png', alt: 'Festival Electronics & Lifestyle', link: '#register' },
+  { id: 'banner-1', src: '/bayment-prizes-poster.jpg', alt: 'Bayment Special Offers & Prizes', link: '#register' },
+  { id: 'banner-2', src: '/bayment-store-poster.jpg', alt: 'Bayment Store Special Offer', link: '#register' },
 ]
 
 export function FestivalThreeAdsSection() {
