@@ -350,9 +350,12 @@ export function RegisterCouponSection({
         {/* Section Header */}
         {!compact && (
           <div className="text-center space-y-2 mb-6">
-            <div className="inline-flex items-center gap-1.5 bg-cyan-50 border border-cyan-200/80 px-3 py-1 rounded-full text-[11px] font-bold text-[#0284c7] uppercase tracking-wider">
-              <Sparkles size={12} className="text-[#0284c7]" />
-              <span>Official Lucky Draw Entry</span>
+            <div className="flex justify-center mb-3">
+              <img
+                src="/kvves-hd-logo.png"
+                alt="Kerala Vyapari Vyavasayi Ekopana Samithi Valanchery Unit"
+                className="h-10 sm:h-12 md:h-14 w-auto object-contain drop-shadow-xs"
+              />
             </div>
             <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 font-['Montserrat',sans-serif]">
               {title}

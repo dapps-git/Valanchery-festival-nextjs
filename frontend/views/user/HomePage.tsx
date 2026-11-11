@@ -64,16 +64,9 @@ export function HomePage() {
                 />
               </picture>
 
-              {/* 1. Floating Ad Banner Slideshow Directly ON the Sky of hero.png with KVVES Malayalam logo above */}
-              <div className="absolute top-2 sm:top-2.5 md:top-3 inset-x-0 z-20 flex flex-col items-center gap-1.5 px-4 pointer-events-auto">
-                <div className="flex justify-center">
-                  <img
-                    src="/kvves-hd-logo.png"
-                    alt="Kerala Vyapari Vyavasayi Ekopana Samithi Valanchery Unit"
-                    className="h-5 sm:h-6 md:h-7 w-auto object-contain drop-shadow-xs"
-                  />
-                </div>
-                <div className="w-full max-w-sm sm:max-w-md md:max-w-lg">
+              {/* 1. Floating Ad Banner Slideshow - Expanded Width & Focus directly ON the Sky of hero.png */}
+              <div className="absolute top-2 sm:top-2.5 md:top-3 inset-x-0 z-20 flex justify-center px-3 sm:px-6 pointer-events-auto">
+                <div className="w-full max-w-xl sm:max-w-2xl md:max-w-3xl lg:max-w-4xl">
                   <FestivalAdBannerSlider />
                 </div>
               </div>
@@ -82,15 +75,6 @@ export function HomePage() {
               <div className="absolute inset-0 flex flex-col justify-start pt-20 sm:pt-24 md:pt-28 lg:pt-32 xl:pt-36 z-10 pointer-events-none">
                 <div className="w-full max-w-7xl mx-auto px-6 md:px-10 lg:px-14">
                   <div className="max-w-[50%] lg:max-w-[46%] space-y-2 pointer-events-auto">
-
-                    {/* Kerala KVVES Unit HD Logo */}
-                    <div className="pb-1">
-                      <img
-                        src="/kvves-hd-logo.png"
-                        alt="Kerala Vyapari Vyavasayi Ekopana Samithi Valanchery Unit"
-                        className="h-10 sm:h-12 md:h-14 lg:h-16 w-auto object-contain drop-shadow-2xs"
-                      />
-                    </div>
 
                     {/* Headline row: Valanchery Shopping in same line with 'approved by' towards the right end */}
                     <div className="space-y-0.5">
@@ -135,24 +119,15 @@ export function HomePage() {
             </div>
 
             {/* Mobile View: Clean white background with natural flowing content (bg image removed) */}
-            <div className="sm:hidden relative w-full bg-white px-3.5 pt-3 pb-6">
+            <div className="sm:hidden relative w-full bg-white px-3.5 pt-0 pb-6">
               <div className="space-y-3 w-full">
-                {/* 1. Floating Ad Banner Slider */}
-                <div className="w-full">
+                {/* 1. Full-bleed Ad Banner Slider (Zero empty spacing on both ends, increased height) */}
+                <div className="-mx-3.5 w-[calc(100%+28px)] overflow-hidden">
                   <FestivalAdBannerSlider />
                 </div>
 
-                {/* 2. Kerala KVVES HD Logo */}
-                <div className="pt-1">
-                  <img
-                    src="/kvves-hd-logo.png"
-                    alt="Kerala Vyapari Vyavasayi Ekopana Samithi Valanchery Unit"
-                    className="h-8 xs:h-9 sm:h-10 w-auto object-contain"
-                  />
-                </div>
-
-                {/* 3. Main Headline: Line 1 with 'approved by' on the same line towards right end */}
-                <div className="space-y-0.5">
+                {/* 2. Main Headline: Line 1 with 'approved by' on the same line towards right end */}
+                <div className="space-y-0.5 pt-1">
                   <div className="flex items-center justify-between gap-3">
                     <span className="text-xl xs:text-2xl font-bold text-[#0369a1] tracking-tight leading-none font-['Montserrat',sans-serif]">
                       Valanchery Shopping
