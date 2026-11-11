@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 export interface BannerSlide {
   id: string
@@ -50,9 +51,7 @@ const BANNERS: BannerSlide[] = [
 
 export function FestivalAdBannerSlider() {
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [isPaused, setIsPaused] = useState(false)
   const [touchStartX, setTouchStartX] = useState<number | null>(null)
-  const timerRef = useRef<NodeJS.Timeout | null>(null)
 
   const nextSlide = useCallback(() => {
     setCurrentIndex((prev) => (prev + 1) % BANNERS.length)
@@ -62,21 +61,14 @@ export function FestivalAdBannerSlider() {
     setCurrentIndex((prev) => (prev - 1 + BANNERS.length) % BANNERS.length)
   }, [])
 
-  // Auto-slide every 3 seconds (3000ms), paused on user hover
+  // Auto-slide every 3.5 seconds (3500ms) uninterrupted
   useEffect(() => {
-    if (isPaused) {
-      if (timerRef.current) clearInterval(timerRef.current)
-      return
-    }
+    const timer = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % BANNERS.length)
+    }, 3500)
 
-    timerRef.current = setInterval(() => {
-      nextSlide()
-    }, 3000)
-
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current)
-    }
-  }, [nextSlide, isPaused, currentIndex])
+    return () => clearInterval(timer)
+  }, [])
 
   // Touch gestures for mobile swipe
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -97,19 +89,14 @@ export function FestivalAdBannerSlider() {
   return (
     <div
       className="w-full relative select-none group px-0 mx-0 overflow-hidden"
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      {/* 
-        Clean Rounded Border & Shadow for Banner.
-        Pure 3:1 natural banner aspect ratio (aspect-[1024/342]).
-      */}
-      <div className="relative w-full overflow-hidden rounded-lg sm:rounded-xl border border-slate-300 shadow-md sm:shadow-lg bg-white aspect-[1024/342] transition-all duration-300 ring-1 ring-black/5">
+      {/* Full-width Ad Banner Frame with increased height */}
+      <div className="relative w-full overflow-hidden rounded-none sm:rounded-xl border-y sm:border border-slate-200/90 shadow-sm sm:shadow-md bg-white aspect-[16/7.5] sm:aspect-[1024/380] transition-all duration-300">
         {/* Slides Track */}
         <div
-          className="flex w-full h-full transition-transform duration-700 ease-out"
+          className="flex w-full h-full transition-transform duration-700 ease-in-out will-change-transform"
           style={{ transform: `translateX(-${currentIndex * 100}%)` }}
         >
           {BANNERS.map((banner, index) => (
@@ -131,6 +118,38 @@ export function FestivalAdBannerSlider() {
                 />
               </a>
             </div>
+          ))}
+        </div>
+
+        {/* Prev / Next Arrows on Desktop */}
+        <button
+          type="button"
+          onClick={prevSlide}
+          aria-label="Previous slide"
+          className="absolute left-1.5 top-1/2 -translate-y-1/2 z-10 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 cursor-pointer backdrop-blur-2xs"
+        >
+          <ChevronLeft size={16} />
+        </button>
+        <button
+          type="button"
+          onClick={nextSlide}
+          aria-label="Next slide"
+          className="absolute right-1.5 top-1/2 -translate-y-1/2 z-10 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 cursor-pointer backdrop-blur-2xs"
+        >
+          <ChevronRight size={16} />
+        </button>
+
+        {/* Slide Indicator Dots */}
+        <div className="absolute bottom-1.5 sm:bottom-2 inset-x-0 z-10 flex items-center justify-center gap-1 sm:gap-1.5 pointer-events-none">
+          {BANNERS.map((_, i) => (
+            <span
+              key={i}
+              className={`transition-all duration-300 rounded-full ${
+                i === currentIndex
+                  ? 'w-4 sm:w-5 h-1 sm:h-1.5 bg-white shadow-xs'
+                  : 'w-1 sm:w-1.5 h-1 sm:h-1.5 bg-white/50'
+              }`}
+            />
           ))}
         </div>
       </div>
