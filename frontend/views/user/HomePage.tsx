@@ -64,9 +64,9 @@ export function HomePage() {
                 />
               </picture>
 
-              {/* 1. Floating Ad Banner Slideshow - Expanded Width & Focus directly ON the Sky of hero.png */}
-              <div className="absolute top-2 sm:top-2.5 md:top-3 inset-x-0 z-20 flex justify-center px-3 sm:px-6 pointer-events-auto">
-                <div className="w-full max-w-xl sm:max-w-2xl md:max-w-3xl lg:max-w-4xl">
+              {/* 1. Floating Ad Banner Slideshow - Expanded with padding on all sides */}
+              <div className="absolute top-2 sm:top-2.5 md:top-3 inset-x-0 z-20 flex justify-center px-4 sm:px-8 pointer-events-auto">
+                <div className="w-full max-w-xl sm:max-w-2xl md:max-w-3xl lg:max-w-4xl p-1">
                   <FestivalAdBannerSlider />
                 </div>
               </div>
@@ -119,10 +119,10 @@ export function HomePage() {
             </div>
 
             {/* Mobile View: Clean white background with natural flowing content (bg image removed) */}
-            <div className="sm:hidden relative w-full bg-white px-3.5 pt-0 pb-6">
-              <div className="space-y-3 w-full">
-                {/* 1. Full-bleed Ad Banner Slider (Zero empty spacing on both ends, increased height) */}
-                <div className="-mx-3.5 w-[calc(100%+28px)] overflow-hidden">
+            <div className="sm:hidden relative w-full bg-white px-3 pt-2.5 pb-6">
+              <div className="space-y-3.5 w-full">
+                {/* 1. Ad Banner Slider (Balanced padding on all sides with rounded corners) */}
+                <div className="w-full">
                   <FestivalAdBannerSlider />
                 </div>
 

@@ -92,8 +92,8 @@ export function FestivalAdBannerSlider() {
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Full-width Ad Banner Frame with increased height */}
-      <div className="relative w-full overflow-hidden rounded-none sm:rounded-xl border-y sm:border border-slate-200/90 shadow-sm sm:shadow-md bg-white aspect-[16/7.5] sm:aspect-[1024/380] transition-all duration-300">
+      {/* Full-width Ad Banner Frame with increased height and smooth rounded corners */}
+      <div className="relative w-full overflow-hidden rounded-xl sm:rounded-2xl border border-slate-200/90 shadow-sm sm:shadow-md bg-white aspect-[16/7.5] sm:aspect-[1024/380] transition-all duration-300">
         {/* Slides Track */}
         <div
           className="flex w-full h-full transition-transform duration-700 ease-in-out will-change-transform"
