@@ -309,7 +309,7 @@ export function RegisterCouponSection({
       })
 
       if (!result.ok) {
-        const errorMsg = result.message || 'Registration failed.'
+        const errorMsg = ('error' in result ? result.error : (result as any).message) || 'Registration failed.'
         if (errorMsg.toLowerCase().includes('already used') || errorMsg.toLowerCase().includes('already registered')) {
           setTokenStatus({
             status: 'Used',

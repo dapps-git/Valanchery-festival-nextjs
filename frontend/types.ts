@@ -8,7 +8,7 @@ export interface Participant {
   id: string
   name: string
   phone: string
-  address: string
+  address?: string
   location?: string
   registeredAt: string
   eligibility: Eligibility

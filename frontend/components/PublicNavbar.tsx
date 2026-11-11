@@ -14,7 +14,7 @@ export function PublicNavbar({ active }: PublicNavbarProps) {
           <img
             src="/valanchery-shopping-festival-logo.png"
             alt="Valanchery Shopping Festival Season 2"
-            className="h-10 sm:h-12 w-auto object-contain transition-transform duration-200 group-hover:scale-105"
+            className="h-12 sm:h-14 md:h-15 w-auto object-contain transition-transform duration-200 group-hover:scale-105"
           />
           <div className="hidden lg:flex items-center gap-2 pl-3 border-l border-slate-200">
             <img

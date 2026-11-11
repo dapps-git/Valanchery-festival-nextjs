@@ -68,7 +68,7 @@ export function HomePage() {
               <div className="absolute top-2 sm:top-2.5 md:top-3 inset-x-0 z-20 flex flex-col items-center gap-1.5 px-4 pointer-events-auto">
                 <div className="flex justify-center">
                   <img
-                    src="/kvves-malayalam-banner.png"
+                    src="/kvves-hd-logo.png"
                     alt="Kerala Vyapari Vyavasayi Ekopana Samithi Valanchery Unit"
                     className="h-5 sm:h-6 md:h-7 w-auto object-contain drop-shadow-xs"
                   />
@@ -78,55 +78,56 @@ export function HomePage() {
                 </div>
               </div>
 
-              {/* 2. Desktop / Tablet Content Overlay (Positioned cleanly below the top banner, logo removed) */}
-              <div className="absolute inset-0 flex flex-col justify-start pt-36 sm:pt-40 md:pt-44 lg:pt-48 xl:pt-52 z-10 pointer-events-none">
+              {/* 2. Desktop / Tablet Content Overlay (Shifted higher up towards top banner) */}
+              <div className="absolute inset-0 flex flex-col justify-start pt-20 sm:pt-24 md:pt-28 lg:pt-32 xl:pt-36 z-10 pointer-events-none">
                 <div className="w-full max-w-7xl mx-auto px-6 md:px-10 lg:px-14">
-                  <div className="max-w-[48%] lg:max-w-[44%] space-y-1.5 md:space-y-2 pointer-events-auto">
+                  <div className="max-w-[50%] lg:max-w-[46%] space-y-2 pointer-events-auto">
 
-                    {/* Subtitle */}
-                    <p className="font-script text-[#0284c7] text-base md:text-xl lg:text-2xl font-bold tracking-wide">
-                      Shop Local • Support Local • Win Together ♡
-                    </p>
+                    {/* Kerala KVVES Unit HD Logo */}
+                    <div className="pb-1">
+                      <img
+                        src="/kvves-hd-logo.png"
+                        alt="Kerala Vyapari Vyavasayi Ekopana Samithi Valanchery Unit"
+                        className="h-10 sm:h-12 md:h-14 lg:h-16 w-auto object-contain drop-shadow-2xs"
+                      />
+                    </div>
 
-                    {/* Festival Main Headline - Reduced font weight, Montserrat font */}
-                    <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-semibold md:font-bold text-[#0369a1] tracking-tight leading-[1.12] font-['Montserrat',sans-serif]">
-                      Valanchery Shopping<br />
-                      Festival
-                    </h1>
+                    {/* Headline row: Valanchery Shopping in same line with 'approved by' towards the right end */}
+                    <div className="space-y-0.5">
+                      <div className="flex items-center justify-between gap-4">
+                        <span className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-semibold md:font-bold text-[#0369a1] tracking-tight leading-none font-['Montserrat',sans-serif]">
+                          Valanchery Shopping
+                        </span>
+                        <div className="inline-flex items-center gap-1.5 shrink-0 ml-auto self-center">
+                          <span className="text-xs sm:text-sm font-medium text-slate-500 lowercase tracking-normal whitespace-nowrap">
+                            approved by
+                          </span>
+                          <img
+                            src="/bayment-icon.png"
+                            alt="Bayment"
+                            className="h-4 sm:h-5 md:h-5.5 w-auto object-contain"
+                          />
+                        </div>
+                      </div>
+                      <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-semibold md:font-bold text-[#0369a1] tracking-tight leading-tight font-['Montserrat',sans-serif]">
+                        Festival
+                      </h1>
+                    </div>
 
                     {/* Description - Montserrat font */}
                     <p className="text-slate-600 text-[10px] md:text-xs lg:text-sm font-normal leading-relaxed line-clamp-2 md:line-clamp-3 lg:line-clamp-none font-['Montserrat',sans-serif]">
                       Organized by Kerala Vyapari Vyavasayi Ekopana Samithi (KVVES) Valanchery Unit. Collect your official coupons from member shops and stand a chance to win mega bumper prizes!
                     </p>
 
-                    {/* Action Buttons -> Smooth scroll to #register on page */}
-                    <div className="pt-1 flex flex-wrap items-center gap-2">
+                    {/* Action Button: Register Coupon only (Learn More removed) */}
+                    <div className="pt-1 flex items-center">
                       <a
                         href="#register"
-                        className="inline-flex items-center gap-1.5 bg-[#0284c7] hover:bg-[#0369a1] text-white px-3.5 md:px-4 py-1.5 md:py-2 text-[11px] md:text-xs font-semibold tracking-wider uppercase transition shadow-xs active:scale-95 cursor-pointer rounded-md font-['Montserrat',sans-serif]"
+                        className="inline-flex items-center gap-1.5 bg-[#0284c7] hover:bg-[#0369a1] text-white px-4 md:px-5 py-2 md:py-2.5 text-xs md:text-sm font-semibold tracking-wider uppercase transition shadow-xs active:scale-95 cursor-pointer rounded-md font-['Montserrat',sans-serif]"
                       >
                         <span>Register Coupon</span>
-                        <ArrowRight size={13} />
+                        <ArrowRight size={14} />
                       </a>
-
-                      <a
-                        href="#why-festival"
-                        className="inline-flex items-center gap-1 bg-[#e0f2fe]/95 hover:bg-[#bae6fd] text-[#0369a1] border border-[#7dd3fc] px-3 md:px-3.5 py-1.5 md:py-2 text-[11px] md:text-xs font-medium tracking-wide transition rounded-md font-['Montserrat',sans-serif]"
-                      >
-                        <span>Learn More</span>
-                      </a>
-                    </div>
-
-                    {/* Official Coupon Ticket Preview directly below the buttons - Increased Size */}
-                    <div className="pt-2.5 sm:pt-3 w-full max-w-md lg:max-w-lg">
-                      <div className="rounded-lg sm:rounded-xl overflow-hidden border border-slate-300 shadow-md bg-white ring-1 ring-black/5 hover:shadow-lg transition">
-                        <img
-                          src="/festival-coupon-banner.png"
-                          alt="Official Lucky Draw Coupon Ticket"
-                          className="w-full h-auto block object-contain"
-                          loading="lazy"
-                        />
-                      </div>
                     </div>
                   </div>
                 </div>
@@ -136,64 +137,56 @@ export function HomePage() {
             {/* Mobile View: Clean white background with natural flowing content (bg image removed) */}
             <div className="sm:hidden relative w-full bg-white px-3.5 pt-3 pb-6">
               <div className="space-y-3 w-full">
-                {/* 1. Official KVVES Malayalam Logo above the banner */}
-                <div className="flex justify-center pt-0.5 pb-0.5">
-                  <img
-                    src="/kvves-malayalam-banner.png"
-                    alt="Kerala Vyapari Vyavasayi Ekopana Samithi Valanchery Unit"
-                    className="h-6 xs:h-7 w-auto object-contain"
-                  />
-                </div>
-
-                {/* 2. Floating Ad Banner Slider */}
+                {/* 1. Floating Ad Banner Slider */}
                 <div className="w-full">
                   <FestivalAdBannerSlider />
                 </div>
 
-                {/* 3. Subtitle */}
-                <p className="font-script text-[#0284c7] text-xs xs:text-sm font-bold tracking-wide pt-1">
-                  Shop Local • Support Local • Win Together ♡
-                </p>
+                {/* 2. Kerala KVVES HD Logo */}
+                <div className="pt-1">
+                  <img
+                    src="/kvves-hd-logo.png"
+                    alt="Kerala Vyapari Vyavasayi Ekopana Samithi Valanchery Unit"
+                    className="h-8 xs:h-9 sm:h-10 w-auto object-contain"
+                  />
+                </div>
 
-                {/* 4. Main Headline */}
-                <h1 className="text-xl xs:text-2xl font-bold text-[#0369a1] tracking-tight leading-tight font-['Montserrat',sans-serif]">
-                  Valanchery Shopping<br />
-                  Festival
-                </h1>
+                {/* 3. Main Headline: Line 1 with 'approved by' on the same line towards right end */}
+                <div className="space-y-0.5">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-xl xs:text-2xl font-bold text-[#0369a1] tracking-tight leading-none font-['Montserrat',sans-serif]">
+                      Valanchery Shopping
+                    </span>
+                    <div className="inline-flex items-center gap-1 shrink-0 ml-auto self-center">
+                      <span className="text-[11px] xs:text-xs font-medium text-slate-500 lowercase tracking-normal whitespace-nowrap">
+                        approved by
+                      </span>
+                      <img
+                        src="/bayment-icon.png"
+                        alt="Bayment"
+                        className="h-3.5 xs:h-4 w-auto object-contain"
+                      />
+                    </div>
+                  </div>
+                  <h1 className="text-xl xs:text-2xl font-bold text-[#0369a1] tracking-tight leading-tight font-['Montserrat',sans-serif]">
+                    Festival
+                  </h1>
+                </div>
 
-                {/* 5. Description */}
+                {/* 4. Description */}
                 <p className="text-slate-600 text-[11px] xs:text-xs font-normal leading-relaxed font-['Montserrat',sans-serif]">
                   Organized by Kerala Vyapari Vyavasayi Ekopana Samithi (KVVES) Valanchery Unit. Collect your official coupons from member shops and stand a chance to win mega bumper prizes!
                 </p>
 
-                {/* 6. Action Buttons */}
-                <div className="pt-1 flex items-center gap-2">
+                {/* 5. Action Button: Register Coupon only */}
+                <div className="pt-1 flex items-center">
                   <a
                     href="#register"
-                    className="inline-flex items-center gap-1.5 bg-[#0284c7] hover:bg-[#0369a1] text-white px-3.5 py-1.5 text-[11px] font-semibold tracking-wider uppercase transition shadow-xs active:scale-95 cursor-pointer rounded-md font-['Montserrat',sans-serif]"
+                    className="inline-flex items-center gap-1.5 bg-[#0284c7] hover:bg-[#0369a1] text-white px-4 py-2 text-xs font-semibold tracking-wider uppercase transition shadow-xs active:scale-95 cursor-pointer rounded-md font-['Montserrat',sans-serif]"
                   >
                     <span>Register Coupon</span>
-                    <ArrowRight size={12} />
+                    <ArrowRight size={13} />
                   </a>
-
-                  <a
-                    href="#why-festival"
-                    className="inline-flex items-center gap-1 bg-white hover:bg-slate-50 text-[#0369a1] border border-[#bae6fd] px-3 py-1.5 text-[11px] font-medium tracking-wide transition shadow-2xs rounded-md font-['Montserrat',sans-serif]"
-                  >
-                    <span>Learn More</span>
-                  </a>
-                </div>
-
-                {/* 7. Official Festival Coupon Ticket - 100% Full-Bleed Edge-to-Edge with Zero Border Radius */}
-                <div className="pt-2 -mx-3.5 w-[calc(100%+28px)]">
-                  <div className="w-full rounded-none overflow-hidden border-y border-slate-300 shadow-md bg-white">
-                    <img
-                      src="/festival-coupon-banner.png"
-                      alt="Official Lucky Draw Coupon Ticket"
-                      className="w-full h-auto block object-cover rounded-none"
-                      loading="eager"
-                    />
-                  </div>
                 </div>
               </div>
             </div>
@@ -203,8 +196,20 @@ export function HomePage() {
         {/* ─────────────────────────────────────────────────────────────
             FOLD 2: REGISTER COUPON SECTION (Embedded on Home Page)
         ─────────────────────────────────────────────────────────────── */}
-        <div className="w-full pt-8 sm:pt-12 pb-6 sm:pb-8 bg-gradient-to-b from-white via-cyan-50/30 to-slate-50 border-b border-cyan-100/60">
+        <div className="w-full pt-8 sm:pt-12 pb-8 sm:pb-10 bg-gradient-to-b from-white via-cyan-50/30 to-slate-50 border-b border-cyan-100/60">
           <RegisterCouponSection id="register" />
+
+          {/* Official Coupon Ticket Preview Placed Right After Registration Form */}
+          <div className="max-w-4xl mx-auto px-4 pt-6 sm:pt-8 flex flex-col items-center">
+            <div className="w-full max-w-2xl rounded-xl sm:rounded-2xl overflow-hidden border border-cyan-200/80 shadow-lg bg-white p-2 sm:p-3 hover:shadow-xl transition">
+              <img
+                src="/festival-coupon-banner.png"
+                alt="Official Lucky Draw Coupon Ticket"
+                className="w-full h-auto block object-contain rounded-lg"
+                loading="lazy"
+              />
+            </div>
+          </div>
         </div>
 
         {/* ─────────────────────────────────────────────────────────────
