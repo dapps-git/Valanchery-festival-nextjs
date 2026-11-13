@@ -1,21 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import {
   ArrowRight,
-  Play,
-  X,
-  Sparkles,
-  Award,
-  Store,
-  Users,
 } from 'lucide-react'
 import { PublicNavbar } from '../../components/PublicNavbar'
-import { FestivalAdBannerSlider } from '../../components/FestivalAdBannerSlider'
 import { RegisterCouponSection } from '../../components/RegisterCouponSection'
 import { FestivalThreeAdsSection } from '../../components/FestivalThreeAdsSection'
 
 export function HomePage() {
-  const [videoModalOpen, setVideoModalOpen] = useState(false)
-
   // If a user scans a QR code that lands on the home page with a coupon code,
   // smoothly scroll them directly to the embedded registration section.
   useEffect(() => {
@@ -41,41 +32,32 @@ export function HomePage() {
       <PublicNavbar active="home" />
 
       {/* Main Page Content Container */}
-      <main className="pt-14 sm:pt-16 pb-16 w-full overflow-x-hidden">
+      <main className="pt-10 sm:pt-13 pb-12 w-full overflow-x-hidden">
         {/* ─────────────────────────────────────────────────────────────
-            FOLD 1: AD BANNER SLIDER (Below Navbar - Zero Border Radius, Reduced Side Padding)
-        ─────────────────────────────────────────────────────────────── */}
-        <section className="relative w-full bg-white border-b border-slate-200/80 overflow-hidden">
-          <div className="w-full max-w-7xl mx-auto px-1 sm:px-2 md:px-3 py-1 sm:py-2">
-            <FestivalAdBannerSlider />
-          </div>
-        </section>
-
-        {/* ─────────────────────────────────────────────────────────────
-            FOLD 2: 2 AD BANNERS (Placed Directly Below Top Banner)
+            FOLD 1: 2-COLUMN SQUARE AD BANNERS (Slow Slide-Down Slideshows)
         ─────────────────────────────────────────────────────────────── */}
         <FestivalThreeAdsSection />
 
         {/* ─────────────────────────────────────────────────────────────
-            FOLD 3: OFFICIAL FESTIVAL COUPON TICKET (Placed Below 2 Ad Banners)
+            FOLD 2: REGISTER COUPON SECTION (Directly Below Ad Banners)
         ─────────────────────────────────────────────────────────────── */}
-        <section className="relative w-full bg-white border-b border-slate-200/80 overflow-hidden py-1.5 sm:py-2.5">
-          <div className="w-full max-w-7xl mx-auto px-1 sm:px-2 md:px-3">
+        <div className="w-full pt-3 sm:pt-6 pb-8 sm:pb-12 bg-gradient-to-b from-white via-cyan-50/25 to-slate-50 border-b border-cyan-100/60">
+          <RegisterCouponSection id="register" compact={true} />
+        </div>
+
+        {/* ─────────────────────────────────────────────────────────────
+            FOLD 3: OFFICIAL FESTIVAL COUPON TICKET (Full-Width Edge-to-Edge, Zero Border Radius)
+        ─────────────────────────────────────────────────────────────── */}
+        <section className="relative w-full bg-white border-y border-slate-200/80 overflow-hidden p-0 m-0">
+          <div className="w-full p-0 m-0">
             <img
               src="/festival-coupon-banner.png"
               alt="Official Valanchery Shopping Festival Lucky Draw Coupon Ticket"
-              className="w-full h-auto block object-contain select-none"
+              className="w-full h-auto block select-none rounded-none"
               loading="lazy"
             />
           </div>
         </section>
-
-        {/* ─────────────────────────────────────────────────────────────
-            FOLD 4: REGISTER COUPON SECTION (Embedded on Home Page)
-        ─────────────────────────────────────────────────────────────── */}
-        <div className="w-full pt-8 sm:pt-12 pb-10 sm:pb-14 bg-gradient-to-b from-white via-cyan-50/25 to-slate-50 border-b border-cyan-100/60">
-          <RegisterCouponSection id="register" compact={true} />
-        </div>
 
         {/* Full-Width Inner Content Container */}
         <div className="w-full pt-8 sm:pt-10 space-y-6 sm:space-y-8">
@@ -163,39 +145,6 @@ export function HomePage() {
           </section>
         </div>
       </main>
-
-      {/* ─────────────────────────────────────────────────────────────
-          EVENT VIDEO MODAL
-      ─────────────────────────────────────────────────────────────── */}
-      {videoModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-          <div className="relative w-full max-w-2xl bg-black overflow-hidden border border-white/20 shadow-2xl rounded-2xl">
-            <button
-              onClick={() => setVideoModalOpen(false)}
-              className="absolute top-3 right-3 z-10 w-8 h-8 bg-white/20 hover:bg-white text-white hover:text-black flex items-center justify-center transition rounded-full"
-            >
-              <X size={18} />
-            </button>
-            <div className="p-8 sm:p-12 text-center text-white space-y-4">
-              <div className="w-16 h-16 bg-[#0891b2] text-white mx-auto flex items-center justify-center shadow-lg rounded-2xl">
-                <Play size={24} className="fill-current ml-1" />
-              </div>
-              <h3 className="text-xl sm:text-2xl font-black">Valanchery Festival 2026 Promo</h3>
-              <p className="text-xs sm:text-sm text-slate-300 max-w-md mx-auto">
-                Official teaser video for Valanchery Shopping Festival Season 2. Shop local, support local, and win bumper rewards!
-              </p>
-              <div className="pt-2">
-                <button
-                  onClick={() => setVideoModalOpen(false)}
-                  className="bg-white/10 hover:bg-white/20 text-white px-6 py-2 text-xs font-bold border border-white/20 transition rounded-xl"
-                >
-                  Close Video
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ─────────────────────────────────────────────────────────────
           MINIMALIST OFFICIAL KVVES FOOTER
