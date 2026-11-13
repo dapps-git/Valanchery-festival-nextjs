@@ -367,7 +367,7 @@ export function RegisterCouponSection({
         )}
 
         {/* Card Frame */}
-        <div className="w-full bg-white rounded-2xl shadow-xl shadow-cyan-950/10 border border-cyan-100 p-5 sm:p-7 relative overflow-hidden">
+        <div className="w-full bg-white rounded-2xl sm:rounded-3xl shadow-xl shadow-cyan-950/10 border border-cyan-100 p-4 sm:p-7 relative overflow-hidden">
           {/* Subtle top cyan line */}
           <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-cyan-500 via-[#0284c7] to-cyan-500" />
 
@@ -444,9 +444,9 @@ export function RegisterCouponSection({
               <form onSubmit={submit} className="space-y-3 sm:space-y-4">
                 {/* 1. Coupon ID Field */}
                 <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="block text-xs font-bold text-slate-700">
-                      Coupon ID <span className="text-cyan-500">*</span>
+                  <div className="flex items-center justify-between mb-1 sm:mb-1.5">
+                    <label className="block text-xs sm:text-sm font-bold text-slate-800">
+                      Coupon ID <span className="text-[#0097b2] font-bold">*</span>
                     </label>
                     {form.couponId && tokenStatus.status !== 'Valid' && tokenStatus.status !== 'Used' && (
                       <span className="text-[10px] font-mono text-slate-400">
@@ -504,8 +504,8 @@ export function RegisterCouponSection({
                         (tokenStatus.status === 'Invalid' && tokenStatus.message) || errors.couponId
                           ? 'border-red-400 bg-red-50/20 focus-within:border-red-500 focus-within:ring-2 focus-within:ring-red-100'
                           : 'border-cyan-200/90 hover:border-cyan-300 focus-within:border-[#0097b2] focus-within:ring-2 focus-within:ring-cyan-100 bg-white'
-                      } rounded-xl p-1 transition`}>
-                        <Ticket size={17} className={`${(tokenStatus.status === 'Invalid' && tokenStatus.message) || errors.couponId ? 'text-red-400' : 'text-slate-400'} ml-2.5 shrink-0`} />
+                      } rounded-xl p-1 sm:p-1.5 transition shadow-2xs`}>
+                        <Ticket size={16} className={`${(tokenStatus.status === 'Invalid' && tokenStatus.message) || errors.couponId ? 'text-red-400' : 'text-slate-400'} ml-2 sm:ml-2.5 shrink-0`} />
                         <input
                           type="text"
                           value={form.couponId}
@@ -522,19 +522,19 @@ export function RegisterCouponSection({
                           onBlur={handleCouponBlur}
                           onKeyDown={handleCouponKeyDown}
                           placeholder="Enter 13-digit coupon code"
-                          className="w-full px-2.5 py-1.5 text-xs sm:text-sm font-mono tracking-wider text-slate-800 placeholder:text-slate-400 outline-none uppercase bg-transparent"
+                          className="w-full min-w-0 px-2 py-1.5 text-xs sm:text-sm font-mono tracking-wider font-semibold text-slate-800 placeholder:font-sans placeholder:normal-case placeholder:tracking-normal placeholder:font-normal placeholder:text-[11px] sm:placeholder:text-xs placeholder:text-slate-400 outline-none uppercase bg-transparent"
                         />
                         {isValidatingToken && (
-                          <div className="mr-2">
-                            <Loader2 size={15} className="animate-spin text-[#0097b2]" />
+                          <div className="mr-1.5 shrink-0">
+                            <Loader2 size={14} className="animate-spin text-[#0097b2]" />
                           </div>
                         )}
                         <button
                           type="button"
                           onClick={() => setIsScannerOpen(true)}
-                          className="inline-flex items-center gap-1.5 bg-[#e0f7fc] hover:bg-[#cbf1f9] text-[#0097b2] px-3 py-2 rounded-lg text-xs font-bold transition whitespace-nowrap shrink-0 cursor-pointer border border-cyan-100"
+                          className="inline-flex items-center gap-1.5 bg-[#e0f7fc] hover:bg-[#cbf1f9] text-[#0097b2] px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-[11px] sm:text-xs font-bold transition whitespace-nowrap shrink-0 cursor-pointer border border-cyan-100 shadow-2xs"
                         >
-                          <Camera size={13} />
+                          <Camera size={13} className="shrink-0" />
                           <span>Scan QR</span>
                         </button>
                       </div>
@@ -551,17 +551,17 @@ export function RegisterCouponSection({
 
                 {/* 2. Full Name Field */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                    Full Name <span className="text-cyan-500">*</span>
+                  <label className="block text-xs sm:text-sm font-bold text-slate-800 mb-1 sm:mb-1.5">
+                    Full Name <span className="text-[#0097b2] font-bold">*</span>
                   </label>
-                  <div className="flex items-center border border-cyan-200/90 hover:border-cyan-300 focus-within:border-[#0097b2] focus-within:ring-2 focus-within:ring-cyan-100 rounded-xl bg-white px-3 py-2.5 transition">
-                    <User size={17} className="text-slate-400 shrink-0 mr-2.5" />
+                  <div className="flex items-center border border-cyan-200/90 hover:border-cyan-300 focus-within:border-[#0097b2] focus-within:ring-2 focus-within:ring-cyan-100 rounded-xl bg-white px-2.5 sm:px-3 py-2 sm:py-2.5 transition shadow-2xs">
+                    <User size={16} className="text-slate-400 shrink-0 mr-2 sm:mr-2.5" />
                     <input
                       type="text"
                       value={form.name}
                       onChange={(e) => set('name', e.target.value)}
                       placeholder="Enter your full name"
-                      className="w-full text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 outline-none bg-transparent"
+                      className="w-full min-w-0 text-xs sm:text-sm font-medium text-slate-800 placeholder:font-normal placeholder:text-[11px] sm:placeholder:text-xs placeholder:text-slate-400 outline-none bg-transparent"
                     />
                   </div>
                   {errors.name && <p className="mt-1 text-[11px] font-medium text-red-600">{errors.name}</p>}
@@ -569,15 +569,15 @@ export function RegisterCouponSection({
 
                 {/* 3. Mobile Number Field */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                    Mobile Number <span className="text-cyan-500">*</span>
+                  <label className="block text-xs sm:text-sm font-bold text-slate-800 mb-1 sm:mb-1.5">
+                    Mobile Number <span className="text-[#0097b2] font-bold">*</span>
                   </label>
-                  <div className="flex items-center border border-cyan-200/90 hover:border-cyan-300 focus-within:border-[#0097b2] focus-within:ring-2 focus-within:ring-cyan-100 rounded-xl bg-white overflow-hidden transition">
-                    <div className="px-3 py-2.5 text-slate-700 font-bold text-xs border-r border-slate-100 flex items-center gap-1 select-none shrink-0 bg-slate-50/50">
+                  <div className="flex items-center border border-cyan-200/90 hover:border-cyan-300 focus-within:border-[#0097b2] focus-within:ring-2 focus-within:ring-cyan-100 rounded-xl bg-white overflow-hidden transition shadow-2xs">
+                    <div className="px-2.5 sm:px-3 py-2 sm:py-2.5 text-slate-700 font-bold text-xs sm:text-sm border-r border-slate-200/80 flex items-center gap-1 select-none shrink-0 bg-slate-50/60">
                       <span>+91</span>
                       <ChevronDown size={13} className="text-slate-400" />
                     </div>
-                    <Phone size={16} className="text-slate-400 ml-3 shrink-0" />
+                    <Phone size={15} className="text-slate-400 ml-2.5 sm:ml-3 shrink-0" />
                     <input
                       type="tel"
                       maxLength={10}
@@ -586,24 +586,24 @@ export function RegisterCouponSection({
                         const digits = e.target.value.replace(/\D/g, '').slice(0, 10)
                         set('phone', digits)
                       }}
-                      placeholder="10-digit mobile number"
-                      className="w-full px-2.5 py-2.5 text-xs sm:text-sm font-mono tracking-wider text-slate-800 placeholder:text-slate-400 outline-none bg-transparent"
+                      placeholder="Enter 10-digit mobile number"
+                      className="w-full min-w-0 px-2 py-2 sm:py-2.5 text-xs sm:text-sm font-mono tracking-wider font-semibold text-slate-800 placeholder:font-sans placeholder:tracking-normal placeholder:font-normal placeholder:text-[11px] sm:placeholder:text-xs placeholder:text-slate-400 outline-none bg-transparent"
                     />
                   </div>
                   {errors.phone && <p className="mt-1 text-[11px] font-medium text-red-600">{errors.phone}</p>}
                   
-                  <p className="text-[11px] text-slate-400 mt-1.5 flex items-center gap-1">
-                    <Info size={12} className="text-[#0097b2] shrink-0" />
+                  <p className="text-[10px] sm:text-[11px] text-slate-500 mt-1.5 flex items-start sm:items-center gap-1.5">
+                    <Info size={13} className="text-[#0097b2] shrink-0 mt-0.5 sm:mt-0" />
                     <span>Winners will be contacted directly on this mobile number.</span>
                   </p>
                 </div>
 
                 {/* Submit Button */}
-                <div className="pt-2">
+                <div className="pt-2 sm:pt-3">
                   <button
                     type="submit"
                     disabled={tokenStatus.status === 'Used' || tokenStatus.status === 'Invalid' || isSubmitting}
-                    className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#0097b2] via-[#0284c7] to-[#0ea5e9] hover:opacity-95 text-white py-3 sm:py-3.5 text-xs sm:text-sm font-bold tracking-wider uppercase transition shadow-md shadow-cyan-500/20 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                    className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#0097b2] via-[#0284c7] to-[#0ea5e9] hover:opacity-95 text-white py-3 sm:py-3.5 text-xs sm:text-sm font-bold tracking-wider uppercase transition shadow-md shadow-cyan-500/25 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                   >
                     {isSubmitting ? (
                       <>
@@ -621,11 +621,13 @@ export function RegisterCouponSection({
               </form>
 
               {/* Trust Footer */}
-              <div className="mt-3.5 text-center">
-                <div className="inline-flex items-center justify-center gap-1.5 text-[11px] font-medium text-[#0097b2]">
-                  <ShieldCheck size={14} className="text-[#0097b2]" />
+              <div className="mt-4 sm:mt-5 flex items-center justify-center gap-2 select-none">
+                <div className="h-px bg-slate-200 flex-1 max-w-[32px] sm:max-w-[48px]" />
+                <span className="inline-flex items-center gap-1.5 text-[10px] sm:text-[11px] font-medium text-slate-600">
+                  <ShieldCheck size={14} className="text-[#0097b2] shrink-0" />
                   <span>Official KVVES Valanchery Merchant Festival Portal</span>
-                </div>
+                </span>
+                <div className="h-px bg-slate-200 flex-1 max-w-[32px] sm:max-w-[48px]" />
               </div>
             </div>
           )}

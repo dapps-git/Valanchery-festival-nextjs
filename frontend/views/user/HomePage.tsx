@@ -43,206 +43,44 @@ export function HomePage() {
       {/* Main Page Content Container */}
       <main className="pt-14 sm:pt-16 pb-16 w-full overflow-x-hidden">
         {/* ─────────────────────────────────────────────────────────────
-            FOLD 1: 100% FULL-PAGE FULL-SIZE HERO BANNER (Edge-to-Edge)
-        ─────────────────────────────────────────────────────────────── */}
-        {/* ─────────────────────────────────────────────────────────────
-            FOLD 1: HERO BANNER (Desktop: hero.png | Mobile: image.png)
+            FOLD 1: AD BANNER SLIDER (Below Navbar - Zero Border Radius, Reduced Side Padding)
         ─────────────────────────────────────────────────────────────── */}
         <section className="relative w-full bg-white border-b border-slate-200/80 overflow-hidden">
-          {/* Edge-to-Edge Banner Frame */}
-          <div className="relative w-full">
-            {/* Desktop / Tablet Banner (hero.png unzoomed landscape ratio) */}
-            <div className="hidden sm:block relative w-full">
-              <picture>
-                <source srcSet="/hero.webp" type="image/webp" />
-                <img
-                  src="/hero.png"
-                  alt="Valanchery Shopping Festival - Shop Local, Support Local, Win Together"
-                  className="w-full h-auto block select-none"
-                  loading="eager"
-                  fetchPriority="high"
-                />
-              </picture>
-
-              {/* 1. Floating Ad Banner Slideshow - Expanded with padding on all sides */}
-              <div className="absolute top-2 sm:top-2.5 md:top-3 inset-x-0 z-20 flex justify-center px-4 sm:px-8 pointer-events-auto">
-                <div className="w-full max-w-xl sm:max-w-2xl md:max-w-3xl lg:max-w-4xl p-1">
-                  <FestivalAdBannerSlider />
-                </div>
-              </div>
-
-              {/* 2. Desktop / Tablet Content Overlay (Shifted higher up towards top banner) */}
-              <div className="absolute inset-0 flex flex-col justify-start pt-20 sm:pt-24 md:pt-28 lg:pt-32 xl:pt-36 z-10 pointer-events-none">
-                <div className="w-full max-w-7xl mx-auto px-6 md:px-10 lg:px-14">
-                  <div className="max-w-[50%] lg:max-w-[46%] space-y-2 pointer-events-auto">
-
-                    {/* Headline row: Valanchery Shopping in same line with 'approved by' towards the right end */}
-                    <div className="space-y-0.5">
-                      <div className="flex items-center justify-between gap-4">
-                        <span className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-semibold md:font-bold text-[#0369a1] tracking-tight leading-none font-['Montserrat',sans-serif]">
-                          Valanchery Shopping
-                        </span>
-                        <div className="inline-flex items-center gap-1.5 shrink-0 ml-auto self-center">
-                          <span className="text-xs sm:text-sm font-medium text-slate-500 lowercase tracking-normal whitespace-nowrap">
-                            approved by
-                          </span>
-                          <img
-                            src="/bayment-icon.png"
-                            alt="Bayment"
-                            className="h-4 sm:h-5 md:h-5.5 w-auto object-contain"
-                          />
-                        </div>
-                      </div>
-                      <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-semibold md:font-bold text-[#0369a1] tracking-tight leading-tight font-['Montserrat',sans-serif]">
-                        Festival
-                      </h1>
-                    </div>
-
-                    {/* Description - Montserrat font */}
-                    <p className="text-slate-600 text-[10px] md:text-xs lg:text-sm font-normal leading-relaxed line-clamp-2 md:line-clamp-3 lg:line-clamp-none font-['Montserrat',sans-serif]">
-                      Organized by Kerala Vyapari Vyavasayi Ekopana Samithi (KVVES) Valanchery Unit. Collect your official coupons from member shops and stand a chance to win mega bumper prizes!
-                    </p>
-
-                    {/* Action Button: Register Coupon only (Learn More removed) */}
-                    <div className="pt-1 flex items-center">
-                      <a
-                        href="#register"
-                        className="inline-flex items-center gap-1.5 bg-[#0284c7] hover:bg-[#0369a1] text-white px-4 md:px-5 py-2 md:py-2.5 text-xs md:text-sm font-semibold tracking-wider uppercase transition shadow-xs active:scale-95 cursor-pointer rounded-md font-['Montserrat',sans-serif]"
-                      >
-                        <span>Register Coupon</span>
-                        <ArrowRight size={14} />
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Mobile View: Clean white background with natural flowing content (bg image removed) */}
-            <div className="sm:hidden relative w-full bg-white px-3 pt-2.5 pb-6">
-              <div className="space-y-3.5 w-full">
-                {/* 1. Ad Banner Slider (Balanced padding on all sides with rounded corners) */}
-                <div className="w-full">
-                  <FestivalAdBannerSlider />
-                </div>
-
-                {/* 2. Main Headline: Line 1 with 'approved by' on the same line towards right end */}
-                <div className="space-y-0.5 pt-1">
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="text-xl xs:text-2xl font-bold text-[#0369a1] tracking-tight leading-none font-['Montserrat',sans-serif]">
-                      Valanchery Shopping
-                    </span>
-                    <div className="inline-flex items-center gap-1 shrink-0 ml-auto self-center">
-                      <span className="text-[11px] xs:text-xs font-medium text-slate-500 lowercase tracking-normal whitespace-nowrap">
-                        approved by
-                      </span>
-                      <img
-                        src="/bayment-icon.png"
-                        alt="Bayment"
-                        className="h-3.5 xs:h-4 w-auto object-contain"
-                      />
-                    </div>
-                  </div>
-                  <h1 className="text-xl xs:text-2xl font-bold text-[#0369a1] tracking-tight leading-tight font-['Montserrat',sans-serif]">
-                    Festival
-                  </h1>
-                </div>
-
-                {/* 4. Description */}
-                <p className="text-slate-600 text-[11px] xs:text-xs font-normal leading-relaxed font-['Montserrat',sans-serif]">
-                  Organized by Kerala Vyapari Vyavasayi Ekopana Samithi (KVVES) Valanchery Unit. Collect your official coupons from member shops and stand a chance to win mega bumper prizes!
-                </p>
-
-                {/* 5. Action Button: Register Coupon only */}
-                <div className="pt-1 flex items-center">
-                  <a
-                    href="#register"
-                    className="inline-flex items-center gap-1.5 bg-[#0284c7] hover:bg-[#0369a1] text-white px-4 py-2 text-xs font-semibold tracking-wider uppercase transition shadow-xs active:scale-95 cursor-pointer rounded-md font-['Montserrat',sans-serif]"
-                  >
-                    <span>Register Coupon</span>
-                    <ArrowRight size={13} />
-                  </a>
-                </div>
-              </div>
-            </div>
+          <div className="w-full max-w-7xl mx-auto px-1 sm:px-2 md:px-3 py-1 sm:py-2">
+            <FestivalAdBannerSlider />
           </div>
         </section>
 
         {/* ─────────────────────────────────────────────────────────────
-            FOLD 2: REGISTER COUPON SECTION (Embedded on Home Page)
-        ─────────────────────────────────────────────────────────────── */}
-        <div className="w-full pt-8 sm:pt-12 pb-8 sm:pb-10 bg-gradient-to-b from-white via-cyan-50/30 to-slate-50 border-b border-cyan-100/60">
-          <RegisterCouponSection id="register" />
-
-          {/* Official Coupon Ticket Preview Placed Right After Registration Form */}
-          <div className="max-w-4xl mx-auto px-4 pt-6 sm:pt-8 flex flex-col items-center">
-            <div className="w-full max-w-2xl rounded-xl sm:rounded-2xl overflow-hidden border border-cyan-200/80 shadow-lg bg-white p-2 sm:p-3 hover:shadow-xl transition">
-              <img
-                src="/festival-coupon-banner.png"
-                alt="Official Lucky Draw Coupon Ticket"
-                className="w-full h-auto block object-contain rounded-lg"
-                loading="lazy"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* ─────────────────────────────────────────────────────────────
-            FOLD 3: 3 ADS DISPLAYED AT THE SAME TIME (Google-Ad Style)
+            FOLD 2: 2 AD BANNERS (Placed Directly Below Top Banner)
         ─────────────────────────────────────────────────────────────── */}
         <FestivalThreeAdsSection />
+
+        {/* ─────────────────────────────────────────────────────────────
+            FOLD 3: OFFICIAL FESTIVAL COUPON TICKET (Placed Below 2 Ad Banners)
+        ─────────────────────────────────────────────────────────────── */}
+        <section className="relative w-full bg-white border-b border-slate-200/80 overflow-hidden py-1.5 sm:py-2.5">
+          <div className="w-full max-w-7xl mx-auto px-1 sm:px-2 md:px-3">
+            <img
+              src="/festival-coupon-banner.png"
+              alt="Official Valanchery Shopping Festival Lucky Draw Coupon Ticket"
+              className="w-full h-auto block object-contain select-none"
+              loading="lazy"
+            />
+          </div>
+        </section>
+
+        {/* ─────────────────────────────────────────────────────────────
+            FOLD 4: REGISTER COUPON SECTION (Embedded on Home Page)
+        ─────────────────────────────────────────────────────────────── */}
+        <div className="w-full pt-8 sm:pt-12 pb-10 sm:pb-14 bg-gradient-to-b from-white via-cyan-50/25 to-slate-50 border-b border-cyan-100/60">
+          <RegisterCouponSection id="register" compact={true} />
+        </div>
 
         {/* Full-Width Inner Content Container */}
         <div className="w-full pt-8 sm:pt-10 space-y-6 sm:space-y-8">
           {/* ─────────────────────────────────────────────────────────────
-              FOLD 2: FESTIVAL SPECIAL COUPON BANNER (Prominent & High Impact)
-          ─────────────────────────────────────────────────────────────── */}
-          <section className="relative w-full bg-white border-y border-cyan-100 py-10 sm:py-14 px-4 sm:px-6 lg:px-8 shadow-xs overflow-hidden">
-            <div className="max-w-6xl mx-auto flex flex-col items-center gap-8 relative z-10">
-              {/* Top Banner Row: Title + Motto */}
-              <div className="w-full flex flex-col md:flex-row items-center justify-between gap-4 border-b border-slate-100 pb-5">
-                <div className="space-y-1 text-center md:text-left">
-                  <span className="text-[11px] font-bold text-[#0891b2] uppercase tracking-wider bg-cyan-50 px-2.5 py-1 rounded-md border border-cyan-100">
-                    Official Ticket
-                  </span>
-                  <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0f172a] pt-1">
-                    Exclusive <span className="text-[#0891b2]">Festival Coupons</span>
-                  </h2>
-                  <p className="text-xs sm:text-sm text-slate-500 font-normal">
-                    Collect serial-numbered tickets with every purchase at Valanchery stores
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <p className="font-script text-[#0891b2] text-xl sm:text-2xl font-bold leading-tight text-center md:text-right">
-                    Shop Local • Save More • Win Big ♡
-                  </p>
-                  <img
-                    src="/shopping-bags.png"
-                    alt="Valanchery Festival Shopping Bags"
-                    className="w-14 sm:w-16 h-auto drop-shadow-sm hidden sm:block"
-                  />
-                </div>
-              </div>
-
-              {/* Large, Prominent Official Lucky Draw Coupon Ticket */}
-              <div className="w-full flex items-center justify-center">
-                <div className="relative group w-full max-w-5xl lg:max-w-6xl">
-                  {/* Large Official Coupon Card Container */}
-                  <div className="relative overflow-hidden bg-white border border-cyan-200/80 shadow-2xl shadow-cyan-950/10 p-2 sm:p-4 transition transform group-hover:scale-[1.005] duration-300 rounded-xl sm:rounded-2xl">
-                    <img
-                      src="/festival-coupon-banner.png"
-                      alt="Valanchery Lucky Draw Official Coupon"
-                      className="w-full h-auto object-contain block mx-auto rounded-lg sm:rounded-xl"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* ─────────────────────────────────────────────────────────────
-              FOLD 4: "WHY SHOP LOCAL?" (Standardized, White & Cyan Card)
+              FOLD 5: "WHY SHOP LOCAL?" (Standardized, White & Cyan Card)
           ─────────────────────────────────────────────────────────────── */}
           <section id="why-festival" className="scroll-mt-20 relative w-full bg-[#f8fafc] py-12 sm:py-16">
             <div className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
