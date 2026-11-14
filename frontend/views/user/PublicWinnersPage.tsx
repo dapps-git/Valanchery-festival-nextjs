@@ -36,7 +36,7 @@ export function PublicWinnersPage() {
           <Link to="/" className="text-white/70 transition hover:text-[#f3d48a] whitespace-nowrap">
             HOME
           </Link>
-          <Link to="/register" className="text-white/70 transition hover:text-[#f3d48a] whitespace-nowrap">
+          <Link to="/#register" className="text-white/70 transition hover:text-[#f3d48a] whitespace-nowrap">
             REGISTER
           </Link>
           <Link to="/winners" className="border-b border-[#f3d48a] pb-0.5 text-[#f3d48a] whitespace-nowrap">
@@ -151,7 +151,7 @@ export function PublicWinnersPage() {
           </p>
           <div className="mt-6">
             <Link
-              to="/register"
+              to="/#register"
               className="inline-flex items-center gap-2 border border-[#d4a017] bg-[#d4a017] px-6 py-3 text-xs font-medium tracking-widest text-[#140d10] transition hover:bg-[#e5b32e]"
             >
               REGISTER NOW FREE
