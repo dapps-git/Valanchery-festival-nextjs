@@ -41,7 +41,7 @@ export function PublicNavbar({ active }: PublicNavbarProps) {
         {/* Right Action Button: Reduced Button Size */}
         <div className="flex items-center gap-2 shrink-0">
           <Link
-            to="/register"
+            to="/#register"
             className="inline-flex items-center gap-1 bg-[#0284c7] hover:bg-[#0369a1] text-white px-2.5 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-[11px] font-bold tracking-wider uppercase transition shadow-2xs active:scale-95 cursor-pointer whitespace-nowrap rounded font-['Montserrat',sans-serif]"
           >
             <span>Register Now</span>

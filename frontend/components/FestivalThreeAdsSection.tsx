@@ -132,7 +132,7 @@ function SingleColumnSlider({
 
 export function FestivalThreeAdsSection() {
   return (
-    <section className="relative w-full py-2 sm:py-3 bg-slate-50/60 border-b border-slate-200/70 select-none">
+    <section className="relative w-full pt-1.5 pb-2 sm:py-2.5 bg-slate-50/60 border-b border-slate-200/70 select-none">
       <div className="max-w-4xl mx-auto px-1.5 sm:px-3">
         {/* 2 columns, each running a slow vertical slide-down animation (total 4 square/portrait banners) */}
         <div className="grid grid-cols-2 gap-1.5 sm:gap-3">

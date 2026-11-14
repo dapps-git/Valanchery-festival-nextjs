@@ -18,11 +18,15 @@ export function HomePage() {
       params.get('id') ||
       params.get('c') ||
       params.get('code')
-    if (rawParam) {
-      setTimeout(() => {
+    const hasHash = window.location.hash === '#register'
+
+    if (rawParam || hasHash) {
+      const scrollHandler = () => {
         const el = document.getElementById('register')
-        if (el) el.scrollIntoView({ behavior: 'smooth' })
-      }, 150)
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+      setTimeout(scrollHandler, 100)
+      setTimeout(scrollHandler, 400)
     }
   }, [])
 
@@ -32,23 +36,16 @@ export function HomePage() {
       <PublicNavbar active="home" />
 
       {/* Main Page Content Container */}
-      <main className="pt-10 sm:pt-13 pb-12 w-full overflow-x-hidden">
+      <main className="pt-9 sm:pt-12 pb-12 w-full overflow-x-hidden">
         {/* ─────────────────────────────────────────────────────────────
             FOLD 1: 2-COLUMN SQUARE AD BANNERS (Slow Slide-Down Slideshows)
         ─────────────────────────────────────────────────────────────── */}
         <FestivalThreeAdsSection />
 
         {/* ─────────────────────────────────────────────────────────────
-            FOLD 2: REGISTER COUPON SECTION (Directly Below Ad Banners)
+            FOLD 2: OFFICIAL FESTIVAL COUPON TICKET (Full-Width Edge-to-Edge, Zero Border Radius)
         ─────────────────────────────────────────────────────────────── */}
-        <div className="w-full pt-3 sm:pt-6 pb-8 sm:pb-12 bg-gradient-to-b from-white via-cyan-50/25 to-slate-50 border-b border-cyan-100/60">
-          <RegisterCouponSection id="register" compact={true} />
-        </div>
-
-        {/* ─────────────────────────────────────────────────────────────
-            FOLD 3: OFFICIAL FESTIVAL COUPON TICKET (Full-Width Edge-to-Edge, Zero Border Radius)
-        ─────────────────────────────────────────────────────────────── */}
-        <section className="relative w-full bg-white border-y border-slate-200/80 overflow-hidden p-0 m-0">
+        <section className="relative w-full bg-white border-b border-slate-200/80 overflow-hidden p-0 m-0">
           <div className="w-full p-0 m-0">
             <img
               src="/festival-coupon-banner.png"
@@ -58,6 +55,13 @@ export function HomePage() {
             />
           </div>
         </section>
+
+        {/* ─────────────────────────────────────────────────────────────
+            FOLD 3: REGISTER COUPON SECTION (Directly Below Coupon Ticket)
+        ─────────────────────────────────────────────────────────────── */}
+        <div className="w-full pt-2 sm:pt-4 pb-6 sm:pb-8 bg-gradient-to-b from-white via-cyan-50/20 to-slate-50 border-b border-cyan-100/60">
+          <RegisterCouponSection id="register" compact={true} />
+        </div>
 
         {/* Full-Width Inner Content Container */}
         <div className="w-full pt-8 sm:pt-10 space-y-6 sm:space-y-8">

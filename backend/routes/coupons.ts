@@ -26,7 +26,7 @@ router.get(['/qr/:id', '/qr/:id.png'], async (req, res) => {
       } catch {}
     }
 
-    const regUrl = `${baseUrl}/register?coupon=${cleanId}`
+    const regUrl = `${baseUrl}/?coupon=${cleanId}#register`
 
     const qrBuffer = await QRCode.toBuffer(regUrl, {
       width: 600,

@@ -13,6 +13,20 @@ const nextConfig = {
   images: {
     remotePatterns: [{ protocol: 'https', hostname: '**' }],
   },
+  async redirects() {
+    return [
+      {
+        source: '/register',
+        destination: '/#register',
+        permanent: false,
+      },
+      {
+        source: '/qr/:couponId',
+        destination: '/?coupon=:couponId#register',
+        permanent: false,
+      },
+    ]
+  },
 }
 
 export default nextConfig

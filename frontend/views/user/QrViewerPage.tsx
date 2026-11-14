@@ -36,7 +36,7 @@ export function QrViewerPage({ couponId: initialCouponId }: { couponId?: string 
   const cleanId = (couponId || '').trim().toUpperCase()
 
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://www.valancheryshoppingfestival.com'
-  const registerUrl = `${baseUrl}/register?coupon=${cleanId}`
+  const registerUrl = `${baseUrl}/?coupon=${cleanId}#register`
 
   useEffect(() => {
     if (!cleanId) return
@@ -173,7 +173,7 @@ export function QrViewerPage({ couponId: initialCouponId }: { couponId?: string 
           {/* Action Buttons */}
           <div className="space-y-2 pt-2">
             <Link
-              to={`/register?coupon=${cleanId}`}
+              to={`/?coupon=${cleanId}#register`}
               className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#7a1426] bg-[#7a1426] py-3 text-xs font-bold tracking-wider text-white shadow-md transition hover:bg-[#961a30]"
             >
               <span>REGISTER WITH THIS COUPON</span>
