@@ -17,12 +17,12 @@ const nextConfig = {
     return [
       {
         source: '/register',
-        destination: '/#register',
+        destination: '/',
         permanent: false,
       },
       {
         source: '/qr/:couponId',
-        destination: '/?coupon=:couponId#register',
+        destination: '/?coupon=:couponId',
         permanent: false,
       },
     ]
