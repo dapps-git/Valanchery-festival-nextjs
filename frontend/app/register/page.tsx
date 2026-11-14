@@ -10,7 +10,7 @@ function RegisterRedirect() {
   useEffect(() => {
     if (typeof window === 'undefined') return
     const search = window.location.search || (searchParams ? `?${searchParams.toString()}` : '')
-    const target = search ? `/${search}#register` : '/#register'
+    const target = search ? `/${search}` : '/'
     window.location.replace(target)
   }, [router, searchParams])
 

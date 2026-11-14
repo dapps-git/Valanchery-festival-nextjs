@@ -1,4 +1,3 @@
-import { useEffect } from 'react'
 import {
   ArrowRight,
 } from 'lucide-react'
@@ -7,29 +6,6 @@ import { RegisterCouponSection } from '../../components/RegisterCouponSection'
 import { FestivalThreeAdsSection } from '../../components/FestivalThreeAdsSection'
 
 export function HomePage() {
-  // If a user scans a QR code that lands on the home page with a coupon code,
-  // smoothly scroll them directly to the embedded registration section.
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    const params = new URLSearchParams(window.location.search)
-    const rawParam =
-      params.get('coupon') ||
-      params.get('token') ||
-      params.get('id') ||
-      params.get('c') ||
-      params.get('code')
-    const hasHash = window.location.hash === '#register'
-
-    if (rawParam || hasHash) {
-      const scrollHandler = () => {
-        const el = document.getElementById('register')
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      }
-      setTimeout(scrollHandler, 100)
-      setTimeout(scrollHandler, 400)
-    }
-  }, [])
-
   return (
     <div className="w-full bg-[#f8fafc] text-[#0f172a] font-sans select-none scroll-smooth min-h-screen overflow-x-hidden">
       {/* 1. White & Cyan Festival Navbar */}

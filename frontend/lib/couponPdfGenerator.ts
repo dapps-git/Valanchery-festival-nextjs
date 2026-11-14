@@ -219,7 +219,7 @@ export async function renderCouponToCanvas(
 
   // 1. Generate & Draw QR Code inside the left white box
   // Box position coordinates: x: 3.1% to 13.4% (w ~ 10.3%), y: 35.8% to 61.2% (h ~ 25.4%)
-  const regUrl = `${baseUrl}/?coupon=${couponId}#register`
+  const regUrl = `${baseUrl}/?coupon=${couponId}`
   const qrDataUrl = await createQrDataUrl(regUrl)
   const qrImg = new Image()
   await new Promise((resolve) => {
@@ -399,7 +399,7 @@ export async function generateA4QrSheetsPdf(
 
     const rawId = couponIds[i]
     const cleanId = rawId.replace(/[^A-Za-z0-9]/g, '').toUpperCase()
-    const regUrl = `${baseUrl.replace(/\/$/, '')}/?coupon=${cleanId}#register`
+    const regUrl = `${baseUrl.replace(/\/$/, '')}/?coupon=${cleanId}`
 
     // High quality QR Code
     const qrDataUrl = await QRCode.toDataURL(regUrl, {

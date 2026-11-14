@@ -8,7 +8,7 @@ export default function QrPage({ params }: { params: Promise<{ couponId: string 
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    const target = couponId ? `/?coupon=${encodeURIComponent(couponId)}#register` : '/#register'
+    const target = couponId ? `/?coupon=${encodeURIComponent(couponId)}` : '/'
     window.location.replace(target)
   }, [couponId])
 
