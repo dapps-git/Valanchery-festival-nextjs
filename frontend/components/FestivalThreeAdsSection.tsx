@@ -9,34 +9,46 @@ export interface BannerSlide {
   link: string
 }
 
-// Column 1: Original prizes poster + New Green Solar poster
+// Column 1: 3 banner slides
 const COLUMN_1_SLIDES: BannerSlide[] = [
   {
-    id: 'col1-prizes',
-    src: '/bayment-prizes-poster.jpg',
-    alt: 'Bayment Special Offers & Prizes',
+    id: 'col1-appliances',
+    src: '/bayment-appliances-offer-poster.jpg',
+    alt: 'Bayment 999 Special Offer Home Appliances',
     link: '#register',
   },
   {
-    id: 'col1-solar-green',
-    src: '/bayment-solar-green-poster.jpg',
-    alt: 'Bayment Go Solar for a Greener Smarter Home',
+    id: 'col1-solar-house',
+    src: '/bayment-solar-house-poster.jpg',
+    alt: 'Bayment Go Solar for Your Home',
+    link: '#register',
+  },
+  {
+    id: 'col1-washing-machine',
+    src: '/bayment-washing-machine-poster.jpg',
+    alt: 'Bayment Branded Washing Machines Offer',
     link: '#register',
   },
 ]
 
-// Column 2: Original store poster + New Festival Solar poster
+// Column 2: 3 banner slides
 const COLUMN_2_SLIDES: BannerSlide[] = [
   {
-    id: 'col2-store',
-    src: '/bayment-store-poster.jpg',
-    alt: 'Bayment Store Special Offer',
+    id: 'col2-solar-subsidy',
+    src: '/bayment-solar-subsidy-poster.jpg',
+    alt: 'Bayment Solar Lifetime Free Current with Subsidy',
     link: '#register',
   },
   {
-    id: 'col2-solar-festival',
-    src: '/bayment-solar-festival-poster.jpg',
-    alt: 'Bayment Solar Shopping Festival',
+    id: 'col2-water-purity',
+    src: '/bayment-purity-water-poster.jpg',
+    alt: 'Bayment Purity Water Assessment',
+    link: '#register',
+  },
+  {
+    id: 'col2-solar-gas',
+    src: '/bayment-solar-gas-poster.jpg',
+    alt: 'Bayment Solar Save on Current Bill and Gas',
     link: '#register',
   },
 ]
