@@ -94,7 +94,7 @@ function SingleColumnSlider({
   }, [interval, initialDelay, slides.length])
 
   return (
-    <div className="relative aspect-square sm:aspect-[4/5] max-h-[460px] w-full overflow-hidden rounded-none border border-slate-200/90 shadow-2xs bg-white">
+    <div className="relative aspect-[3/4] w-full overflow-hidden rounded-none border border-slate-200/90 shadow-2xs bg-white">
       {slides.map((banner, index) => {
         const isCurrent = index === currentIndex
         const isPrev = index === previousIndex
@@ -124,13 +124,13 @@ function SingleColumnSlider({
           >
             <a
               href={banner.link}
-              className="w-full h-full block relative p-0 m-0 overflow-hidden cursor-pointer"
+              className="w-full h-full block relative p-0 m-0 overflow-hidden cursor-pointer bg-white"
               title={banner.alt}
             >
               <img
                 src={banner.src}
                 alt={banner.alt}
-                className="w-full h-full object-cover object-center block select-none rounded-none"
+                className="w-full h-full object-contain object-center block select-none rounded-none"
                 loading="lazy"
                 draggable={false}
               />
@@ -145,7 +145,7 @@ function SingleColumnSlider({
 export function FestivalThreeAdsSection() {
   return (
     <section className="relative w-full pt-1.5 pb-2 sm:py-2.5 bg-slate-50/60 border-b border-slate-200/70 select-none">
-      <div className="max-w-4xl mx-auto px-1.5 sm:px-3">
+      <div className="max-w-2xl sm:max-w-3xl mx-auto px-1.5 sm:px-3">
         {/* 2 columns, each running a slow vertical slide-down animation (total 4 square/portrait banners) */}
         <div className="grid grid-cols-2 gap-1.5 sm:gap-3">
           <SingleColumnSlider slides={COLUMN_1_SLIDES} interval={5000} initialDelay={0} />
