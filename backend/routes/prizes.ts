@@ -19,6 +19,25 @@ router.get('/', async (req, res) => {
   }
 })
 
+// Initialize official festival prizes (1 Car, 10 Bikes, 10 Gold Coins) - Admin only
+router.post('/seed-official', requireAdminAuth, async (req, res) => {
+  try {
+    const { seedPrizes } = await import('../seed.js')
+    let inserted = 0
+    for (const p of seedPrizes) {
+      const exists = await Prize.findOne({ id: p.id })
+      if (!exists) {
+        await Prize.create(p)
+        inserted++
+      }
+    }
+    const all = await Prize.find().lean()
+    res.json({ ok: true, message: `Inserted ${inserted} official festival prizes. Total: ${all.length}`, prizes: all })
+  } catch (error: any) {
+    res.status(500).json({ ok: false, error: error.message })
+  }
+})
+
 // Create or upsert prize (admin only)
 router.post('/', requireAdminAuth, async (req, res) => {
   try {

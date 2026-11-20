@@ -45,34 +45,13 @@ export async function POST(request: Request) {
     })
     const actualParticipantId = participantDoc?.id || participantId
     const actualCouponId = participantDoc?.couponId || ''
-    const participantPhone = (participantDoc?.phone || '').replace(/\D/g, '').slice(-10)
 
-    // 2. SUPREME RULE: If this PHONE NUMBER has already won Mega Competition, BLOCK IT!
-    if (participantPhone) {
-      const samePhoneParticipants = await participantsCol
-        .find({ phone: { $regex: new RegExp(`${participantPhone}$`) } })
-        .project({ id: 1 })
-        .toArray()
-      const samePhonePartIds = samePhoneParticipants.map((p: any) => p.id)
-
-      const phoneWonMega = await winnersCol.findOne({
-        status: 'Confirmed',
-        competitionType: 'Mega',
-        $or: [
-          { participantId: { $in: samePhonePartIds } },
-          { phone: { $regex: new RegExp(`${participantPhone}$`) } },
-          { participantPhone: { $regex: new RegExp(`${participantPhone}$`) } },
-        ],
-      })
-
-      if (phoneWonMega) {
-        return NextResponse.json(
-          { ok: false, error: 'This participant (phone number) has already won Mega Competition and cannot participate again.' },
-          { status: 400 }
-        )
-      }
-    }
-
+    // 2. Strict Coupon-ID Based Eligibility Validation
+    // - Same phone number CAN participate in Mega and Normal with other coupons
+    // - No coupon can win twice in Mega (cannot win Mega again)
+    // - No coupon can win twice in Normal (cannot win Normal again)
+    // - Mega winner coupon cannot participate in Normal
+    // Validated strictly by couponId / participantId, NEVER by phone number.
     const checkConditions: any[] = [{ participantId: actualParticipantId }]
     if (actualCouponId) {
       checkConditions.push({ couponId: actualCouponId })
