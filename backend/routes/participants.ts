@@ -223,34 +223,28 @@ router.get('/', requireAdminAuth, async (req, res) => {
       const allWinners = await Winner.find({ status: 'Confirmed' }).lean()
 
       const megaWinnerCoupons = new Set<string>()
-      const megaWinnerPhones = new Set<string>()
       const normalWinnerCoupons = new Set<string>()
 
       for (const w of allWinners) {
         const cId = ((w as any).couponId || (w as any).participantCouponId || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase()
-        const rawPhone = (w as any).phone || (w as any).participantPhone || ''
-        const phone = rawPhone.replace(/\D/g, '').slice(-10)
 
         if (w.competitionType === 'Mega') {
           if (cId) megaWinnerCoupons.add(cId)
           if (w.participantId) megaWinnerCoupons.add(w.participantId)
-          if (phone) megaWinnerPhones.add(phone)
         } else {
           if (cId) normalWinnerCoupons.add(cId)
           if (w.participantId) normalWinnerCoupons.add(w.participantId)
         }
       }
 
-      // Populate missing phone numbers and couponIds from participant records
+      // Populate missing couponIds from participant records
       const allWinnerPartIds = Array.from(new Set([...megaWinnerCoupons, ...normalWinnerCoupons])).filter((id) => id.startsWith('VF') || id.length > 5)
       if (allWinnerPartIds.length > 0) {
-        const pDocs = await Participant.find({ id: { $in: allWinnerPartIds } }).select('id couponId phone').lean()
+        const pDocs = await Participant.find({ id: { $in: allWinnerPartIds } }).select('id couponId').lean()
         for (const p of pDocs) {
           const cleanCoupon = (p.couponId || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase()
-          const cleanPhone = (p.phone || '').replace(/\D/g, '').slice(-10)
-          if (megaWinnerCoupons.has(p.id)) {
-            if (cleanCoupon) megaWinnerCoupons.add(cleanCoupon)
-            if (cleanPhone) megaWinnerPhones.add(cleanPhone)
+          if (megaWinnerCoupons.has(p.id) && cleanCoupon) {
+            megaWinnerCoupons.add(cleanCoupon)
           }
           if (normalWinnerCoupons.has(p.id) && cleanCoupon) {
             normalWinnerCoupons.add(cleanCoupon)
@@ -263,12 +257,11 @@ router.get('/', requireAdminAuth, async (req, res) => {
         .lean()
 
       const filtered = allParticipants.filter((p) => {
-        const phone = (p.phone || '').replace(/\D/g, '').slice(-10)
         const cleanCoupon = (p.couponId || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase()
 
         if (competitionType === 'Mega') {
-          // Mega: Once a phone number has won Mega, it cannot win Mega again; specific coupon cannot win Mega again
-          if (phone && megaWinnerPhones.has(phone)) return false
+          // Mega: Specific coupon cannot win Mega again
+          // Same phone numbers CAN participate with other coupons!
           if (cleanCoupon && megaWinnerCoupons.has(cleanCoupon)) return false
           if (p.id && megaWinnerCoupons.has(p.id)) return false
         } else {

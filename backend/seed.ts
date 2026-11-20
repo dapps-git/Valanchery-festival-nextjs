@@ -8,70 +8,41 @@ import { Draw } from './models/Draw.js'
 import { Winner } from './models/Winner.js'
 
 export const seedPrizes = [
+  // Mega Competition: 1 Car (Grand Bumper Prize)
   {
-    id: 'prize-tv',
-    name: 'Smart TV',
-    description: '55-inch 4K Ultra HD smart television for the festival home.',
-    value: '₹42,000',
-    image: 'https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?auto=format&fit=crop&w=900&q=80',
-    assignedDrawId: 'draw-01',
-    status: 'Assigned' as const,
+    id: 'mega-car-01',
+    name: 'Brand New Car (Maruti Suzuki Swift)',
+    description: 'Mega Grand Bumper Prize — Maruti Suzuki Swift',
+    value: '₹8,50,000',
+    image: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=900&q=80',
+    assignedDrawId: null,
+    status: 'Available' as const,
+    competitionType: 'Mega' as const,
   },
 
-  {
-    id: 'prize-voucher',
-    name: 'Gift Voucher',
-    description: 'Festival shopping voucher valid at all partner stores.',
-    value: '₹10,000',
-    image: 'https://images.unsplash.com/photo-1513885535751-8b9238bd345a?auto=format&fit=crop&w=900&q=80',
-    assignedDrawId: 'draw-02',
-    status: 'Assigned' as const,
-  },
-  {
-    id: 'prize-laptop',
-    name: 'Premium Laptop',
-    description: 'High-speed 16GB RAM laptop for work, study and celebration.',
-    value: '₹58,000',
-    image: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=900&q=80',
-    assignedDrawId: 'draw-03',
-    status: 'Assigned' as const,
-  },
-  {
-    id: 'prize-phone',
-    name: 'Flagship Smartphone',
-    description: 'Flagship 5G smartphone — the upcoming grand lucky draw prize.',
-    value: '₹35,000',
-    image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=900&q=80',
-    assignedDrawId: 'draw-04',
-    status: 'Assigned' as const,
-  },
-  {
-    id: 'prize-fridge',
-    name: 'Double-Door Refrigerator',
-    description: 'Energy-efficient frost-free refrigerator for home.',
-    value: '₹32,000',
-    image: 'https://images.unsplash.com/photo-1571171637578-41bc2dd41cd2?auto=format&fit=crop&w=900&q=80',
-    assignedDrawId: 'draw-05',
-    status: 'Assigned' as const,
-  },
-  {
-    id: 'prize-washer',
-    name: 'Washing Machine',
-    description: 'Fully automatic inverter front-load washing machine.',
-    value: '₹28,000',
-    image: 'https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?auto=format&fit=crop&w=900&q=80',
-    assignedDrawId: 'draw-06',
-    status: 'Assigned' as const,
-  },
-  {
-    id: 'prize-festival',
-    name: 'Special Gold Hamper',
-    description: 'Grand festive gold coin hamper and celebration voucher.',
-    value: '₹75,000',
-    image: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?auto=format&fit=crop&w=900&q=80',
-    assignedDrawId: 'draw-10',
-    status: 'Assigned' as const,
-  },
+  // Normal Competition: 10 Motorbikes
+  ...Array.from({ length: 10 }, (_, i) => ({
+    id: `normal-bike-${String(i + 1).padStart(2, '0')}`,
+    name: `Brand New Motorbike #${i + 1}`,
+    description: `Normal Competition Prize — Brand New Motorbike #${i + 1}`,
+    value: '₹85,000',
+    image: 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=900&q=80',
+    assignedDrawId: null,
+    status: 'Available' as const,
+    competitionType: 'Normal' as const,
+  })),
+
+  // Normal Competition: 10 Gold Coins
+  ...Array.from({ length: 10 }, (_, i) => ({
+    id: `normal-gold-${String(i + 1).padStart(2, '0')}`,
+    name: `Pure Gold Coin #${i + 1}`,
+    description: `Normal Competition Prize — 916 Pure Gold Coin #${i + 1}`,
+    value: '₹7,500',
+    image: 'https://images.unsplash.com/photo-1610375461246-83df859d849d?auto=format&fit=crop&w=900&q=80',
+    assignedDrawId: null,
+    status: 'Available' as const,
+    competitionType: 'Normal' as const,
+  })),
 ]
 
 export const seedDraws = [
@@ -93,7 +64,12 @@ export const seedWinners: any[] = []
 
 export async function seedDatabase() {
   try {
-    // Mock prizes and mock draws auto-seeding disabled per user request
+    // Seed official festival prizes if empty (1 Car, 10 Bikes, 10 Gold Coins)
+    const prizeCount = await Prize.countDocuments()
+    if (prizeCount === 0) {
+      await Prize.insertMany(seedPrizes)
+      console.log('✅ Initialized 21 official festival prizes: 1 Car, 10 Bikes, 10 Gold Coins')
+    }
 
     // Seed admin credentials into MongoDB if not present
     const db = mongoose.connection.db
