@@ -88,28 +88,58 @@ export function LuckyDrawPage() {
   const [uploadSuccess, setUploadSuccess] = useState('')
   const [uploadError, setUploadError] = useState('')
 
+  // Real festival coupon seed list (from actual 3000 printed database coupons)
+  const REAL_COUPON_SEEDS = [
+    'B774097RXFA81',
+    '438539ZRRJ09P',
+    '763M6F371M9PR',
+    '4H0411M71ZLX4',
+    '8B0M32Q3J27W0',
+    '1H1Y9BH41M204',
+  ]
+
   // Circular Wheel State
   const [wheelRotation, setWheelRotation] = useState(0)
-  const [wheelSlices, setWheelSlices] = useState<string[]>([
-    'CPN00123',
-    'CPN00456',
-    'CPN00789',
-    'CPN01012',
-    'CPN01345',
-    'CPN01678',
-  ])
+  const [wheelSlices, setWheelSlices] = useState<string[]>(REAL_COUPON_SEEDS)
   const [isSpinningWheel, setIsSpinningWheel] = useState(false)
 
-  // Update initial wheel slices when pool loads
+  // Update wheel slices with real coupons from eligible participants or database coupons
   useEffect(() => {
+    // 1. If eligible participants exist, use their real coupon IDs
     if (eligiblePool.length > 0) {
       const sample = eligiblePool.slice(0, 6).map((p) => (p.couponId || p.id).toUpperCase())
-      while (sample.length < 6) {
-        sample.push(`CPN00${sample.length * 150 + 123}`)
+      const filled = [...sample]
+      let idx = 0
+      while (filled.length < 6) {
+        filled.push(REAL_COUPON_SEEDS[idx % REAL_COUPON_SEEDS.length])
+        idx++
       }
-      setWheelSlices(sample)
+      setWheelSlices(filled)
+      return
     }
-  }, [eligiblePool])
+
+    // 2. If coupons are loaded in data, use real coupon codes
+    if (Array.isArray(data.coupons) && data.coupons.length >= 6) {
+      const sample = data.coupons.slice(0, 6).map((c) => String(c.id || c.serialNo).toUpperCase())
+      setWheelSlices(sample)
+      return
+    }
+
+    // 3. Otherwise fetch real batch coupons from API directory
+    api.getDirectoryCoupons(new URLSearchParams({ limit: '12' }))
+      .then((res) => {
+        if (res && res.ok && Array.isArray(res.coupons) && res.coupons.length > 0) {
+          const codes = res.coupons.slice(0, 6).map((c) => String(c.id || c.serialNo).toUpperCase())
+          let idx = 0
+          while (codes.length < 6) {
+            codes.push(REAL_COUPON_SEEDS[idx % REAL_COUPON_SEEDS.length])
+            idx++
+          }
+          setWheelSlices(codes)
+        }
+      })
+      .catch(() => {})
+  }, [eligiblePool, data.coupons])
 
   // Set of prize IDs that have already been awarded or confirmed in winners
   const wonPrizeIds = useMemo(() => {
@@ -336,7 +366,7 @@ export function LuckyDrawPage() {
         newSlices.push(winningCoupon)
       } else {
         const other = otherParticipants[otherIdx % Math.max(1, otherParticipants.length)]
-        newSlices.push(other ? (other.couponId || other.id).toUpperCase() : `CPN00${i * 150 + 123}`)
+        newSlices.push(other ? (other.couponId || other.id).toUpperCase() : REAL_COUPON_SEEDS[i % REAL_COUPON_SEEDS.length])
         otherIdx++
       }
     }
@@ -631,22 +661,22 @@ export function LuckyDrawPage() {
               const endAngle = i * 60 + 30
               const path = getSlicePath(200, 200, 192, startAngle, endAngle)
               const sliceColor = i % 2 === 0 ? '#F2E4D2' : '#FAF3E8'
-              const couponCode = wheelSlices[i] || `CPN00${i * 123 + 456}`
+              const couponCode = wheelSlices[i] || REAL_COUPON_SEEDS[i % REAL_COUPON_SEEDS.length]
 
               return (
                 <g key={i}>
                   <path d={path} fill={sliceColor} stroke="#E2D4BE" strokeWidth="1.5" />
-                  {/* Coupon Code Text Only - NO ticket icon */}
+                  {/* Real Coupon Code Text - Narrower outer ring band */}
                   <g transform={`rotate(${i * 60}, 200, 200)`}>
                     <text
                       x="200"
-                      y="78"
+                      y="52"
                       textAnchor="middle"
                       fill="#3D2314"
-                      fontSize="13"
+                      fontSize="11.5"
                       fontWeight="700"
                       fontFamily="monospace"
-                      letterSpacing="0.04em"
+                      letterSpacing="0.05em"
                     >
                       {couponCode}
                     </text>
@@ -667,17 +697,17 @@ export function LuckyDrawPage() {
           </svg>
         </div>
 
-        {/* Center Fixed Hub (Always Upright! Clean Prize Photo Showcase - NO TEXT/PRICE) */}
-        <div className="absolute z-20 w-[112px] h-[112px] sm:w-[126px] sm:h-[126px] md:w-[136px] md:h-[136px] rounded-full bg-[#FFFDF9] border-2 border-[#DFCBB0] shadow-md flex items-center justify-center p-2 text-center pointer-events-none">
+        {/* Center Fixed Hub (Enlarged Inner Circle with Expanded Prize Showcase) */}
+        <div className="absolute z-20 w-[165px] h-[165px] sm:w-[205px] sm:h-[205px] md:w-[225px] md:h-[225px] rounded-full bg-[#FFFDF9] border-2 border-[#DFCBB0] shadow-md flex items-center justify-center p-3 text-center pointer-events-none">
           {activePrize.image && activePrize.image !== '/kvves-logo-round.png' ? (
             <img
               src={activePrize.image}
               alt={activePrize.name}
-              className="max-w-[85px] max-h-[64px] sm:max-w-[98px] sm:max-h-[74px] md:max-w-[108px] md:max-h-[80px] w-auto h-auto object-contain drop-shadow-sm transition-transform"
+              className="max-w-[125px] max-h-[95px] sm:max-w-[155px] sm:max-h-[115px] md:max-w-[170px] md:max-h-[125px] w-auto h-auto object-contain drop-shadow-sm transition-transform"
             />
           ) : (
-            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-[#FAF1E3] flex items-center justify-center text-[#9E6F28]">
-              {competitionType === 'Mega' ? <Trophy size={26} /> : <Gift size={26} />}
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#FAF1E3] flex items-center justify-center text-[#9E6F28]">
+              {competitionType === 'Mega' ? <Trophy size={36} /> : <Gift size={36} />}
             </div>
           )}
         </div>
