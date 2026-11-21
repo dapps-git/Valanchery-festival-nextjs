@@ -529,7 +529,7 @@ export function LuckyDrawPage() {
   }
 
   return (
-    <div className="relative w-full max-w-5xl mx-auto p-4 sm:p-5 font-sans font-normal text-[#292524] space-y-6 sm:space-y-8 pt-3 sm:pt-6">
+    <div className="relative w-full max-w-5xl mx-auto p-4 sm:p-5 font-sans font-normal text-[#292524] space-y-8 sm:space-y-12 pt-6 sm:pt-10">
       <Confetti active={phase === 'reveal' || phase === 'done'} />
       {flash && <div className="pointer-events-none absolute inset-0 z-20 bg-white animate-[flash_0.6s_ease]" />}
       {toast && <Toast message={toast} onDone={() => setToast('')} />}
@@ -611,12 +611,12 @@ export function LuckyDrawPage() {
       </div>
 
       {/* ─────────────────────────────────────────────────────────────
-          2. SPINNER (CENTERED WITH BALANCED VERTICAL SPACING)
+          2. SPINNER (ENLARGED CIRCLE & LARGER INNER IMAGE CIRCLE)
       ─────────────────────────────────────────────────────────────── */}
-      <div className="relative flex flex-col items-center justify-center my-4 sm:my-8 w-full">
+      <div className="relative flex flex-col items-center justify-center my-6 sm:my-10 w-full">
         {/* Top Fixed Teardrop Pointer */}
-        <div className="absolute -top-3.5 sm:-top-4 left-1/2 -translate-x-1/2 z-30 pointer-events-none">
-          <svg width="30" height="40" viewBox="0 0 28 38" fill="none" className="drop-shadow-md">
+        <div className="absolute -top-4 sm:-top-5 left-1/2 -translate-x-1/2 z-30 pointer-events-none">
+          <svg width="34" height="44" viewBox="0 0 28 38" fill="none" className="drop-shadow-md">
             <path
               d="M14 36 C13 32 3 19 3 14 A11 11 0 1 1 25 14 C25 19 15 32 14 36 Z"
               fill="#3D2314"
@@ -627,12 +627,12 @@ export function LuckyDrawPage() {
           </svg>
         </div>
 
-        {/* Rotating Wheel Container */}
+        {/* Rotating Wheel Container (Enlarged Size) */}
         <div
-          className="relative w-[290px] h-[290px] sm:w-[370px] sm:h-[370px] md:w-[410px] md:h-[410px] rounded-full overflow-hidden"
+          className="relative w-[340px] h-[340px] sm:w-[440px] sm:h-[440px] md:w-[480px] md:h-[480px] rounded-full overflow-hidden"
           style={{
             boxShadow:
-              '0 14px 40px -8px rgba(160, 115, 55, 0.32), 0 0 0 8px #FAF5ED, 0 0 0 10px #DFCBB0',
+              '0 18px 48px -10px rgba(160, 115, 55, 0.35), 0 0 0 10px #FAF5ED, 0 0 0 12px #DFCBB0',
           }}
         >
           <svg
@@ -666,11 +666,11 @@ export function LuckyDrawPage() {
               return (
                 <g key={i}>
                   <path d={path} fill={sliceColor} stroke="#E2D4BE" strokeWidth="1.5" />
-                  {/* Real Coupon Code Text - Narrower outer ring band */}
+                  {/* Real Coupon Code Text */}
                   <g transform={`rotate(${i * 60}, 200, 200)`}>
                     <text
                       x="200"
-                      y="52"
+                      y="46"
                       textAnchor="middle"
                       fill="#3D2314"
                       fontSize="11.5"
@@ -697,26 +697,26 @@ export function LuckyDrawPage() {
           </svg>
         </div>
 
-        {/* Center Fixed Hub (Enlarged Inner Circle with Expanded Prize Showcase) */}
-        <div className="absolute z-20 w-[165px] h-[165px] sm:w-[205px] sm:h-[205px] md:w-[225px] md:h-[225px] rounded-full bg-[#FFFDF9] border-2 border-[#DFCBB0] shadow-md flex items-center justify-center p-3 text-center pointer-events-none">
+        {/* Center Fixed Hub (Further Enlarged Inner Circle with Grand Prize Showcase) */}
+        <div className="absolute z-20 w-[195px] h-[195px] sm:w-[250px] sm:h-[250px] md:w-[275px] md:h-[275px] rounded-full bg-[#FFFDF9] border-2 border-[#DFCBB0] shadow-md flex items-center justify-center p-3 sm:p-4 text-center pointer-events-none">
           {activePrize.image && activePrize.image !== '/kvves-logo-round.png' ? (
             <img
               src={activePrize.image}
               alt={activePrize.name}
-              className="max-w-[125px] max-h-[95px] sm:max-w-[155px] sm:max-h-[115px] md:max-w-[170px] md:max-h-[125px] w-auto h-auto object-contain drop-shadow-sm transition-transform"
+              className="max-w-[155px] max-h-[115px] sm:max-w-[195px] sm:max-h-[145px] md:max-w-[220px] md:max-h-[160px] w-auto h-auto object-contain drop-shadow-sm transition-transform"
             />
           ) : (
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#FAF1E3] flex items-center justify-center text-[#9E6F28]">
-              {competitionType === 'Mega' ? <Trophy size={36} /> : <Gift size={36} />}
+            <div className="w-18 h-18 sm:w-24 sm:h-24 rounded-full bg-[#FAF1E3] flex items-center justify-center text-[#9E6F28]">
+              {competitionType === 'Mega' ? <Trophy size={42} /> : <Gift size={42} />}
             </div>
           )}
         </div>
       </div>
 
       {/* ─────────────────────────────────────────────────────────────
-          3. BOTTOM BUTTON
+          3. BOTTOM BUTTON (Positioned Lower with Comfortable Spacing)
       ─────────────────────────────────────────────────────────────── */}
-      <div className="flex flex-col items-center justify-center w-full pt-2 sm:pt-4">
+      <div className="flex flex-col items-center justify-center w-full pt-4 sm:pt-8">
         {phase === 'reveal' || phase === 'done' ? (
           <div className="flex items-center gap-3 w-full max-w-md">
             <button
